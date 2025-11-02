@@ -9,7 +9,6 @@ import {
   Tooltip,
   Divider,
   Paper,
-  Grid,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -50,95 +49,103 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         px: 3,
         display: "flex",
         alignItems: "center",
-        justifyContent: "center",
+        justifyContent: "space-between",
         position: "sticky",
         top: 0,
         zIndex: 1200,
         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
       }}
     >
-      <Grid container alignItems="center" spacing={1} width={"100%"}>
-        <Grid item size={2}>
-          <IconButton
-            onClick={onToggleSidebar}
-            sx={{
-              color: "#2092ec",
-              borderRadius: 2,
-            }}
-          >
-            <MenuIcon fontSize="medium" />
-          </IconButton>
-        </Grid>
-        <Grid item size={6}>
-          <Paper
-            component="form"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              height: 42,
-              borderRadius: 2,
-              px: 1.5,
-              boxShadow: "none",
-            }}
-          >
-            <SearchIcon sx={{ color: "#9ca3af", mr: 1 }} />
-            <InputBase
-              sx={{ flex: 1, fontSize: 14, border: "none" }}
-              placeholder="Search [CTRL + K]"
-              inputProps={{ "aria-label": "search" }}
-            />
-          </Paper>
-        </Grid>
-        <Grid
-          item
-          size={4}
+      {/* Left Section: Sidebar Toggle + Search */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+          flex: 1,
+          minWidth: 0,
+        }}
+      >
+        <IconButton
+          onClick={onToggleSidebar}
           sx={{
-            display: "flex",
-            justifyContent: "flex-end",
-            alignItems: "center",
-            gap: 1.5,
+            color: "#2092ec",
+            borderRadius: 2,
           }}
         >
-          <Tooltip title="Apps">
-            <IconButton>
-              <AppsIcon sx={{ color: "#6b7280" }} />
-            </IconButton>
-          </Tooltip>
+          <MenuIcon fontSize="medium" />
+        </IconButton>
 
-          <Tooltip title="Language">
-            <IconButton>
-              <LanguageIcon sx={{ color: "#6b7280" }} />
-            </IconButton>
-          </Tooltip>
+        <Paper
+          component="form"
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            height: 42,
+            borderRadius: 2,
+            px: 1.5,
+            boxShadow: "none",
+            flex: 1,
+            minWidth: 200,
+          }}
+        >
+          <SearchIcon sx={{ color: "#9ca3af", mr: 1 }} />
+          <InputBase
+            sx={{ flex: 1, fontSize: 14, border: "none" }}
+            placeholder="Search [CTRL + K]"
+            inputProps={{ "aria-label": "search" }}
+          />
+        </Paper>
+      </Box>
 
-          <Tooltip title="Theme">
-            <IconButton>
-              <LightModeIcon sx={{ color: "#6b7280" }} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Favorites">
-            <IconButton>
-              <StarIcon sx={{ color: "#6b7280" }} />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Notifications">
-            <IconButton>
-              <NotificationsIcon sx={{ color: "#ef4444" }} />
-            </IconButton>
-          </Tooltip>
-
-          {/* Profile Avatar */}
-          <IconButton onClick={handleMenuOpen}>
-            <Avatar
-              alt="User Profile"
-              src="https://i.pravatar.cc/150?img=3"
-              sx={{ width: 36, height: 36 }}
-            />
+      {/* Right Section: Icons + Avatar */}
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "flex-end",
+          gap: 1.5,
+          flexShrink: 0,
+        }}
+      >
+        <Tooltip title="Apps">
+          <IconButton>
+            <AppsIcon sx={{ color: "#6b7280" }} />
           </IconButton>
-        </Grid>
-      </Grid>
+        </Tooltip>
+
+        <Tooltip title="Language">
+          <IconButton>
+            <LanguageIcon sx={{ color: "#6b7280" }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Theme">
+          <IconButton>
+            <LightModeIcon sx={{ color: "#6b7280" }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Favorites">
+          <IconButton>
+            <StarIcon sx={{ color: "#6b7280" }} />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title="Notifications">
+          <IconButton>
+            <NotificationsIcon sx={{ color: "#ef4444" }} />
+          </IconButton>
+        </Tooltip>
+
+        <IconButton onClick={handleMenuOpen}>
+          <Avatar
+            alt="User Profile"
+            src="https://i.pravatar.cc/150?img=3"
+            sx={{ width: 36, height: 36 }}
+          />
+        </IconButton>
+      </Box>
 
       {/* Profile Menu */}
       <Menu
