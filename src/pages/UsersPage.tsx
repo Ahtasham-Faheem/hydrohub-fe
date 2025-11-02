@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   Typography,
-  Grid,
   Button,
   TextField,
   Table,
@@ -25,7 +24,6 @@ import {
   Edit,
   Delete,
   Visibility,
-  FilterList,
   Add,
   Download,
   Sort,
@@ -125,112 +123,116 @@ export const UsersPage = () => {
   return (
     <Box sx={{ minHeight: "100vh", p: 3 }}>
       {/* Cards Row */}
-<Grid container spacing={3} sx={{ mb: 4 }}>
-  {cards.map((card, idx) => (
-    <Grid item size={3} key={idx}>
-      <Card
+      <Box
         sx={{
-          borderRadius: 3,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          border: "1px solid #f1f5f9",
-          transition: "transform 0.2s, box-shadow 0.2s",
-          "&:hover": {
-            transform: "translateY(-2px)",
-            boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
-          },
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 3,
+          mb: 4,
         }}
       >
-        <CardContent sx={{ p: 3 }}>
-          {/* Header Row: Icon + Title + Menu */}
+        {cards.map((card, idx) => (
           <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            mb={2}
-          >
-            <Box display="flex" alignItems="center" gap={1.5}>
-              <Box
-                sx={{
-                  bgcolor:
-                    card.title === "Active User"
-                      ? "#e0f2fe"
-                      : card.title === "Present User"
-                      ? "#dcfce7"
-                      : card.title === "On Leaves User"
-                      ? "#fef9c3"
-                      : "#fee2e2",
-                  borderRadius: "10px",
-                  p: 1.2,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 42,
-                  height: 42,
-                }}
-              >
-                <Box
-                  component="span"
-                  sx={{
-                    fontSize: 22,
-                    color:
-                      card.title === "Active User"
-                        ? "#3b82f6"
-                        : card.title === "Present User"
-                        ? "#16a34a"
-                        : card.title === "On Leaves User"
-                        ? "#ca8a04"
-                        : "#dc2626",
-                  }}
-                >
-                  {card.icon}
-                </Box>
-              </Box>
-              <Typography
-                variant="subtitle1"
-                sx={{ fontWeight: 600, color: "#374151" }}
-              >
-                {card.title}
-              </Typography>
-            </Box>
-
-            <IconButton size="small" sx={{ color: "#9ca3af" }}>
-              <span style={{ fontSize: "18px" }}>⋯</span>
-            </IconButton>
-          </Box>
-
-          {/* Main Stat */}
-          <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-            <Typography
-              variant="h5"
-              sx={{ fontWeight: 400, color: "#111827", mr: 1 }}
-            >
-              {card.value}
-            </Typography>
-            <Typography
-              variant="body2"
-              sx={{ color: "#16a34a", fontWeight: 600 }}
-            >
-              {card.change}
-            </Typography>
-          </Box>
-
-          {/* Description */}
-          <Typography
-            variant="body2"
+            key={idx}
             sx={{
-              color: "#9ca3af",
-              lineHeight: 1.5,
-              fontSize: 13,
+              flex: "1 1 calc(25% - 24px)",
+              minWidth: "250px",
             }}
           >
-            {card.desc}
-          </Typography>
-        </CardContent>
-      </Card>
-    </Grid>
-  ))}
-</Grid>
+            <Card
+              sx={{
+                borderRadius: 3,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                border: "1px solid #f1f5f9",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+                },
+              }}
+            >
+              <CardContent sx={{ p: 3 }}>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={2}
+                >
+                  <Box display="flex" alignItems="center" gap={1.5}>
+                    <Box
+                      sx={{
+                        bgcolor:
+                          card.title === "Active User"
+                            ? "#e0f2fe"
+                            : card.title === "Present User"
+                            ? "#dcfce7"
+                            : card.title === "On Leaves User"
+                            ? "#fef9c3"
+                            : "#fee2e2",
+                        borderRadius: "10px",
+                        p: 1.2,
+                        width: 42,
+                        height: 42,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: 22,
+                          color:
+                            card.title === "Active User"
+                              ? "#3b82f6"
+                              : card.title === "Present User"
+                              ? "#16a34a"
+                              : card.title === "On Leaves User"
+                              ? "#ca8a04"
+                              : "#dc2626",
+                        }}
+                      >
+                        {card.icon}
+                      </Box>
+                    </Box>
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 600, color: "#374151" }}
+                    >
+                      {card.title}
+                    </Typography>
+                  </Box>
+                  <IconButton size="small" sx={{ color: "#9ca3af" }}>
+                    <span style={{ fontSize: "18px" }}>⋯</span>
+                  </IconButton>
+                </Box>
 
+                <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{ fontWeight: 400, color: "#111827", mr: 1 }}
+                  >
+                    {card.value}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: "#16a34a", fontWeight: 600 }}
+                  >
+                    {card.change}
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9ca3af", lineHeight: 1.5, fontSize: 13 }}
+                >
+                  {card.desc}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Box>
+        ))}
+      </Box>
 
       {/* Filters Section */}
       <Card
@@ -239,168 +241,153 @@ export const UsersPage = () => {
           borderRadius: 3,
           boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
           border: "1px solid #e5e7eb",
+          p: 3,
         }}
       >
-        <CardContent sx={{ p: 3 }}>
-          {/* Filter Controls */}
-          <Grid container spacing={2} alignItems="center">
-            <Grid item size={2.4}>
-              <Button
-                startIcon={<DateRange />}
-                variant="outlined"
-                fullWidth
-                sx={{
-                  borderColor: "#d1d5db",
-                  textTransform: "none",
-                  color: "#374151",
-                  fontWeight: 500,
-                  py: 1,
-                  justifyContent: "flex-start",
-                }}
-              >
-                25 Sep 25 - 24 Oct 25
-              </Button>
-            </Grid>
-            <Grid container size={2.4}>
-              <FormControl fullWidth size="small">
-                <InputLabel sx={{ fontSize: 14 }}>Select Status</InputLabel>
-                <Select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                  label="Select Status"
-                  sx={{ fontSize: 14 }}
-                >
-                  <MenuItem value="Active">Active</MenuItem>
-                  <MenuItem value="Inactive">Inactive</MenuItem>
-                  <MenuItem value="Pending">Pending</MenuItem>
-                  <MenuItem value="Suspended">Suspended</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item size={2.4}>
-              <FormControl fullWidth size="small">
-                <InputLabel sx={{ fontSize: 14 }}>Select Role</InputLabel>
-                <Select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  label="Select Role"
-                  sx={{ fontSize: 14 }}
-                >
-                  <MenuItem value="Admin">Admin</MenuItem>
-                  <MenuItem value="Editor">Editor</MenuItem>
-                  <MenuItem value="Author">Author</MenuItem>
-                  <MenuItem value="Maintainer">Maintainer</MenuItem>
-                  <MenuItem value="Subscriber">Subscriber</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item size={2.4}>
-              <FormControl fullWidth size="small">
-                <InputLabel sx={{ fontSize: 14 }}>Select Shift</InputLabel>
-                <Select
-                  value={shift}
-                  onChange={(e) => setShift(e.target.value)}
-                  label="Select Shift"
-                  sx={{ fontSize: 14 }}
-                >
-                  <MenuItem value="Morning">Morning Shift</MenuItem>
-                  <MenuItem value="Evening">Evening Shift</MenuItem>
-                  <MenuItem value="Night">Night Shift</MenuItem>
-                  <MenuItem value="Flexible">Flexible Hours</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item size={2.4}>
-              <FormControl fullWidth size="small">
-                <InputLabel sx={{ fontSize: 14 }}>Select Department</InputLabel>
-                <Select
-                  value={department}
-                  onChange={(e) => setDepartment(e.target.value)}
-                  label="Select Department"
-                  sx={{ fontSize: 14 }}
-                >
-                  <MenuItem value="IT">Information Technology</MenuItem>
-                  <MenuItem value="HR">Human Resources</MenuItem>
-                  <MenuItem value="Finance">Finance</MenuItem>
-                  <MenuItem value="Marketing">Marketing</MenuItem>
-                  <MenuItem value="Operations">Operations</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-          </Grid>
-
-          <Divider sx={{ marginTop: 3 }} />
-
-          {/* Actions Row */}
-          <Box
+        <Box
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 2,
+            alignItems: "center",
+          }}
+        >
+          <Button
+            startIcon={<DateRange />}
+            variant="outlined"
             sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mt: 3,
-              flexWrap: "wrap",
-              gap: 2,
+              borderColor: "#d1d5db",
+              textTransform: "none",
+              color: "#374151",
+              fontWeight: 500,
+              py: 1,
+              justifyContent: "flex-start",
             }}
           >
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <Button
-                variant="outlined"
-                startIcon={<Download />}
-                sx={{
-                  textTransform: "none",
-                  minWidth: "auto",
-                }}
-              >
-                Export
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Sort />}
-                sx={{
-                  textTransform: "none",
-                  minWidth: "auto",
-                }}
-              >
-                Sort By
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<ManageAccounts />}
-                sx={{
-                  textTransform: "none",
-                  minWidth: "auto",
-                }}
-              >
-                Manage Columns
-              </Button>
-            </Box>
+            25 Sep 25 - 24 Oct 25
+          </Button>
 
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-              <TextField
-                size="medium"
-                placeholder="Search User..."
-                sx={{
-                  minWidth: 250,
-                  "& .MuiOutlinedInput-root": {
-                    fontSize: 14,
-                  },
-                }}
-              />
-              <Button
-                variant="contained"
-                startIcon={<Add />}
-                sx={{
-                  textTransform: "none",
-                  bgcolor: "#2563eb",
-                  "&:hover": { bgcolor: "#1d4ed8" },
-                  px: 3,
-                }}
-              >
-                Add New User
-              </Button>
-            </Box>
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel sx={{ fontSize: 14 }}>Select Status</InputLabel>
+            <Select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              label="Select Status"
+              sx={{ fontSize: 14 }}
+            >
+              <MenuItem value="Active">Active</MenuItem>
+              <MenuItem value="Inactive">Inactive</MenuItem>
+              <MenuItem value="Pending">Pending</MenuItem>
+              <MenuItem value="Suspended">Suspended</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel sx={{ fontSize: 14 }}>Select Role</InputLabel>
+            <Select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              label="Select Role"
+              sx={{ fontSize: 14 }}
+            >
+              <MenuItem value="Admin">Admin</MenuItem>
+              <MenuItem value="Editor">Editor</MenuItem>
+              <MenuItem value="Author">Author</MenuItem>
+              <MenuItem value="Maintainer">Maintainer</MenuItem>
+              <MenuItem value="Subscriber">Subscriber</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel sx={{ fontSize: 14 }}>Select Shift</InputLabel>
+            <Select
+              value={shift}
+              onChange={(e) => setShift(e.target.value)}
+              label="Select Shift"
+              sx={{ fontSize: 14 }}
+            >
+              <MenuItem value="Morning">Morning Shift</MenuItem>
+              <MenuItem value="Evening">Evening Shift</MenuItem>
+              <MenuItem value="Night">Night Shift</MenuItem>
+              <MenuItem value="Flexible">Flexible Hours</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl size="small" sx={{ minWidth: 180 }}>
+            <InputLabel sx={{ fontSize: 14 }}>Select Department</InputLabel>
+            <Select
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              label="Select Department"
+              sx={{ fontSize: 14 }}
+            >
+              <MenuItem value="IT">Information Technology</MenuItem>
+              <MenuItem value="HR">Human Resources</MenuItem>
+              <MenuItem value="Finance">Finance</MenuItem>
+              <MenuItem value="Marketing">Marketing</MenuItem>
+              <MenuItem value="Operations">Operations</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <Divider sx={{ marginY: 3 }} />
+
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <Button variant="outlined" startIcon={<Download />}>
+              Export
+            </Button>
+            <Button variant="outlined" startIcon={<Sort />}>
+              Sort By
+            </Button>
+            <Button variant="outlined" startIcon={<ManageAccounts />}>
+              Manage Columns
+            </Button>
           </Box>
-        </CardContent>
+
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <TextField
+              size="medium"
+              placeholder="Search User..."
+              sx={{
+                minWidth: 250,
+                "& .MuiOutlinedInput-root": {
+                  fontSize: 14,
+                },
+              }}
+            />
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              sx={{
+                textTransform: "none",
+                bgcolor: "#2563eb",
+                "&:hover": { bgcolor: "#1d4ed8" },
+                px: 3,
+              }}
+            >
+              Add New User
+            </Button>
+          </Box>
+        </Box>
+      </Card>
+
+      {/* Table */}
+      <Card
+        sx={{
+          borderRadius: 3,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+          border: "1px solid #e5e7eb",
+          overflow: "hidden",
+        }}
+      >
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: "#f8fafc" }}>
@@ -416,14 +403,7 @@ export const UsersPage = () => {
           </TableHead>
           <TableBody>
             {users.map((u) => (
-              <TableRow
-                key={u.id}
-                hover
-                sx={{
-                  "&:last-child td": { borderBottom: 0 },
-                  transition: "background-color 0.2s",
-                }}
-              >
+              <TableRow key={u.id} hover>
                 <TableCell sx={{ py: 2 }}>
                   <Box display="flex" alignItems="center" gap={2}>
                     <Avatar src={u.avatar} sx={{ width: 40, height: 40 }} />
@@ -458,22 +438,13 @@ export const UsersPage = () => {
                   />
                 </TableCell>
                 <TableCell align="center" sx={{ py: 2 }}>
-                  <IconButton
-                    size="small"
-                    sx={{ color: "#6b7280", "&:hover": { bgcolor: "#f3f4f6" } }}
-                  >
+                  <IconButton size="small" sx={{ color: "#6b7280" }}>
                     <Visibility fontSize="small" />
                   </IconButton>
-                  <IconButton
-                    size="small"
-                    sx={{ color: "#f59e0b", "&:hover": { bgcolor: "#fef3c7" } }}
-                  >
+                  <IconButton size="small" sx={{ color: "#f59e0b" }}>
                     <Edit fontSize="small" />
                   </IconButton>
-                  <IconButton
-                    size="small"
-                    sx={{ color: "#ef4444", "&:hover": { bgcolor: "#fef2f2" } }}
-                  >
+                  <IconButton size="small" sx={{ color: "#ef4444" }}>
                     <Delete fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -482,16 +453,6 @@ export const UsersPage = () => {
           </TableBody>
         </Table>
       </Card>
-
-      {/* Table Section */}
-      <Card
-        sx={{
-          borderRadius: 3,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          border: "1px solid #e5e7eb",
-          overflow: "hidden",
-        }}
-      ></Card>
     </Box>
   );
 };
