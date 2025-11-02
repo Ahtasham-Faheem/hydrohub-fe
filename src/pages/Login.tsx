@@ -134,7 +134,7 @@ export const Login = () => {
           <Typography
             align="center"
             fontWeight="800"
-            className="text-primary-600 !text-2xl"
+            className="text-primary-600 text-2xl!"
           >
             Business Control Center
           </Typography>
