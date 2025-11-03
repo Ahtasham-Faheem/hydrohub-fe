@@ -22,13 +22,21 @@ export const ResetPassword = () => {
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({ email: "", phone: "", otp: "", password: "" });
   const navigate = useNavigate();
 
   const handleSendCode = () => {
-    if (resetMode === "email" && !email)
-      return alert("Please enter your email first");
-    if (resetMode === "phone" && !phone)
-      return alert("Please enter your phone number first");
+    setErrors({ email: "", phone: "", otp: "", password: "" });
+    
+    if (resetMode === "email" && !email) {
+      setErrors(prev => ({ ...prev, email: "Please enter your email first" }));
+      return;
+    }
+    if (resetMode === "phone" && !phone) {
+      setErrors(prev => ({ ...prev, phone: "Please enter your phone number first" }));
+      return;
+    }
+    
     alert(
       `Verification code sent to ${
         resetMode === "email" ? email : countryCode + phone
@@ -38,7 +46,37 @@ export const ResetPassword = () => {
 
   const handleReset = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Password reset successfully!");
+    setErrors({ email: "", phone: "", otp: "", password: "" });
+    
+    let hasErrors = false;
+    const newErrors = { email: "", phone: "", otp: "", password: "" };
+    
+    if (resetMode === "email" && !email) {
+      newErrors.email = "Email is required";
+      hasErrors = true;
+    }
+    if (resetMode === "phone" && !phone) {
+      newErrors.phone = "Phone number is required";
+      hasErrors = true;
+    }
+    if (!otp) {
+      newErrors.otp = "Verification code is required";
+      hasErrors = true;
+    }
+    if (!password) {
+      newErrors.password = "New password is required";
+      hasErrors = true;
+    } else if (password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    // Success - redirect to login
     navigate("/login");
   };
 
@@ -155,19 +193,21 @@ export const ResetPassword = () => {
                 label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                endAdornment={<Email sx={{ color: "#9ca3af", fontSize: 22 }} />} // Reduced icon size
+                error={errors.email}
+                endAdornment={<Email sx={{ color: "#9ca3af", fontSize: 22 }} />}
               />
             ) : (
               <CustomInput
                 label="Phone Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
+                error={errors.phone}
                 startAdornment={
                   <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
                     <select
                       value={countryCode}
                       onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none" // Reduced font size
+                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
                     >
                       <option value="+92">PK +92</option>
                       <option value="+91">IN +91</option>
@@ -176,24 +216,25 @@ export const ResetPassword = () => {
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>
                 }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />} // Reduced icon size
+                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
               />
             )}
 
             {/* Code input */}
-            <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Box>
               <CustomInput
                 label="Enter 6-digit code"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
+                error={errors.otp}
                 endAdornment={
                   <Button
                     variant="outlined"
                     sx={{
                       textTransform: "none",
-                      height: "38px", // Reduced height
+                      height: "38px",
                       border: "none",
-                      fontSize: 15, // Reduced font size
+                      fontSize: 15,
                       color: "#4b5563",
                       borderLeft: "1px solid #D1CFD4",
                       borderRadius: 0,
@@ -214,6 +255,7 @@ export const ResetPassword = () => {
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              error={errors.password}
               endAdornment={
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}

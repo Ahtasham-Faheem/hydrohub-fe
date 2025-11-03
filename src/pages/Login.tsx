@@ -13,6 +13,7 @@ import {
 import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
 import { useAuth } from "../contexts/AuthContext";
 import WaterLogo from "../assets/WATER-INN-logo.svg";
+import { LuMail } from "react-icons/lu";
 import { Footer } from "./Footer";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { CustomInput } from "../components/CustomInput";
@@ -76,19 +77,21 @@ export const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    
+
     setIsLoading(true);
     setErrors({ email: "", password: "", phone: "" });
-    
+
     try {
       await login({
-        email: loginMode === 'email' ? email : `${countryCode}${phone}`,
-        password: useCodeLogin ? otp : password
+        email: loginMode === "email" ? email : `${countryCode}${phone}`,
+        password: useCodeLogin ? otp : password,
       });
       navigate("/dashboard");
     } catch (error: any) {
-      console.error('Login error:', error);
-      const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+      console.error("Login error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Login failed. Please check your credentials.";
       setErrors({ email: errorMessage, password: "", phone: "" });
     } finally {
       setIsLoading(false);
@@ -145,7 +148,6 @@ export const Login = () => {
           width: "90%",
           boxShadow: 3,
           borderRadius: 2,
-          margin: "auto 0",
         }}
       >
         <CardContent sx={{ px: 4, py: 5 }}>
@@ -176,7 +178,7 @@ export const Login = () => {
           <Box
             component="form"
             onSubmit={handleSubmit}
-            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+            sx={{ display: "flex", flexDirection: "column" }}
           >
             {/* Toggle Login Mode */}
             <Typography
@@ -185,7 +187,7 @@ export const Login = () => {
                 textAlign: "right",
                 fontSize: 14,
                 cursor: "pointer",
-                textDecoration: "underline",
+                marginBottom: 0.5,
               }}
               onClick={() => {
                 setLoginMode(loginMode === "email" ? "phone" : "email");
@@ -193,91 +195,104 @@ export const Login = () => {
               }}
             >
               {loginMode === "email"
-                ? "Log in with phone number"
+                ? "Log in with Phone"
                 : "Log in with email & password"}
             </Typography>
 
             {/* Email or Phone Input */}
             {loginMode === "email" ? (
-              <CustomInput
-                label="Email or Username"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                error={errors.email}
-              />
+              <div className="mb-4">
+                <CustomInput
+                  label="Email or Username"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  error={errors.email}
+                  endAdornment={
+                    <LuMail style={{ color: "#9ca3af", fontSize: 22 }} />
+                  }
+                />
+              </div>
             ) : (
-              <CustomInput
-                label="Phone Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                error={errors.phone}
-                startAdornment={
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-                    >
-                      <option value="+92">PK +92</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+1">US +1</option>
-                    </select>
-                    <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-                  </Box>
-                }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
-              />
+              <div className="mb-4">
+                <CustomInput
+                  label="Phone Number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  error={errors.phone}
+                  startAdornment={
+                    <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
+                      >
+                        <option value="+92">PK +92</option>
+                        <option value="+91">IN +91</option>
+                        <option value="+1">US +1</option>
+                      </select>
+                      <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
+                    </Box>
+                  }
+                  endAdornment={
+                    <Phone sx={{ color: "#9ca3af", fontSize: 22 }} />
+                  }
+                />
+              </div>
             )}
 
             {/* Password or Code */}
-            {loginMode === "phone" && useCodeLogin ? (
-              <Box sx={{ display: "flex", alignItems: "center" }}>
+            <div className="mb-2">
+              {loginMode === "phone" && useCodeLogin ? (
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <CustomInput
+                    label="Enter 6-digit code"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
+                    endAdornment={
+                      <Button
+                        variant="outlined"
+                        sx={{
+                          textTransform: "none",
+                          border: "none",
+                          height: "38px",
+                          fontSize: 15,
+                          color: "#4b5563",
+                          borderLeft: "1px solid #D1CFD4",
+                          borderRadius: 0,
+                          paddingRight: 0,
+                          ":hover": { textDecoration: "underline" },
+                        }}
+                        onClick={handleSendCode}
+                      >
+                        Send code
+                      </Button>
+                    }
+                  />
+                </Box>
+              ) : (
                 <CustomInput
-                  label="Enter 6-digit code"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  label="Password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  error={errors.password}
                   endAdornment={
-                    <Button
-                      variant="outlined"
-                      sx={{
-                        textTransform: "none",
-                        border: "none",
-                        height: "38px",
-                        fontSize: 15,
-                        color: "#4b5563",
-                        borderLeft: "1px solid #D1CFD4",
-                        borderRadius: 0,
-                        paddingRight: 0,
-                        ":hover": { textDecoration: "underline" },
-                      }}
-                      onClick={handleSendCode}
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
                     >
-                      Send code
-                    </Button>
+                      {showPassword ? (
+                        <VisibilityOff
+                          sx={{ color: "#9ca3af", fontSize: 22 }}
+                        />
+                      ) : (
+                        <Visibility sx={{ color: "#9ca3af", fontSize: 22 }} />
+                      )}
+                    </IconButton>
                   }
                 />
-              </Box>
-            ) : (
-              <CustomInput
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                error={errors.password}
-                endAdornment={
-                  <IconButton
-                    onClick={() => setShowPassword(!showPassword)}
-                    edge="end"
-                  >
-                    {showPassword ? (
-                      <VisibilityOff sx={{ color: "#9ca3af", fontSize: 22 }} />
-                    ) : (
-                      <Visibility sx={{ color: "#9ca3af", fontSize: 22 }} />
-                    )}
-                  </IconButton>
-                }
-              />
-            )}
+              )}
+            </div>
 
             {/* Remember Me or Code Toggle */}
             {loginMode === "phone" ? (
@@ -287,6 +302,7 @@ export const Login = () => {
                   fontSize: 14,
                   cursor: "pointer",
                   textDecoration: "underline",
+                  marginBottom: 3,
                 }}
                 onClick={() => setUseCodeLogin(!useCodeLogin)}
               >
@@ -297,7 +313,7 @@ export const Login = () => {
                 display="flex"
                 justifyContent="space-between"
                 alignItems="center"
-                mb={2}
+                mb={3}
               >
                 <FormControlLabel
                   control={
@@ -328,15 +344,15 @@ export const Login = () => {
               </Box>
             )}
 
-            <PrimaryButton 
-              type="submit" 
-              onClick={() => handleSubmit} 
+            <PrimaryButton
+              type="submit"
+              onClick={() => handleSubmit}
               fullWidth
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Log In"}
             </PrimaryButton>
-            <Box textAlign="center" mt={1}>
+            <Box textAlign="center" mt={3}>
               <Link
                 to="/"
                 className="text-text-600 text-sm flex justify-center items-center hover:text-text-600"

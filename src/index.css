@@ -30,3 +30,7 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #f4f5fa;
 }
+
+.MuiFormHelperText-root {
+  margin-left: 3px !important;
+}

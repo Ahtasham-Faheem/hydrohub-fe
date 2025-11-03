@@ -8,8 +8,8 @@ import {
   IconButton,
   Divider,
 } from "@mui/material";
-import QrCode2Icon from "@mui/icons-material/QrCode2";
-import PersonOutlineOutlinedIcon from "@mui/icons-material/PersonOutlineOutlined";
+import { BsQrCode } from "react-icons/bs";
+import { RiUserLine } from "react-icons/ri";
 import InstagramIcon from "../assets/instagram.svg";
 import FacebookIcon from "../assets/facebook.svg";
 import TwitterIcon from "../assets/twitter.svg";
@@ -106,6 +106,7 @@ export const LoginAccess = () => {
               fontWeight: 400,
               mb: 2,
               borderColor: "#d1d5db",
+              textTransform: 'none',
               "&:hover": {
                 backgroundColor: "#eff6ff",
                 borderColor: "#2092ec",
@@ -115,12 +116,12 @@ export const LoginAccess = () => {
             }}
           >
             <span className="">
-              <QrCode2Icon
+              <BsQrCode
                 style={{
                   position: "absolute",
-                  left: "9px",
-                  top: 6,
-                  fontSize: "28px",
+                  left: "12px",
+                  top: 7,
+                  fontSize: "24px",
                 }}
               />
             </span>
@@ -138,6 +139,7 @@ export const LoginAccess = () => {
               fontSize: 16,
               color: "#374151",
               fontWeight: 500,
+              textTransform: 'none',
               mb: 2,
               borderColor: "#d1d5db",
               "&:hover": {
@@ -149,12 +151,12 @@ export const LoginAccess = () => {
             }}
           >
             <span className="">
-              <PersonOutlineOutlinedIcon
+              <RiUserLine
                 style={{
                   position: "absolute",
-                  left: "9px",
-                  top: 6,
-                  fontSize: "28px",
+                  left: "12px",
+                  top: 8,
+                  fontSize: "24px",
                 }}
               />
             </span>
