@@ -1,9 +1,23 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { authService } from '../services/api';
+import type { LoginCredentials } from '../services/api';
+
+// TODO: Change this to false when backend is ready
+const DEMO_MODE = true;
+
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  name?: string;
+}
 
 interface AuthContextType {
   isAuthenticated: boolean;
-  login: () => void;
+  user: User | null;
+  isLoading: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
 }
 
@@ -19,12 +33,68 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const login = () => setIsAuthenticated(true);
-  const logout = () => setIsAuthenticated(false);
+  useEffect(() => {
+    // Check for existing token on app load
+    const token = localStorage.getItem('authToken');
+    const userData = localStorage.getItem('userData');
+    
+    if (token && userData) {
+      try {
+        setUser(JSON.parse(userData));
+        setIsAuthenticated(true);
+      } catch (error) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = async (credentials: LoginCredentials) => {
+    if (DEMO_MODE) {
+      // Demo mode: Allow any login without API call
+      const demoUser = {
+        id: '1',
+        email: credentials.email,
+        role: 'admin',
+        name: 'Demo User'
+      };
+      
+      localStorage.setItem('authToken', 'demo-token');
+      localStorage.setItem('userData', JSON.stringify(demoUser));
+      
+      setUser(demoUser);
+      setIsAuthenticated(true);
+      return;
+    }
+
+    // Real API mode
+    try {
+      const userType = import.meta.env.VITE_USER_TYPE || 'admin';
+      const response = await authService.login(credentials, userType);
+      
+      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('userData', JSON.stringify(response.user));
+      
+      setUser(response.user);
+      setIsAuthenticated(true);
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    setUser(null);
+    setIsAuthenticated(false);
+  };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

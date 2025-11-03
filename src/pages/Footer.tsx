@@ -124,7 +124,7 @@ export const Footer = () => {
               />
             </svg>
             <span className="text-white text-center font-poppins text-sm font-medium">
-              © 2025 HYDROHUB
+              2025 HYDROHUB
             </span>
           </div>
         </div>

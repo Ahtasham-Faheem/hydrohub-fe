@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Button,
@@ -27,8 +27,15 @@ export const Login = () => {
   const [otp, setOtp] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "", phone: "" });
-  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
 
   const validate = () => {
     let valid = true;
@@ -66,11 +73,26 @@ export const Login = () => {
     return valid;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    login();
-    navigate("/dashboard");
+    
+    setIsLoading(true);
+    setErrors({ email: "", password: "", phone: "" });
+    
+    try {
+      await login({
+        email: loginMode === 'email' ? email : `${countryCode}${phone}`,
+        password: useCodeLogin ? otp : password
+      });
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error('Login error:', error);
+      const errorMessage = error.response?.data?.message || "Login failed. Please check your credentials.";
+      setErrors({ email: errorMessage, password: "", phone: "" });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSendCode = () => {
@@ -86,11 +108,7 @@ export const Login = () => {
           to="/login"
           className="text-primary-600 hover:underline cursor-pointer"
         >
-          <img
-            src={WaterLogo}
-            alt="HydroHub Logo"
-            className="w-[190px]"
-          />
+          <img src={WaterLogo} alt="HydroHub Logo" className="w-[190px]" />
         </Link>
         <div className="text-center font-extrabold text-primary-600 flex items-center cursor-pointer">
           <svg
@@ -122,12 +140,12 @@ export const Login = () => {
 
       {/* Login Card */}
       <Card
-        sx={{ 
-          maxWidth: 500, 
-          width: "90%", 
-          boxShadow: 3, 
+        sx={{
+          maxWidth: 500,
+          width: "90%",
+          boxShadow: 3,
           borderRadius: 2,
-          margin: 'auto 0'
+          margin: "auto 0",
         }}
       >
         <CardContent sx={{ px: 4, py: 5 }}>
@@ -223,8 +241,8 @@ export const Login = () => {
                       variant="outlined"
                       sx={{
                         textTransform: "none",
-                        height: "48px",
                         border: "none",
+                        height: "38px",
                         fontSize: 15,
                         color: "#4b5563",
                         borderLeft: "1px solid #D1CFD4",
@@ -288,7 +306,7 @@ export const Login = () => {
                         color: "#2092ec",
                         "&.Mui-checked": { color: "#2092ec" },
                         padding: 0,
-                        paddingX: 1
+                        paddingX: 1,
                       }}
                     />
                   }
@@ -310,8 +328,13 @@ export const Login = () => {
               </Box>
             )}
 
-            <PrimaryButton type="submit" fullWidth>
-              Log In
+            <PrimaryButton 
+              type="submit" 
+              onClick={() => handleSubmit} 
+              fullWidth
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Log In"}
             </PrimaryButton>
             <Box textAlign="center" mt={1}>
               <Link

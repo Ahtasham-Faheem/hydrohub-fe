@@ -191,7 +191,7 @@ export const ResetPassword = () => {
                     variant="outlined"
                     sx={{
                       textTransform: "none",
-                      height: "48px", // Reduced height
+                      height: "38px", // Reduced height
                       border: "none",
                       fontSize: 15, // Reduced font size
                       color: "#4b5563",
