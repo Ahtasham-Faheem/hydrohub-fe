@@ -100,15 +100,16 @@ export const LoginAccess = () => {
             onClick={() => (window.location.href = "/#")}
             sx={{
               borderWidth: 2,
-              borderColor: "#2092ec",
-              color: "#2092ec",
               borderRadius: 2,
               fontSize: 16,
+              color: "#374151",
               fontWeight: 400,
               mb: 2,
+              borderColor: "#d1d5db",
               "&:hover": {
-                borderColor: "#1d4ed8",
                 backgroundColor: "#eff6ff",
+                borderColor: "#2092ec",
+                color: "#2092ec",
               },
               position: "relative",
             }}
@@ -132,15 +133,17 @@ export const LoginAccess = () => {
             fullWidth
             onClick={() => navigate("/login")}
             sx={{
-              borderColor: "#d1d5db",
-              color: "#374151",
+              borderWidth: 2,
               borderRadius: 2,
               fontSize: 16,
+              color: "#374151",
               fontWeight: 500,
-              borderWidth: 2,
               mb: 2,
+              borderColor: "#d1d5db",
               "&:hover": {
-                backgroundColor: "#f9fafb",
+                backgroundColor: "#eff6ff",
+                borderColor: "#2092ec",
+                color: "#2092ec",
               },
               position: "relative",
             }}
