@@ -137,7 +137,7 @@ export const ResetPassword = () => {
             variant="h4"
             align="center"
             fontWeight="800"
-            className="text-primary-600 !text-2xl" // Reduced font size
+            className="text-primary-600 text-2xl!" // Reduced font size
           >
             Business Control Center
           </Typography>

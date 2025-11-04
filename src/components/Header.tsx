@@ -12,11 +12,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  Apps as AppsIcon,
-  Language as LanguageIcon,
-  LightMode as LightModeIcon,
-  NotificationsNone as NotificationsIcon,
-  StarBorder as StarIcon,
   ExitToApp as LogoutIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
