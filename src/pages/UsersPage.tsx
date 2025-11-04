@@ -4,7 +4,6 @@ import {
   CardContent,
   Typography,
   Button,
-  TextField,
   Table,
   TableHead,
   TableRow,
@@ -641,8 +640,14 @@ export const UsersPage = () => {
           overflow: "hidden",
         }}
       >
-        <Table sx={{ minWidth: 800 }}>
-          <TableHead>
+        {isLoading ? (
+          <Box sx={{ p: 4, textAlign: 'center', color: 'var(--color-text-500)' }}>
+            Loading users...
+          </Box>
+        ) : (
+          <Box>
+            <Table sx={{ minWidth: 800 }}>
+              <TableHead>
             <TableRow sx={{ bgcolor: "#f8fafc" }}>
               <TableCell sx={{ fontWeight: 600, py: 2 }}>User</TableCell>
               <TableCell sx={{ fontWeight: 600, py: 2 }}>Email</TableCell>
@@ -732,6 +737,71 @@ export const UsersPage = () => {
             ))}
           </TableBody>
         </Table>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'end', 
+          gap: 1, 
+          p: 2, 
+          borderTop: '1px solid #e5e7eb'
+        }}>
+          <Button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            sx={{
+              color: 'var(--color-text-500)',
+              '&:hover': {
+                bgcolor: 'var(--color-primary-light)',
+                color: 'var(--color-primary-600)',
+              }
+            }}
+          >
+            Previous
+          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {[...Array(totalPages)].map((_, idx) => (
+              <Button
+                key={idx}
+                onClick={() => setCurrentPage(idx + 1)}
+                variant={currentPage === idx + 1 ? "contained" : "text"}
+                sx={{
+                  minWidth: 40,
+                  height: 40,
+                  p: 0,
+                  borderRadius: 20,
+                  ...(currentPage === idx + 1 ? {
+                    bgcolor: 'var(--color-primary-600)',
+                    '&:hover': {
+                      bgcolor: 'var(--color-primary-700)',
+                    }
+                  } : {
+                    color: 'var(--color-text-500)',
+                    '&:hover': {
+                      bgcolor: 'var(--color-primary-light)',
+                      color: 'var(--color-primary-600)',
+                    }
+                  })
+                }}
+              >
+                {idx + 1}
+              </Button>
+            ))}
+          </Box>
+          <Button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            sx={{
+              color: 'var(--color-text-500)',
+              '&:hover': {
+                bgcolor: 'var(--color-primary-light)',
+                color: 'var(--color-primary-600)',
+              }
+            }}
+          >
+            Next
+          </Button>
+        </Box>
+          </Box>
+        )}
       </Card>
       {/* <Footer /> */}
     </Box>
