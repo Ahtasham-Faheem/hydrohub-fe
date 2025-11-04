@@ -15,7 +15,7 @@ import FacebookIcon from "../assets/facebook.svg";
 import TwitterIcon from "../assets/twitter.svg";
 import XIcon from "../assets/X.svg";
 import WaterLogo from "../assets/WATER-INN-logo.svg";
-import { Footer } from "./Footer";
+import { Footer } from "../components/auth/Footer";
 
 export const LoginAccess = () => {
   const navigate = useNavigate();
@@ -108,9 +108,8 @@ export const LoginAccess = () => {
               borderColor: "#d1d5db",
               textTransform: 'none',
               "&:hover": {
-                backgroundColor: "#eff6ff",
-                borderColor: "#2092ec",
-                color: "#2092ec",
+                borderColor: "var(--color-primary-600)",
+                color: "var(--color-primary-600)",
               },
               position: "relative",
             }}
@@ -143,9 +142,8 @@ export const LoginAccess = () => {
               mb: 2,
               borderColor: "#d1d5db",
               "&:hover": {
-                backgroundColor: "#eff6ff",
-                borderColor: "#2092ec",
-                color: "#2092ec",
+                borderColor: "var(--color-primary-600)",
+                color: "var(--color-primary-600)",
               },
               position: "relative",
             }}
@@ -167,7 +165,7 @@ export const LoginAccess = () => {
           <Typography
             sx={{
               fontSize: 13.5,
-              color: "#6b7280",
+              color: "var(--color-text-600)",
               mt: 1,
               mb: 3,
             }}
@@ -176,7 +174,7 @@ export const LoginAccess = () => {
             <Link
               to="/contact"
               style={{
-                color: "#2092ec",
+                color: "var(--color-primary-600)",
                 cursor: "pointer",
                 fontWeight: 500,
               }}

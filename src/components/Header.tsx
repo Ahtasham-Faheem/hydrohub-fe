@@ -12,7 +12,6 @@ import {
 } from "@mui/material";
 import {
   Menu as MenuIcon,
-  Search as SearchIcon,
   Apps as AppsIcon,
   Language as LanguageIcon,
   LightMode as LightModeIcon,
@@ -22,7 +21,17 @@ import {
   Person as PersonIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
+import { LuSearch } from "react-icons/lu";
 import { useAuth } from "../contexts/AuthContext";
+import NightIcon from "../assets/HeaderIcons/night.svg";
+import BellIcon from "../assets/HeaderIcons/bell.svg";
+import boxesIcon from "../assets/HeaderIcons/boxes.svg";
+import chatIcon from "../assets/HeaderIcons/chat.svg";
+import sunIcon from "../assets/HeaderIcons/sun.svg";
+import mailIcon from "../assets/HeaderIcons/mail.svg";
+import cornersIcon from "../assets/HeaderIcons/corners.svg";
+import languageIcon from "../assets/HeaderIcons/language.svg";
+import starIcon from "../assets/HeaderIcons/star.svg";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -42,11 +51,13 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
       sx={{
         height: 70,
         backgroundColor: "#fff",
-        borderBottom: "1px solid #e5e7eb",
+        borderBottom: "1px solid var(--color-gray-200)",
         borderBottomLeftRadius: 8,
         borderBottomRightRadius: 8,
-        marginRight: "20px",
+        mr: 3,
         px: 3,
+        py: 1,
+        ml: 2,
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -61,7 +72,7 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 2,
+          gap: 4,
           flex: 1,
           minWidth: 0,
         }}
@@ -69,8 +80,11 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         <IconButton
           onClick={onToggleSidebar}
           sx={{
-            color: "#2092ec",
-            borderRadius: 2,
+            color: "white",
+            borderRadius: 0.5,
+            backgroundColor: "var(--color-primary-600)",
+            padding: "3px !important",
+            "&:hover": { color: "var(--color-primary-600)", backgroundColor: "var(--color-primary-light)" }
           }}
         >
           <MenuIcon fontSize="medium" />
@@ -87,9 +101,10 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
             boxShadow: "none",
             flex: 1,
             minWidth: 200,
+            marginLeft: 10,
           }}
         >
-          <SearchIcon sx={{ color: "#9ca3af", mr: 1 }} />
+          <LuSearch style={{ color: "var(--color-text-600)", marginRight: 8 }} />
           <InputBase
             sx={{ flex: 1, fontSize: 14, border: "none" }}
             placeholder="Search [CTRL + K]"
@@ -108,33 +123,49 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
           flexShrink: 0,
         }}
       >
-        <Tooltip title="Apps">
-          <IconButton>
-            <AppsIcon sx={{ color: "#6b7280" }} />
+        <Tooltip title="Night">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={NightIcon} alt="apps" style={{ width: 16, height: 16 }} />
           </IconButton>
         </Tooltip>
-
-        <Tooltip title="Language">
-          <IconButton>
-            <LanguageIcon sx={{ color: "#6b7280" }} />
+        <Tooltip title="Corners">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={cornersIcon} alt="apps" style={{ width: 15, height: 15 }} />
           </IconButton>
         </Tooltip>
-
-        <Tooltip title="Theme">
-          <IconButton>
-            <LightModeIcon sx={{ color: "#6b7280" }} />
+        <Tooltip title="Boxes">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={boxesIcon} alt="apps" style={{ width: 15, height: 15 }} />
           </IconButton>
         </Tooltip>
-
         <Tooltip title="Favorites">
-          <IconButton>
-            <StarIcon sx={{ color: "#6b7280" }} />
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={starIcon} alt="favorites" style={{ width: 16, height: 16, opacity: 0.85 }} />
           </IconButton>
         </Tooltip>
-
+        <Tooltip title="Language">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={languageIcon} alt="language" style={{ width: 16, height: 16, opacity: 0.85 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Theme">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={sunIcon} alt="theme" style={{ width: 16, height: 16, opacity: 0.85 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Mail">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={mailIcon} alt="apps" style={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Chat">
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={chatIcon} alt="apps" style={{ width: 16, height: 16 }} />
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Notifications">
-          <IconButton>
-            <NotificationsIcon sx={{ color: "#ef4444" }} />
+          <IconButton sx={{ p: 0.5 }}>
+            <img src={BellIcon} alt="notifications" style={{ width: 16, height: 16 }} />
           </IconButton>
         </Tooltip>
 

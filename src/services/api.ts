@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { UsersResponse } from '../types/user';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = import.meta.env.VITE_API_VERSION;
@@ -25,7 +26,7 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  token: string;
+  access_token: string;
   user: {
     id: string;
     email: string;
@@ -37,6 +38,18 @@ export interface LoginResponse {
 export const authService = {
   login: async (credentials: LoginCredentials, userType: string): Promise<LoginResponse> => {
     const response = await api.post(`/auth/${userType}/login`, credentials);
+    return response.data;
+  },
+};
+
+export const usersService = {
+  getUsers: async (page = 1, limit = 10): Promise<UsersResponse> => {
+    const response = await api.get(`/users`, {
+      params: {
+        page,
+        limit,
+      },
+    });
     return response.data;
   },
 };

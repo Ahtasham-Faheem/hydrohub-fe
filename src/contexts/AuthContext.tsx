@@ -4,7 +4,7 @@ import { authService } from '../services/api';
 import type { LoginCredentials } from '../services/api';
 
 // TODO: Change this to false when backend is ready
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 interface User {
   id: string;
@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const userType = import.meta.env.VITE_USER_TYPE || 'admin';
       const response = await authService.login(credentials, userType);
       
-      localStorage.setItem('authToken', response.token);
+      localStorage.setItem('authToken', response.access_token);
       localStorage.setItem('userData', JSON.stringify(response.user));
       
       setUser(response.user);

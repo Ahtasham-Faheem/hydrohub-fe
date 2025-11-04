@@ -11,6 +11,7 @@ interface CustomInputProps {
   endAdornment?: React.ReactNode;
   startAdornment?: React.ReactNode;
   fullWidth?: boolean;
+  placeholder?: string;
 }
 
 export const CustomInput = ({
@@ -22,6 +23,7 @@ export const CustomInput = ({
   endAdornment,
   startAdornment,
   fullWidth = true,
+  placeholder
 }: CustomInputProps) => {
   return (
     <TextField
@@ -34,6 +36,7 @@ export const CustomInput = ({
       error={!!error}
       helperText={error}
       sx={{ fontSize: 12 }}
+      placeholder={placeholder}
       variant="outlined"
       InputProps={{
         startAdornment: startAdornment ? (

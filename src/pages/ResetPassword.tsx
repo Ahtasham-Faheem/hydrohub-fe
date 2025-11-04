@@ -12,7 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CustomInput } from "../components/CustomInput";
 import { PrimaryButton } from "../components/PrimaryButton";
 import WaterLogo from "../assets/WATER-INN-logo.svg";
-import { Footer } from "./Footer";
+import { Footer } from "../components/auth/Footer";
 
 export const ResetPassword = () => {
   const [resetMode, setResetMode] = useState<"email" | "phone">("email");

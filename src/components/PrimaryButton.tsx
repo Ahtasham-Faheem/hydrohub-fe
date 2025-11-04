@@ -8,6 +8,7 @@ interface PrimaryButtonProps {
   fullWidth?: boolean;
   disabled?: boolean;
   size?: "small" | "medium" | "large";
+  className?: string;
 }
 
 export const PrimaryButton = ({
@@ -17,6 +18,7 @@ export const PrimaryButton = ({
   fullWidth = false,
   disabled = false,
   size = "medium",
+  className
 }: PrimaryButtonProps) => {
   return (
     <Button
@@ -26,6 +28,7 @@ export const PrimaryButton = ({
       disabled={disabled}
       size={size}
       onClick={onClick}
+      className={className}
       sx={{
         py: 1,
         borderRadius: 2,

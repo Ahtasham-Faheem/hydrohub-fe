@@ -2,8 +2,9 @@
 
 @theme {
   --color-primary-500: #3b82f6;
-  --color-primary-600: #2092EC;
+  --color-primary-600: #2092ec;
   --color-primary-light: #0061ff29;
+  --color-primary-bg-light: #e3f1fd;
   --color-primary-700: #1d4ed8;
   --color-secondary-500: #64748b;
   --color-secondary-600: #475569;
@@ -14,23 +15,35 @@
   --color-danger-500: #ef4444;
   --color-danger-600: #dc2626;
   --color-danger-700: #b91c1c;
-  --color-bg-color: #EAF2FB;
+  --color-bg-color: #eaf2fb;
   --color-text-300: #9ca3af;
+  --color-text-500: #4b5563;
   --color-text-600: #4b5563;
   --color-gray-200: #f4f5fa;
-  --color-sidebar-gradient-start: #8BCCFF;
+  --color-sidebar-gradient-start: #8bccff;
+  --color-status-success: #27c840;
+  --color-status-success-light: #d4f4d9;
+  --color-status-warning: #febc2f;
+  --color-status-warning-light: #fff2d5;
+  --color-status-error: #ff5f57;
+  --color-status-error-light: #ffdfdd;
 }
 
 * {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
 }
 
 body {
   margin: 0;
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   background-color: #f4f5fa;
 }
 
 .MuiFormHelperText-root {
   margin-left: 3px !important;
+}
+
+.sidebar .MuiListItemButton-root {
+  border-top-right-radius: 50px;
+  border-bottom-right-radius: 50px;
 }

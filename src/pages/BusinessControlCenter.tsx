@@ -14,29 +14,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
-
-const initialModules = [
-  { id: "1", title: "System User", color: "#22c55e", icon: "🧑‍💻" },
-  { id: "2", title: "Shift Management", color: "#ef4444", icon: "👥" },
-  { id: "3", title: "Catalogue", color: "#f97316", icon: "📄" },
-  { id: "4", title: "Payment Channel", color: "#3b82f6", icon: "💳" },
-  { id: "5", title: "Customers", color: "#16a34a", icon: "🧍" },
-  { id: "6", title: "Start of the Day", color: "#ef4444", icon: "⏰" },
-  { id: "7", title: "Close of the Day", color: "#16a34a", icon: "📅" },
-  { id: "8", title: "Customer Management", color: "#2563eb", icon: "👨‍💼" },
-  { id: "9", title: "Customer Profiles", color: "#f97316", icon: "👤" },
-  { id: "10", title: "Customer Orders", color: "#ef4444", icon: "📋" },
-  { id: "11", title: "Customer Payments", color: "#10b981", icon: "💵" },
-  { id: "12", title: "Customer Ranking", color: "#3b82f6", icon: "📊" },
-  { id: "13", title: "Customer Categories", color: "#fb923c", icon: "📁" },
-  { id: "14", title: "Conversations", color: "#2563eb", icon: "💬" },
-  { id: "15", title: "Email / Communication Logs", color: "#22c55e", icon: "✉️" },
-  { id: "16", title: "Customer Insights", color: "#f59e0b", icon: "💡" },
-  { id: "17", title: "Reviews & Ratings", color: "#ea580c", icon: "⭐" },
-  { id: "18", title: "Alerts & Follow-ups", color: "#3b82f6", icon: "🔔" },
-  { id: "19", title: "Manage Reviews", color: "#16a34a", icon: "💬" },
-  { id: "20", title: "Payments & Receipts", color: "#ef4444", icon: "💰" },
-];
+import { initialModules } from "../utils/utils";
+import Isolation from "../assets/ControlIcons/isolation.svg";
 
 export default function BusinessControlCenter() {
   const [modules, setModules] = useState(initialModules);
@@ -56,16 +35,19 @@ export default function BusinessControlCenter() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-bold text-gray-800">
           Business Control Center
         </h1>
 
-        <label className="flex items-center gap-2 cursor-pointer">
-          <span className="text-sm text-gray-700">Enable Drag and Drop</span>
-          <div className="relative">
+        <label className="flex items-center gap-2">
+          <div className="mr-1">
+            <img src={Isolation} className="bg-white p-2 rounded hover:shadow-md" alt="Isolation Mode" />
+          </div>
+
+          <div className="relative cursor-pointer">
             <input
               type="checkbox"
               checked={isDraggable}
@@ -75,6 +57,7 @@ export default function BusinessControlCenter() {
             <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
           </div>
+          <span className="text-sm text-gray-700">Enable Drag and Drop</span>
         </label>
       </div>
 
@@ -85,13 +68,13 @@ export default function BusinessControlCenter() {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={modules} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-8 gap-4">
+          <div className="grid grid-cols-8 gap-4 font-medium">
             {modules.map((module) => (
               <SortableCard
                 key={module.id}
                 id={module.id}
                 title={module.title}
-                icon={module.icon}
+                icon={<img src={module.icon} height={20} className="mb-2" />}
                 color={module.color}
                 isDraggable={isDraggable}
               />
@@ -112,12 +95,18 @@ function SortableCard({
 }: {
   id: string;
   title: string;
-  icon: string;
+  icon: any;
   color: string;
   isDraggable: boolean;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id, disabled: !isDraggable });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id, disabled: !isDraggable });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -137,7 +126,7 @@ function SortableCard({
         <div className="text-4xl mb-1" style={{ color }}>
           {icon}
         </div>
-        <p className="text-xs font-semibold text-gray-800 text-center leading-tight line-clamp-2">
+        <p className="text-xs font-medium text-gray-800 text-center leading-tight line-clamp-2">
           {title}
         </p>
 

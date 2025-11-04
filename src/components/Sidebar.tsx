@@ -112,6 +112,7 @@ export const Sidebar = ({
   };
 
   return (
+    <div className="sidebar">
     <Drawer
       variant="permanent"
       sx={{
@@ -162,7 +163,7 @@ export const Sidebar = ({
               selected={activeSection === "overview"}
               onClick={() => onSelect("overview")}
               className={getActiveClass("overview")}
-              sx={{ justifyContent: collapsed ? "center" : "flex-start" }}
+              sx={{ justifyContent: collapsed ? "center" : "flex-start", borderRadius: '12px' }}
             >
               <DashboardIcon
                 sx={{ color: getIconColor("overview"), mr: collapsed ? 0 : 2 }}
@@ -382,5 +383,6 @@ export const Sidebar = ({
         </List>
       </Box>
     </Drawer>
+    </div>
   );
 };
