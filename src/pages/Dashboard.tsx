@@ -4,36 +4,31 @@ import { Sidebar } from "../components/Sidebar";
 import { Header } from "../components/Header";
 import { UsersPage } from "./UsersPage";
 import BusinessControlCenter from "./BusinessControlCenter";
+import { CreateUser } from "./CreateUser";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 
 export const Dashboard = () => {
-  const [activeSection, setActiveSection] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const renderContent = () => {
-    switch (activeSection) {
-      case "overview":
-        return <BusinessControlCenter />;
-      case "users":
-        return <UsersPage />;
-      case "sales":
-        return (
-          <Typography>Sales reports and analytics appear here.</Typography>
-        );
-      case "performance":
-        return <Typography>Performance metrics and charts.</Typography>;
-      case "settings":
-        return <Typography>Adjust platform settings here.</Typography>;
-      default:
-        return <Typography>Select a section from the sidebar.</Typography>;
-    }
+  // Extract the active section from the current path
+  const getActiveSection = () => {
+    const path = location.pathname.split('/').filter(Boolean);
+    return path[1] || 'overview';
+  };
+
+  // Handle section changes from sidebar
+  const handleSectionChange = (section: string) => {
+    navigate(`/dashboard/${section}`);
   };
 
   return (
     <Box sx={{ display: "flex", height: "100vh" }}>
       {/* Sidebar */}
       <Sidebar
-        onSelect={setActiveSection}
-        activeSection={activeSection}
+        onSelect={handleSectionChange}
+        activeSection={getActiveSection()}
         collapsed={sidebarCollapsed}
       />
 
@@ -44,8 +39,16 @@ export const Dashboard = () => {
         />
 
         {/* Content Area */}
-        <Box sx={{ flexGrow: 1, p: 2, pr: 3 }}>
-          {renderContent()}
+        <Box sx={{ p: 2, pr: 3 }}>
+          <Routes>
+            <Route path="/" element={<BusinessControlCenter />} />
+            <Route path="overview" element={<BusinessControlCenter />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="users/create" element={<CreateUser />} />
+            <Route path="*" element={
+              <Typography>Coming Soon...</Typography>
+            } />
+          </Routes>
         </Box>
 
         <div className="flex justify-between p-4 pb-4 pt-2 pr-7">

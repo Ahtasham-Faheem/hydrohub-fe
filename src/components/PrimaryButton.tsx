@@ -9,6 +9,8 @@ interface PrimaryButtonProps {
   disabled?: boolean;
   size?: "small" | "medium" | "large";
   className?: string;
+  startIcon?: React.ReactNode;
+  endIcon?: React.ReactNode;
 }
 
 export const PrimaryButton = ({
@@ -18,7 +20,9 @@ export const PrimaryButton = ({
   fullWidth = false,
   disabled = false,
   size = "medium",
-  className
+  className,
+  startIcon,
+  endIcon,
 }: PrimaryButtonProps) => {
   return (
     <Button
@@ -29,6 +33,8 @@ export const PrimaryButton = ({
       size={size}
       onClick={onClick}
       className={className}
+      startIcon={startIcon}
+      endIcon={endIcon}
       sx={{
         py: 1,
         borderRadius: 2,
@@ -36,6 +42,7 @@ export const PrimaryButton = ({
         fontWeight: 600,
         bgcolor: "#2092ec",
         textTransform: "none",
+        px: 4,
         "&:hover": { bgcolor: "#187bcd" },
       }}
     >

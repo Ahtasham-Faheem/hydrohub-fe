@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DndContext,
   closestCenter,
@@ -16,6 +17,44 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { initialModules } from "../utils/utils";
 import Isolation from "../assets/ControlIcons/isolation.svg";
+
+// Map card titles to their corresponding routes
+const cardToRouteMap: { [key: string]: string } = {
+  "System User": "users/create",
+  "Shift Management": "/shift-management",
+  "Start of the Day": "/start-of-day",
+  "Close of the Day": "/close-of-day",
+  "Customer Management": "customer-management",
+  "Customer Profiles": "/customer-profiles",
+  "Customer Orders": "/customer-orders",
+  "Customer Payments": "/customer-payments",
+  "Customer Ranking": "/customer-ranking",
+  "Customer Categories": "/customer-categories",
+  "Conversations": "/message-center/chat",
+  "Email / Communication Logs": "/message-center/email",
+  "Customer Insights": "/customer-insights",
+  "Reviews & Ratings": "/reviews-ratings",
+  "Alerts & Follow-ups": "/alerts-followups",
+  "Manage Reviews": "manage-reviews",
+  "Orders Management": "/orders-management",
+  "Payments & Receipts": "/payments-receipts",
+  "Accounts Overview": "/accounts-overview",
+  "Expenses Management": "/expenses-management",
+  "Invoices & Billing": "/invoices-billing",
+  "Catalog Management": "/catalog-management",
+  "System Setting": "/system-settings",
+  "Sales Summary": "/sales-summary",
+  "Scheduler": "/scheduler",
+  "POS Dashboard": "/pos-dashboard",
+  "Parked Receipts": "/parked-receipts",
+  "Claims & FOC": "/claims-foc",
+  "Returns & Refunds": "/returns-refunds",
+  "Delivery Tracker": "/delivery-tracker",
+  "Fleet Management": "/fleet-management",
+  "Inventory / Stock Control": "/inventory-stock",
+  "Route Planning": "/route-planning",
+  "Logistics Management": "/logistics-management"
+};
 
 export default function BusinessControlCenter() {
   const [modules, setModules] = useState(initialModules);
@@ -99,6 +138,7 @@ function SortableCard({
   color: string;
   isDraggable: boolean;
 }) {
+  const navigate = useNavigate();
   const {
     attributes,
     listeners,
@@ -114,12 +154,23 @@ function SortableCard({
     zIndex: isDragging ? 50 : "auto",
   };
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Only navigate if not dragging and not clicking the drag handle
+    if (!isDraggable || (isDraggable && !(e.target as Element).closest('button'))) {
+      const route = cardToRouteMap[title];
+      if (route) {
+        navigate(`/dashboard/${route}`);
+      }
+    }
+  };
+
   return (
     <div ref={setNodeRef} style={style}>
       <div
+        onClick={handleClick}
         className={`w-full h-28 rounded-lg border border-gray-200 bg-white
         flex flex-col items-center justify-center p-3
-        transition-shadow relative ${
+        transition-shadow relative cursor-pointer ${
           isDragging ? "shadow-xl" : "shadow-sm hover:shadow-md"
         }`}
       >

@@ -27,21 +27,10 @@ export default function App() {
 
             {/* Protected Routes */}
             <Route
-              path="/dashboard"
+              path="/dashboard/*"
               element={
                 <PrivateRoute>
                   <Dashboard />
-                </PrivateRoute>
-              }
-            />
-
-            {/* Add more protected routes here as needed */}
-            <Route
-              path="/admin/*"
-              element={
-                <PrivateRoute roles={["admin"]}>
-                  {/* Admin routes component */}
-                  <div>Admin Area</div>
                 </PrivateRoute>
               }
             />

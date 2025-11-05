@@ -12,6 +12,7 @@ interface CustomInputProps {
   startAdornment?: React.ReactNode;
   fullWidth?: boolean;
   placeholder?: string;
+  size?: "small" | "medium";
 }
 
 export const CustomInput = ({
@@ -23,13 +24,14 @@ export const CustomInput = ({
   endAdornment,
   startAdornment,
   fullWidth = true,
-  placeholder
+  placeholder,
+  size = "small",
 }: CustomInputProps) => {
   return (
     <TextField
       label={label}
       type={type}
-      size="small"
+      size={size}
       value={value}
       onChange={onChange}
       fullWidth={fullWidth}
