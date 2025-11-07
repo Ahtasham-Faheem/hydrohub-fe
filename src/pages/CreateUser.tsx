@@ -33,9 +33,9 @@ import { ReferralInformation } from "../components/forms/ReferralInformation";
 import { DocumentsUpload } from "../components/forms/DocumentsUpload";
 import { SalaryBenefits } from "../components/forms/SalaryBenefits";
 import { AttendanceDutyInfo } from "../components/forms/AttendanceDutyInfo";
-import { DutyCoverageArea } from "../components/forms/DutyCoverageArea";
 import { AdditionalNotes } from "../components/forms/AdditionalNotes";
 import { AssetsAndEquipmentAssigned } from "../components/forms/AssetsAndEquipmentAssigned";
+import { DutyCoverageAreaGrid } from "../components/forms/DutyCoverageAreaGrid";
 
 // ✅ Ordered according to renderStepContent
 const steps = [
@@ -101,7 +101,7 @@ export const CreateUser = () => {
       case 7:
         return <AttendanceDutyInfo />;
       case 8:
-        return <DutyCoverageArea />;
+        return <DutyCoverageAreaGrid />;
       case 9:
         return <AdditionalNotes />;
       case 10:
@@ -172,7 +172,9 @@ export const CreateUser = () => {
             </Box>
           </Box>
 
-          <Box sx={{ mb: 6, height: "65vh", pr: 1, overflowY: "scroll" }}>
+          <Box
+            sx={{ mb: 6, height: "65vh", pr: 1, pt: 1, overflowY: "scroll" }}
+          >
             {renderStepContent(activeStep)}
           </Box>
 
