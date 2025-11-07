@@ -1,16 +1,5 @@
-import { Stack } from "@mui/material";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
+import { Stack, TextField } from "@mui/material";
 import { useState } from "react";
-import type { SelectChangeEvent } from "@mui/material";
-
-const relationOptions = [
-  { value: "father", label: "Father" },
-  { value: "mother", label: "Mother" },
-  { value: "spouse", label: "Spouse" },
-  { value: "sibling", label: "Sibling" },
-  { value: "other", label: "Other" },
-];
 
 export const ContactInformation = () => {
   const [formData, setFormData] = useState({
@@ -21,9 +10,8 @@ export const ContactInformation = () => {
     presentAddress: "",
     permanentAddress: "",
     emergencyContactName: "",
-    emergencyContactTitle: "mr",
-    emergencyContactRelation: "other",
     emergencyContactNumber: "",
+    emergencyContactRelation: "",
   });
 
   const handleInputChange = (name: string) => (
@@ -35,91 +23,94 @@ export const ContactInformation = () => {
     }));
   };
 
-  const handleSelectChange = (name: string) => (e: SelectChangeEvent<string>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: e.target.value,
-    }));
-  };
-
   return (
     <Stack spacing={3}>
+      {/* Mobile + Alternate Contact */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Mobile Number"
           value={formData.mobileNumber}
           onChange={handleInputChange("mobileNumber")}
-          placeholder="+92 302 66 48 100"
-          size='medium'
+          placeholder="+92 302 6648100"
+          InputProps={{ readOnly: true }}
+          helperText="View only"
         />
-        <CustomInput
+        <TextField
+          fullWidth
           label="Alternate Contact"
           value={formData.alternateContact}
           onChange={handleInputChange("alternateContact")}
-          placeholder="0555 7936"
-          size='medium'
+          placeholder="0555 7938"
         />
       </Stack>
 
+      {/* Personal + Official Email */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Personal Email"
-          type="email"
           value={formData.personalEmail}
           onChange={handleInputChange("personalEmail")}
-          size='medium'
-          placeholder="john.doe@example.com"
-        />
-        <CustomInput
-          label="Official Email"
+          placeholder="john.doe@gmail.com"
           type="email"
+          InputProps={{ readOnly: true }}
+          helperText="View only"
+        />
+        <TextField
+          fullWidth
+          label="Official Email"
           value={formData.officialEmail}
           onChange={handleInputChange("officialEmail")}
-          size='medium'
-          placeholder="john.doe@company.com"
+          placeholder="john.doe@waterinn.com"
+          type="email"
         />
       </Stack>
 
+      {/* Present + Permanent Address */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Present Address"
           value={formData.presentAddress}
           onChange={handleInputChange("presentAddress")}
-          placeholder="Enter present address"
-          size='medium'
+          placeholder="House 10, Block A, Lahore"
         />
-        <CustomInput
+        <TextField
+          fullWidth
           label="Permanent Address"
           value={formData.permanentAddress}
           onChange={handleInputChange("permanentAddress")}
-          placeholder="Enter permanent address"
-          size='medium'
+          placeholder="House 20, Model Town, Lahore"
         />
       </Stack>
 
+      {/* Emergency Contact Name + Number */}
       <Stack direction="row" spacing={2}>
-          <CustomInput
-            label="Emergency Contact Name"
-            value={formData.emergencyContactName}
-            onChange={handleInputChange("emergencyContactName")}
-            placeholder="Enter emergency contact name"
-            size='medium'
-          />
-          <CustomSelect
-          label="Emergency Contact Relation"
-          value={formData.emergencyContactRelation}
-          onChange={handleSelectChange("emergencyContactRelation")}
-          options={relationOptions}
+        <TextField
+          fullWidth
+          label="Emergency Contact Name"
+          value={formData.emergencyContactName}
+          onChange={handleInputChange("emergencyContactName")}
+          placeholder="Jane Doe"
         />
-      </Stack>
-
-      <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Emergency Contact Number"
           value={formData.emergencyContactNumber}
           onChange={handleInputChange("emergencyContactNumber")}
-          placeholder="+92 302 66 48 100"
-          size='medium'
+          placeholder="+92 345 5678786"
+        />
+      </Stack>
+
+      {/* Emergency Contact Relation */}
+      <Stack direction="row" spacing={2}>
+        <TextField
+          fullWidth
+          label="Emergency Contact Relation"
+          value={formData.emergencyContactRelation}
+          onChange={handleInputChange("emergencyContactRelation")}
+          placeholder="Sister"
         />
         <div className="w-full"></div>
       </Stack>

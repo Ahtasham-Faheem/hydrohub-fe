@@ -1,20 +1,12 @@
-import { Stack } from "@mui/material";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
+import {
+  Stack,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { useState } from "react";
-import type { SelectChangeEvent } from "@mui/material";
-
-const salaryPaymentModeOptions = [
-  { value: "bank-transfer", label: "Bank Transfer" },
-  { value: "cheque", label: "Cheque" },
-  { value: "cash", label: "Cash" },
-];
-
-const accountTypeOptions = [
-  { value: "savings", label: "Savings" },
-  { value: "current", label: "Current" },
-  { value: "salary", label: "Salary Account" },
-];
 
 export const SalaryBenefits = () => {
   const [formData, setFormData] = useState({
@@ -25,94 +17,106 @@ export const SalaryBenefits = () => {
     bankName: "",
     bankAccountTitle: "",
     bankAccountNumber: "",
-    bankStatus: "",
+    taxStatus: "",
   });
 
-  const handleInputChange = (name: string) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: e.target.value,
-    }));
-  };
+  const handleInputChange =
+    (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: e.target.value,
+      }));
+    };
 
-  const handleSelectChange = (name: string) => (e: SelectChangeEvent<string>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: e.target.value,
-    }));
-  };
+  const handleSelectChange =
+    (name: string) => (e: React.ChangeEvent<{ value: unknown }>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: e.target.value as string,
+      }));
+    };
 
   return (
     <Stack spacing={3}>
+      {/* Basic Salary + Allowances */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Basic Salary"
           value={formData.basicSalary}
           onChange={handleInputChange("basicSalary")}
-          placeholder="Enter basic salary"
-          size="medium"
-          startAdornment="$"
+          placeholder="50000"
         />
-        <CustomInput
+        <TextField
+          fullWidth
           label="Allowances"
           value={formData.allowances}
           onChange={handleInputChange("allowances")}
-          placeholder="Enter allowances"
-          size="medium"
-          startAdornment="$"
+          placeholder="Travel, Medical"
         />
       </Stack>
 
+      {/* Provident Fund + Salary Payment Mode */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Provident Fund"
           value={formData.providentFund}
           onChange={handleInputChange("providentFund")}
-          placeholder="Enter provident fund"
-          size="medium"
-          startAdornment="$"
+          placeholder="5% of Salary"
         />
-        <CustomSelect
-          label="Salary Payment Mode"
-          value={formData.salaryPaymentMode}
-          onChange={handleSelectChange("salaryPaymentMode")}
-          options={salaryPaymentModeOptions}
-        />
+        <FormControl fullWidth>
+          <InputLabel>Salary Payment Mode</InputLabel>
+          <Select
+            label="Salary Payment Mode"
+            value={formData.salaryPaymentMode}
+            onChange={()=>handleSelectChange("salaryPaymentMode")}
+          >
+            <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
+            <MenuItem value="Cheque">Cheque</MenuItem>
+            <MenuItem value="Cash">Cash</MenuItem>
+          </Select>
+        </FormControl>
       </Stack>
 
+      {/* Bank Name + Account Title */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Bank Name"
           value={formData.bankName}
           onChange={handleInputChange("bankName")}
-          placeholder="Enter bank name"
-          size="medium"
+          placeholder="HBL Bank"
         />
-        <CustomInput
+        <TextField
+          fullWidth
           label="Bank Account Title"
           value={formData.bankAccountTitle}
           onChange={handleInputChange("bankAccountTitle")}
-          placeholder="Enter account title"
-          size="medium"
+          placeholder="John Doe"
         />
       </Stack>
 
+      {/* Bank Account Number + Tax Status */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <TextField
+          fullWidth
           label="Bank Account Number"
           value={formData.bankAccountNumber}
           onChange={handleInputChange("bankAccountNumber")}
-          placeholder="Enter account number"
-          size="medium"
+          placeholder="PK00HABB000123456789"
         />
-        <CustomSelect
-          label="Bank Account Type"
-          value={formData.bankStatus}
-          onChange={handleSelectChange("bankStatus")}
-          options={accountTypeOptions}
-        />
+        <FormControl fullWidth>
+          <InputLabel>Tax Status</InputLabel>
+          <Select
+            label="Tax Status"
+            value={formData.taxStatus}
+            onChange={()=>handleSelectChange("taxStatus")}
+          >
+            <MenuItem value="Taxable">Taxable</MenuItem>
+            <MenuItem value="Non-Taxable">Non-Taxable</MenuItem>
+          </Select>
+        </FormControl>
       </Stack>
     </Stack>
   );

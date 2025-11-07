@@ -1,42 +1,20 @@
-import { Stack } from "@mui/material";
-import { CustomDateInput } from "../CustomDateInput";
-import { CustomSelect } from "../CustomSelect";
+import {
+  Stack,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useState } from "react";
-import type { SelectChangeEvent } from "@mui/material";
 import dayjs, { Dayjs } from "dayjs";
-
-const departmentOptions = [
-  { value: "engineering", label: "Engineering" },
-  { value: "hr", label: "Human Resources" },
-  { value: "finance", label: "Finance" },
-  { value: "operations", label: "Operations" },
-  { value: "it", label: "Information Technology" },
-];
-
-const employmentTypeOptions = [
-  { value: "full-time", label: "Full Time" },
-  { value: "part-time", label: "Part Time" },
-  { value: "contract", label: "Contract" },
-  { value: "temporary", label: "Temporary" },
-];
-
-const shiftTypeOptions = [
-  { value: "morning", label: "Morning" },
-  { value: "evening", label: "Evening" },
-  { value: "night", label: "Night" },
-  { value: "rotating", label: "Rotating" },
-];
-
-const statusOptions = [
-  { value: "active", label: "Active" },
-  { value: "probation", label: "Probation" },
-  { value: "suspended", label: "Suspended" },
-  { value: "terminated", label: "Terminated" },
-];
 
 export const EmploymentDetails = () => {
   const [formData, setFormData] = useState({
-    joiningDate: dayjs() as Dayjs | null,
+    joiningDate: dayjs("2022-03-12") as Dayjs | null,
     jobTitle: "",
     department: "",
     employmentType: "",
@@ -46,6 +24,22 @@ export const EmploymentDetails = () => {
     status: "",
   });
 
+  const handleInputChange =
+    (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: e.target.value,
+      }));
+    };
+
+  const handleSelectChange =
+    (name: string) => (e: React.ChangeEvent<{ value: unknown }>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: e.target.value as string,
+      }));
+    };
+
   const handleDateChange = (date: Dayjs | null) => {
     setFormData((prev) => ({
       ...prev,
@@ -53,85 +47,84 @@ export const EmploymentDetails = () => {
     }));
   };
 
-  const handleSelectChange = (name: string) => (e: SelectChangeEvent<string>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: e.target.value,
-    }));
-  };
-
   return (
     <Stack spacing={3}>
+      {/* Joining Date + Job Title */}
       <Stack direction="row" spacing={2}>
-        <CustomDateInput
-          label="Joining Date"
-          value={formData.joiningDate}
-          onChange={handleDateChange}
-        />
-        <CustomSelect
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DatePicker
+            label="Joining Date"
+            value={formData.joiningDate}
+            onChange={handleDateChange}
+            sx={{ width: "100%" }}
+          />
+        </LocalizationProvider>
+        <TextField
+          fullWidth
           label="Job Title"
           value={formData.jobTitle}
-          onChange={handleSelectChange("jobTitle")}
-          options={[
-            { value: "manager", label: "Manager" },
-            { value: "developer", label: "Developer" },
-            { value: "designer", label: "Designer" },
-            { value: "analyst", label: "Analyst" },
-          ]}
+          onChange={handleInputChange("jobTitle")}
+          placeholder="Sales Executive"
         />
       </Stack>
 
+      {/* Department + Employment Type */}
       <Stack direction="row" spacing={2}>
-        <CustomSelect
+        <TextField
+          fullWidth
           label="Department"
           value={formData.department}
-          onChange={handleSelectChange("department")}
-          options={departmentOptions}
+          onChange={handleInputChange("department")}
+          placeholder="Sales & Marketing"
         />
-        <CustomSelect
-          label="Employment Type"
-          value={formData.employmentType}
-          onChange={handleSelectChange("employmentType")}
-          options={employmentTypeOptions}
-        />
+        <FormControl fullWidth>
+          <InputLabel>Employment Type</InputLabel>
+          <Select
+            label="Employment Type"
+            value={formData.employmentType}
+            onChange={()=>handleSelectChange("employmentType")}
+          >
+            <MenuItem value="Full-Time">Full-Time</MenuItem>
+            <MenuItem value="Part-Time">Part-Time</MenuItem>
+            <MenuItem value="Contract">Contract</MenuItem>
+            <MenuItem value="Internship">Internship</MenuItem>
+          </Select>
+        </FormControl>
       </Stack>
 
+      {/* Supervisor + Work Location */}
       <Stack direction="row" spacing={2}>
-        <CustomSelect
+        <TextField
+          fullWidth
           label="Supervisor"
           value={formData.supervisor}
-          onChange={handleSelectChange("supervisor")}
-          options={[
-            { value: "john-doe", label: "John Doe" },
-            { value: "jane-smith", label: "Jane Smith" },
-            { value: "bob-wilson", label: "Bob Wilson" },
-          ]}
+          onChange={handleInputChange("supervisor")}
+          placeholder="Sarah Khan"
         />
-        <CustomSelect
+        <TextField
+          fullWidth
           label="Work Location"
           value={formData.workLocation}
-          onChange={handleSelectChange("workLocation")}
-          options={[
-            { value: "main-office", label: "Main Office" },
-            { value: "branch-1", label: "Branch 1" },
-            { value: "branch-2", label: "Branch 2" },
-            { value: "remote", label: "Remote" },
-          ]}
+          onChange={handleInputChange("workLocation")}
+          placeholder="Lahore Head Office"
         />
       </Stack>
 
+      {/* Shift Type + Status */}
       <Stack direction="row" spacing={2}>
-        <CustomSelect
+        <TextField
+          fullWidth
           label="Shift Type"
           value={formData.shiftType}
-          onChange={handleSelectChange("shiftType")}
-          options={shiftTypeOptions}
+          onChange={handleInputChange("shiftType")}
+          placeholder="Morning"
         />
-        <CustomSelect
+        <TextField
+          fullWidth
           label="Status"
           value={formData.status}
-          onChange={handleSelectChange("status")}
-          options={statusOptions}
+          onChange={handleInputChange("status")}
+          placeholder="Active"
         />
       </Stack>
     </Stack>
