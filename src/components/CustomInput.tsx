@@ -13,6 +13,7 @@ interface CustomInputProps {
   fullWidth?: boolean;
   placeholder?: string;
   size?: "small" | "medium";
+  disabled?: boolean;
 }
 
 export const CustomInput = ({
@@ -26,6 +27,7 @@ export const CustomInput = ({
   fullWidth = true,
   placeholder,
   size = "small",
+  disabled = false,
 }: CustomInputProps) => {
   return (
     <TextField
@@ -40,6 +42,7 @@ export const CustomInput = ({
       sx={{ fontSize: 12 }}
       placeholder={placeholder}
       variant="outlined"
+      disabled={disabled}
       InputProps={{
         startAdornment: startAdornment ? (
           <InputAdornment position="start">{startAdornment}</InputAdornment>

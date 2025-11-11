@@ -7,9 +7,12 @@ import {
   Typography,
   Button,
   Card,
+  Alert,
 } from "@mui/material";
 import { PrimaryButton } from "../components/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
+import { FormProvider, useFormContext } from "../contexts/FormContext";
+import { usersService, staffService } from "../services/api";
 
 // React Icons
 import { FaUserAlt, FaMapMarkedAlt, FaRegCalendarCheck } from "react-icons/fa";
@@ -52,18 +55,99 @@ const steps = [
   { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
 ];
 
-export const CreateUser = () => {
-  const [activeStep, setActiveStep] = useState(0);
+const CreateUserForm = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const {
+    formData,
+    currentStep,
+    setCurrentStep,
+    updateFormData,
+    validateRequiredFields,
+  } = useFormContext();
+  const [image, setImage] = useState<string | null>(null);
 
-  const handleNext = () => {
-    setActiveStep((prevStep) => Math.min(prevStep + 1, steps.length - 1));
+  const handleNext = async () => {
+    setError(null);
+
+    // If it's the first step, validate required fields and submit
+    if (currentStep === 0) {
+      const validation = validateRequiredFields();
+      if (!validation.isValid) {
+        setError(validation.errors.join(", "));
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const userResponse = await usersService.createUser({
+          username: formData.username,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          status: formData.status,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          fathersName: formData.fathersName,
+          dateOfBirth: formData.dateOfBirth,
+          gender: formData.gender,
+          nationalId: formData.nationalId,
+          maritalStatus: formData.maritalStatus,
+          profilePictureAssetId: formData.profilePictureAssetId,
+        });
+
+        updateFormData("userId", userResponse.id);
+        setSuccess(true);
+        setCurrentStep(1);
+        setTimeout(() => {
+          setSuccess(false);
+        }, 2000);
+      } catch (error: any) {
+        setError(error.response?.data?.message || "Failed to create user");
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    // If it's the second step, create staff
+    if (currentStep === 1) {
+      if (!formData.userId) {
+        setError("User ID is missing. Please go back and create user first.");
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        await staffService.createStaff({
+          userId: formData.userId,
+          userRole: formData.userRole,
+          accessLevel: formData.accessLevel,
+          accessExpiry: formData.accessExpiry,
+          branchAssignment: formData.branchAssignment,
+          twoFactorAuth: formData.twoFactorAuth,
+        });
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+        }, 2000);
+      } catch (error: any) {
+        setError(
+          error.response?.data?.message || "Failed to assign staff role"
+        );
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    setCurrentStep(Math.min(currentStep + 1, steps.length - 1));
   };
 
   const handleBack = () => {
-    setActiveStep((prevStep) => Math.max(prevStep - 1, 0));
+    setCurrentStep(Math.max(currentStep - 1, 0));
   };
-
-  const [image, setImage] = useState<string | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -133,7 +217,7 @@ export const CreateUser = () => {
           User Creation Form
         </Typography>
         <Stepper
-          activeStep={activeStep}
+          activeStep={currentStep}
           orientation="vertical"
           sx={{
             "& .MuiStepLabel-root": { py: 1 },
@@ -165,17 +249,28 @@ export const CreateUser = () => {
         <Card sx={{ p: 3, height: "100%", boxShadow: "none" }}>
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              {steps[activeStep].icon}
+              {steps[currentStep].icon}
               <Typography variant="h6" sx={{ my: 1 }}>
-                {steps[activeStep].label}
+                {steps[currentStep].label}
               </Typography>
             </Box>
           </Box>
 
           <Box
-            sx={{ mb: 6, height: "65vh", pr: 1, pt: 1, overflowY: "scroll" }}
+            sx={{ height: "71vh", pr: 1, pt: 1, overflowY: "scroll" }}
+            className="noScrollbar"
           >
-            {renderStepContent(activeStep)}
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                User created successfully!
+              </Alert>
+            )}
+            {renderStepContent(currentStep)}
           </Box>
 
           <Box
@@ -189,18 +284,30 @@ export const CreateUser = () => {
             <Button
               variant="outlined"
               onClick={handleBack}
-              disabled={activeStep === 0}
+              disabled={currentStep === 0}
               startIcon={<BsArrowLeft />}
               sx={{ px: 4 }}
             >
               Previous
             </Button>
-            <PrimaryButton endIcon={<BsArrowRight />} onClick={handleNext}>
-              {activeStep === steps.length - 1 ? "Submit" : "Next"}
+            <PrimaryButton
+              endIcon={<BsArrowRight />}
+              onClick={handleNext}
+              disabled={isLoading}
+            >
+              {isLoading ? "Processing..." : "Next"}
             </PrimaryButton>
           </Box>
         </Card>
       </Box>
     </Box>
+  );
+};
+
+export const CreateUser = () => {
+  return (
+    <FormProvider>
+      <CreateUserForm />
+    </FormProvider>
   );
 };

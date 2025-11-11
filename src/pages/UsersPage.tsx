@@ -918,7 +918,7 @@ export const UsersPage = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
+    <Box>
       <UserStatsCards cards={cards} />
       <Card
         sx={{

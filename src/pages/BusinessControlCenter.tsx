@@ -20,7 +20,7 @@ import Isolation from "../assets/ControlIcons/isolation.svg";
 
 // Map card titles to their corresponding routes
 const cardToRouteMap: { [key: string]: string } = {
-  "System User": "users/create",
+  "System User": "users",
   "Shift Management": "/shift-management",
   "Start of the Day": "/start-of-day",
   "Close of the Day": "/close-of-day",
@@ -30,7 +30,7 @@ const cardToRouteMap: { [key: string]: string } = {
   "Customer Payments": "/customer-payments",
   "Customer Ranking": "/customer-ranking",
   "Customer Categories": "/customer-categories",
-  "Conversations": "/message-center/chat",
+  Conversations: "/message-center/chat",
   "Email / Communication Logs": "/message-center/email",
   "Customer Insights": "/customer-insights",
   "Reviews & Ratings": "/reviews-ratings",
@@ -44,7 +44,7 @@ const cardToRouteMap: { [key: string]: string } = {
   "Catalog Management": "/catalog-management",
   "System Setting": "/system-settings",
   "Sales Summary": "/sales-summary",
-  "Scheduler": "/scheduler",
+  Scheduler: "/scheduler",
   "POS Dashboard": "/pos-dashboard",
   "Parked Receipts": "/parked-receipts",
   "Claims & FOC": "/claims-foc",
@@ -53,7 +53,7 @@ const cardToRouteMap: { [key: string]: string } = {
   "Fleet Management": "/fleet-management",
   "Inventory / Stock Control": "/inventory-stock",
   "Route Planning": "/route-planning",
-  "Logistics Management": "/logistics-management"
+  "Logistics Management": "/logistics-management",
 };
 
 export default function BusinessControlCenter() {
@@ -81,12 +81,16 @@ export default function BusinessControlCenter() {
           Business Control Center
         </h1>
 
-        <label className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <div className="mr-1">
-            <img src={Isolation} className="bg-white p-2 rounded hover:shadow-md" alt="Isolation Mode" />
+            <img
+              src={Isolation}
+              className="bg-white p-2 rounded hover:shadow-md"
+              alt="Isolation Mode"
+            />
           </div>
 
-          <div className="relative cursor-pointer">
+          <label className="relative cursor-pointer">
             <input
               type="checkbox"
               checked={isDraggable}
@@ -95,9 +99,9 @@ export default function BusinessControlCenter() {
             />
             <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-          </div>
+          </label>
           <span className="text-sm text-gray-700">Enable Drag and Drop</span>
-        </label>
+        </div>
       </div>
 
       {/* Sortable Grid */}
@@ -156,7 +160,10 @@ function SortableCard({
 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Only navigate if not dragging and not clicking the drag handle
-    if (!isDraggable || (isDraggable && !(e.target as Element).closest('button'))) {
+    if (
+      !isDraggable ||
+      (isDraggable && !(e.target as Element).closest("button"))
+    ) {
       const route = cardToRouteMap[title];
       if (route) {
         navigate(`/dashboard/${route}`);

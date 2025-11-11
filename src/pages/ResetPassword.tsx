@@ -13,6 +13,7 @@ import { CustomInput } from "../components/CustomInput";
 import { PrimaryButton } from "../components/PrimaryButton";
 import WaterLogo from "../assets/WATER-INN-logo.svg";
 import { Footer } from "../components/auth/Footer";
+import { authService } from "../services/api";
 
 export const ResetPassword = () => {
   const [resetMode, setResetMode] = useState<"email" | "phone">("email");
@@ -23,30 +24,53 @@ export const ResetPassword = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", phone: "", otp: "", password: "" });
+  const [isLoading, setIsLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
   const navigate = useNavigate();
 
-  const handleSendCode = () => {
+  const handleSendCode = async () => {
     setErrors({ email: "", phone: "", otp: "", password: "" });
+    setIsLoading(true);
     
     if (resetMode === "email" && !email) {
       setErrors(prev => ({ ...prev, email: "Please enter your email first" }));
+      setIsLoading(false);
       return;
     }
     if (resetMode === "phone" && !phone) {
       setErrors(prev => ({ ...prev, phone: "Please enter your phone number first" }));
+      setIsLoading(false);
       return;
     }
     
-    alert(
-      `Verification code sent to ${
-        resetMode === "email" ? email : countryCode + phone
-      }`
-    );
+    try {
+      const requestData = resetMode === "email" 
+        ? { email } 
+        : { phone: countryCode + phone };
+      
+      await authService.requestResetPassword(requestData);
+      setCodeSent(true);
+      alert(
+        `Verification code sent to ${
+          resetMode === "email" ? email : countryCode + phone
+        }`
+      );
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Failed to send code";
+      if (resetMode === "email") {
+        setErrors(prev => ({ ...prev, email: errorMessage }));
+      } else {
+        setErrors(prev => ({ ...prev, phone: errorMessage }));
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleReset = (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({ email: "", phone: "", otp: "", password: "" });
+    setIsLoading(true);
     
     let hasErrors = false;
     const newErrors = { email: "", phone: "", otp: "", password: "" };
@@ -73,11 +97,25 @@ export const ResetPassword = () => {
     
     if (hasErrors) {
       setErrors(newErrors);
+      setIsLoading(false);
       return;
     }
     
-    // Success - redirect to login
-    navigate("/login");
+    try {
+      const resetData = {
+        ...(resetMode === "email" ? { email } : { phone: countryCode + phone }),
+        code: otp,
+        newPassword: password,
+      };
+      
+      await authService.resetPassword(resetData);
+      navigate("/login");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Failed to reset password";
+      setErrors(prev => ({ ...prev, otp: errorMessage }));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -242,6 +280,7 @@ export const ResetPassword = () => {
                       ":hover": { textDecoration: "underline" },
                     }}
                     onClick={handleSendCode}
+                    disabled={isLoading}
                   >
                     Send code
                   </Button>
@@ -251,27 +290,29 @@ export const ResetPassword = () => {
 
             {/* Password field */}
             <CustomInput
-              label="Password"
+              label="New Password"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               error={errors.password}
+              disabled={!codeSent}
               endAdornment={
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
+                  disabled={!codeSent}
                 >
                   {showPassword ? (
-                    <VisibilityOff sx={{ color: "#9ca3af", fontSize: 22 }} /> // Reduced icon size
+                    <VisibilityOff sx={{ color: codeSent ? "#9ca3af" : "#d1d5db", fontSize: 22 }} />
                   ) : (
-                    <Visibility sx={{ color: "#9ca3af", fontSize: 22 }} /> // Reduced icon size
+                    <Visibility sx={{ color: codeSent ? "#9ca3af" : "#d1d5db", fontSize: 22 }} />
                   )}
                 </IconButton>
               }
             />
 
-            <PrimaryButton type="submit" fullWidth>
-              Reset Password {/* Changed button text */}
+            <PrimaryButton type="submit" fullWidth disabled={isLoading}>
+              {isLoading ? "Processing..." : "Reset Password"}
             </PrimaryButton>
 
             {/* Back to Login link */}

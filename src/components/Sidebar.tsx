@@ -32,7 +32,7 @@ export const Sidebar = ({
 }: SidebarProps) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
 
-  const drawerWidth = collapsed ? 80 : 349;
+  const drawerWidth = collapsed ? 80 : 309;
 
   // Auto-open parents when navigating into nested pages
   useEffect(() => {
@@ -188,7 +188,7 @@ export const Sidebar = ({
           {/* Logo */}
           <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
             <Link
-              to="/login"
+              to="/dashboard"
               className="text-primary-600 hover:underline cursor-pointer flex justify-center"
             >
               <img
