@@ -83,8 +83,8 @@ export const UsersTable = ({
                       label={u.status}
                       size="small"
                       sx={{
-                        bgcolor: u.status === "active" ? "#dcfce7" : "#fef2f2",
-                        color: u.status === "active" ? "#16a34a" : "#dc2626",
+                        bgcolor: u.status === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
+                        color: u.status === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
                       }}
                     />
                   </TableCell>
@@ -95,12 +95,12 @@ export const UsersTable = ({
                       sx={{
                         bgcolor:
                           u.isEmailVerified && u.isPhoneVerified
-                            ? "#dcfce7"
-                            : "#fef2f2",
+                            ? "var(--color-status-success-light)"
+                            : "var(--color-status-error-light)",
                         color:
                           u.isEmailVerified && u.isPhoneVerified
-                            ? "#16a34a"
-                            : "#dc2626",
+                            ? "var(--color-status-success)"
+                            : "var(--color-status-error)",
                       }}
                     />
                   </TableCell>

@@ -1,122 +1,84 @@
 import {
   Stack,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from "@mui/material";
-import { useState } from "react";
+import { CustomInput } from "../CustomInput";
+import { CustomSelect } from "../CustomSelect";
+import { useFormContext } from "../../contexts/FormContext";
 
 export const SalaryBenefits = () => {
-  const [formData, setFormData] = useState({
-    basicSalary: "",
-    allowances: "",
-    providentFund: "",
-    salaryPaymentMode: "",
-    bankName: "",
-    bankAccountTitle: "",
-    bankAccountNumber: "",
-    taxStatus: "",
-  });
-
-  const handleInputChange =
-    (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: e.target.value,
-      }));
-    };
-
-  const handleSelectChange =
-    (name: string) => (e: React.ChangeEvent<{ value: unknown }>) => {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: e.target.value as string,
-      }));
-    };
+  const { formData, updateFormData } = useFormContext();
 
   return (
     <Stack spacing={3}>
-      {/* Basic Salary + Allowances */}
+      {/* Basic Salary + Allowances + Provident Fund */}
       <Stack direction="row" spacing={2}>
-        <TextField
-          fullWidth
+        <CustomInput
           label="Basic Salary"
-          value={formData.basicSalary}
-          onChange={handleInputChange("basicSalary")}
+          type="number"
           placeholder="50000"
+          value={formData.basicSalary || ''}
+          onChange={(e) => updateFormData('basicSalary', e.target.value)}
         />
-        <TextField
-          fullWidth
+        <CustomInput
           label="Allowances"
-          value={formData.allowances}
-          onChange={handleInputChange("allowances")}
-          placeholder="Travel, Medical"
+          type="number"
+          placeholder="e.g., Fuel, Meal, Bonus"
+          value={formData.allowances || ''}
+          onChange={(e) => updateFormData('allowances', e.target.value)}
         />
-      </Stack>
-
-      {/* Provident Fund + Salary Payment Mode */}
-      <Stack direction="row" spacing={2}>
-        <TextField
-          fullWidth
+        <CustomInput
           label="Provident Fund"
-          value={formData.providentFund}
-          onChange={handleInputChange("providentFund")}
-          placeholder="5% of Salary"
+          type="number"
+          placeholder="e.g., 3%, 6%"
+          value={formData.providentFund || ''}
+          onChange={(e) => updateFormData('providentFund', e.target.value)}
         />
-        <FormControl fullWidth>
-          <InputLabel>Salary Payment Mode</InputLabel>
-          <Select
-            label="Salary Payment Mode"
-            value={formData.salaryPaymentMode}
-            onChange={()=>handleSelectChange("salaryPaymentMode")}
-          >
-            <MenuItem value="Bank Transfer">Bank Transfer</MenuItem>
-            <MenuItem value="Cheque">Cheque</MenuItem>
-            <MenuItem value="Cash">Cash</MenuItem>
-          </Select>
-        </FormControl>
       </Stack>
 
-      {/* Bank Name + Account Title */}
+      {/* Salary Payment Mode + Bank Name + Bank Account Title */}
       <Stack direction="row" spacing={2}>
-        <TextField
-          fullWidth
-          label="Bank Name"
-          value={formData.bankName}
-          onChange={handleInputChange("bankName")}
-          placeholder="HBL Bank"
+        <CustomSelect
+          label="Salary Payment Mode"
+          value={formData.salaryPaymentMode || ''}
+          onChange={(e) => updateFormData('salaryPaymentMode', e.target.value)}
+          options={[
+            { value: "cash", label: "Cash" },
+            { value: "bank_transfer", label: "Bank Transfer" },
+            { value: "cheque", label: "Cheque" },
+            { value: "other", label: "Other" },
+          ]}
         />
-        <TextField
-          fullWidth
+        <CustomInput
+          label="Bank Name"
+          placeholder="HBL Bank"
+          value={formData.bankName || ''}
+          onChange={(e) => updateFormData('bankName', e.target.value)}
+        />
+        <CustomInput
           label="Bank Account Title"
-          value={formData.bankAccountTitle}
-          onChange={handleInputChange("bankAccountTitle")}
           placeholder="John Doe"
+          value={formData.bankAccountTitle || ''}
+          onChange={(e) => updateFormData('bankAccountTitle', e.target.value)}
         />
       </Stack>
 
       {/* Bank Account Number + Tax Status */}
       <Stack direction="row" spacing={2}>
-        <TextField
-          fullWidth
+        <CustomInput
           label="Bank Account Number"
-          value={formData.bankAccountNumber}
-          onChange={handleInputChange("bankAccountNumber")}
           placeholder="PK00HABB000123456789"
+          value={formData.bankAccountNumber || ''}
+          onChange={(e) => updateFormData('bankAccountNumber', e.target.value)}
         />
-        <FormControl fullWidth>
-          <InputLabel>Tax Status</InputLabel>
-          <Select
-            label="Tax Status"
-            value={formData.taxStatus}
-            onChange={()=>handleSelectChange("taxStatus")}
-          >
-            <MenuItem value="Taxable">Taxable</MenuItem>
-            <MenuItem value="Non-Taxable">Non-Taxable</MenuItem>
-          </Select>
-        </FormControl>
+        <CustomSelect
+          label="Tax Status"
+          value={formData.taxStatus || ''}
+          onChange={(e) => updateFormData('taxStatus', e.target.value)}
+          options={[
+            { value: "taxable", label: "Taxable" },
+            { value: "non_taxable", label: "Non-Taxable" },
+          ]}
+        />
       </Stack>
     </Stack>
   );

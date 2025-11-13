@@ -1,8 +1,4 @@
-import {
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Stack, TextField } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -33,22 +29,8 @@ export const AdditionalNotes = () => {
 
   return (
     <Stack spacing={3}>
-      <Typography
-        variant="subtitle1"
-        sx={{ fontWeight: 600, color: "#1976d2" }}
-      >
-        Additional Notes
-      </Typography>
-
-      {/* Remarks + Exit Date */}
+      {/* Reason for Leaving */}
       <Stack direction="row" spacing={2}>
-        <TextField
-          fullWidth
-          label="Remarks"
-          value={formData.remarks}
-          onChange={handleInputChange("remarks")}
-          placeholder="Enter remarks"
-        />
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <DatePicker
             label="Exit Date"
@@ -57,10 +39,6 @@ export const AdditionalNotes = () => {
             sx={{ width: "100%" }}
           />
         </LocalizationProvider>
-      </Stack>
-
-      {/* Reason for Leaving */}
-      <Stack direction="row" spacing={2}>
         <TextField
           fullWidth
           label="Reason for Leaving"
@@ -68,7 +46,6 @@ export const AdditionalNotes = () => {
           onChange={handleInputChange("reasonForLeaving")}
           placeholder="Enter reason for leaving"
         />
-        <div className="w-full"></div>
       </Stack>
     </Stack>
   );

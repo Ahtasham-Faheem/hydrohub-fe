@@ -12,10 +12,11 @@ import {
 import { PrimaryButton } from "../components/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FormProvider, useFormContext } from "../contexts/FormContext";
-import { usersService, staffService } from "../services/api";
+import { useCreateUser } from "../hooks/useUsers";
+import { useCreateStaff } from "../hooks/useStaff";
 
 // React Icons
-import { FaUserAlt, FaMapMarkedAlt, FaRegCalendarCheck } from "react-icons/fa";
+import { FaUserAlt, FaRegCalendarCheck } from "react-icons/fa";
 import {
   MdContactMail,
   MdOutlineAttachMoney,
@@ -32,31 +33,28 @@ import { PersonalInformation } from "../components/forms/PersonalInformation";
 import { SystemAccessRole } from "../components/forms/SystemAccessRole";
 import { ContactInformation } from "../components/forms/ContactInformation";
 import { EmploymentDetails } from "../components/forms/EmploymentDetails";
-import { ReferralInformation } from "../components/forms/ReferralInformation";
 import { DocumentsUpload } from "../components/forms/DocumentsUpload";
 import { SalaryBenefits } from "../components/forms/SalaryBenefits";
 import { AttendanceDutyInfo } from "../components/forms/AttendanceDutyInfo";
 import { AdditionalNotes } from "../components/forms/AdditionalNotes";
 import { AssetsAndEquipmentAssigned } from "../components/forms/AssetsAndEquipmentAssigned";
-import { DutyCoverageAreaGrid } from "../components/forms/DutyCoverageAreaGrid";
+import { IdentificationVerification } from "../components/forms/IdentificationVerification";
 
 // ✅ Ordered according to renderStepContent
 const steps = [
   { label: "Personal Information", icon: <FaUserAlt size={22} /> },
-  { label: "System Access & Role", icon: <RiSettings4Line size={22} /> },
   { label: "Contact Information", icon: <MdContactMail size={22} /> },
   { label: "Employment Details", icon: <MdOutlineWork size={22} /> },
-  { label: "Referral Information", icon: <AiOutlineIdcard size={22} /> },
-  { label: "Documents Upload", icon: <HiOutlineDocumentDuplicate size={22} /> },
   { label: "Salary & Benefits", icon: <MdOutlineAttachMoney size={22} /> },
+  { label: "Identification & Verification", icon: <AiOutlineIdcard size={22} /> },
+  { label: "System Access & Role", icon: <RiSettings4Line size={22} /> },
   { label: "Attendance & Duty Info", icon: <FaRegCalendarCheck size={22} /> },
-  { label: "Duty Coverage Area", icon: <FaMapMarkedAlt size={22} /> },
-  { label: "Additional Notes", icon: <IoMdClipboard size={22} /> },
   { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
+  { label: "Documents Upload", icon: <HiOutlineDocumentDuplicate size={22} /> },
+  { label: "Additional Notes", icon: <IoMdClipboard size={22} /> },
 ];
 
 const CreateUserForm = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const {
@@ -66,6 +64,10 @@ const CreateUserForm = () => {
     updateFormData,
     validateRequiredFields,
   } = useFormContext();
+
+  // TanStack Query mutations
+  const createUserMutation = useCreateUser();
+  const createStaffMutation = useCreateStaff();
   const [image, setImage] = useState<string | null>(null);
 
   const handleNext = async () => {
@@ -79,9 +81,8 @@ const CreateUserForm = () => {
         return;
       }
 
-      setIsLoading(true);
-      try {
-        const userResponse = await usersService.createUser({
+      createUserMutation.mutate(
+        {
           username: formData.username,
           email: formData.email,
           phone: formData.phone,
@@ -91,23 +92,26 @@ const CreateUserForm = () => {
           lastName: formData.lastName,
           fathersName: formData.fathersName,
           dateOfBirth: formData.dateOfBirth,
+          userRole: formData.userRole,
           gender: formData.gender,
           nationalId: formData.nationalId,
           maritalStatus: formData.maritalStatus,
           profilePictureAssetId: formData.profilePictureAssetId,
-        });
-
-        updateFormData("userId", userResponse.id);
-        setSuccess(true);
-        setCurrentStep(1);
-        setTimeout(() => {
-          setSuccess(false);
-        }, 2000);
-      } catch (error: any) {
-        setError(error.response?.data?.message || "Failed to create user");
-      } finally {
-        setIsLoading(false);
-      }
+        },
+        {
+          onSuccess: (userResponse) => {
+            updateFormData("userId", userResponse.id);
+            setSuccess(true);
+            setCurrentStep(1);
+            setTimeout(() => {
+              setSuccess(false);
+            }, 2000);
+          },
+          onError: (error: any) => {
+            setError(error.response?.data?.message || "Failed to create user");
+          },
+        }
+      );
       return;
     }
 
@@ -118,27 +122,28 @@ const CreateUserForm = () => {
         return;
       }
 
-      setIsLoading(true);
-      try {
-        await staffService.createStaff({
+      createStaffMutation.mutate(
+        {
           userId: formData.userId,
-          userRole: formData.userRole,
           accessLevel: formData.accessLevel,
           accessExpiry: formData.accessExpiry,
           branchAssignment: formData.branchAssignment,
           twoFactorAuth: formData.twoFactorAuth,
-        });
-        setSuccess(true);
-        setTimeout(() => {
-          setSuccess(false);
-        }, 2000);
-      } catch (error: any) {
-        setError(
-          error.response?.data?.message || "Failed to assign staff role"
-        );
-      } finally {
-        setIsLoading(false);
-      }
+        },
+        {
+          onSuccess: () => {
+            setSuccess(true);
+            setTimeout(() => {
+              setSuccess(false);
+            }, 2000);
+          },
+          onError: (error: any) => {
+            setError(
+              error.response?.data?.message || "Failed to assign staff role"
+            );
+          },
+        }
+      );
       return;
     }
 
@@ -171,25 +176,23 @@ const CreateUserForm = () => {
           />
         );
       case 1:
-        return <SystemAccessRole />;
-      case 2:
         return <ContactInformation />;
-      case 3:
+      case 2:
         return <EmploymentDetails />;
-      case 4:
-        return <ReferralInformation />;
-      case 5:
-        return <DocumentsUpload />;
-      case 6:
+      case 3:
         return <SalaryBenefits />;
-      case 7:
+      case 4:
+        return <IdentificationVerification />;
+      case 5:
+        return <SystemAccessRole />;
+      case 6:
         return <AttendanceDutyInfo />;
+      case 7:
+        return <AssetsAndEquipmentAssigned />;
       case 8:
-        return <DutyCoverageAreaGrid />;
+        return <DocumentsUpload />;
       case 9:
         return <AdditionalNotes />;
-      case 10:
-        return <AssetsAndEquipmentAssigned />;
       default:
         return (
           <PersonalInformation
@@ -293,9 +296,17 @@ const CreateUserForm = () => {
             <PrimaryButton
               endIcon={<BsArrowRight />}
               onClick={handleNext}
-              disabled={isLoading}
+              disabled={
+                createUserMutation.isPending || createStaffMutation.isPending
+              }
             >
-              {isLoading ? "Processing..." : "Next"}
+              {createUserMutation.isPending || createStaffMutation.isPending
+                ? "Processing..."
+                : currentStep === 0
+                ? "Create User"
+                : currentStep === 1
+                ? "Assign Role"
+                : "Next"}
             </PrimaryButton>
           </Box>
         </Card>

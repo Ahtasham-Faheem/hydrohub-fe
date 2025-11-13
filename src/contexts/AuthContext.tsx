@@ -58,7 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Demo mode: Allow any login without API call
       const demoUser = {
         id: '1',
-        email: credentials.email,
+        email: credentials.email || 'demo@example.com',
         role: 'admin',
         name: 'Demo User'
       };
@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Real API mode
     try {
-      const userType = import.meta.env.VITE_USER_TYPE || 'admin';
+      const userType = import.meta.env.VITE_USER_TYPE || 'staff';
       const response = await authService.login(credentials, userType);
       
       localStorage.setItem('authToken', response.access_token);

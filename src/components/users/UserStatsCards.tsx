@@ -8,6 +8,7 @@ interface StatsCard {
   change: string;
   desc: string;
   color: string;
+  bgColor: string;
   icon: ReactNode;
 }
 
@@ -48,7 +49,7 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
                 <Box display="flex" alignItems="center" gap={1.5}>
                   <Box
                     sx={{
-                      bgcolor: "#f9fafb",
+                      bgcolor: card.bgColor,
                       borderRadius: "5px",
                       p: 2,
                       width: 50,

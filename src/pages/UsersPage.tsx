@@ -808,11 +808,10 @@
 //   );
 // };
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Card, Divider } from "@mui/material";
 import dayjs from "dayjs";
-import { usersService } from "../services/api";
-import type { User } from "../types/user";
+import { useUsers } from "../hooks/useUsers";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
 import { UserStatsCards } from "../components/users/UserStatsCards";
 import { UserFilters } from "../components/users/UserFilters";
@@ -827,10 +826,13 @@ export const UsersPage = () => {
   const [search, setSearch] = useState("");
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(dayjs());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  
+  // Using TanStack Query
+  const { data: usersData, isLoading, error } = useUsers(currentPage, 10);
+  
+  const users = usersData?.data || [];
+  const totalPages = usersData?.pagination?.totalPages || 1;
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(
     null
@@ -850,20 +852,7 @@ export const UsersPage = () => {
     { label: "Last 7 Days", value: "last7", date: dayjs().subtract(7, "day") },
   ];
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await usersService.getUsers(currentPage, 10);
-        setUsers(response.data);
-        setTotalPages(response.pagination.totalPages);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUsers();
-  }, [currentPage]);
+  // TanStack Query handles the data fetching automatically
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -884,7 +873,8 @@ export const UsersPage = () => {
       value: users.filter((u) => u.status === "active").length.toString(),
       change: "+0%",
       desc: "All staff currently authorized in the system",
-      color: "#22c55e",
+      color: "var(--color-status-success)",
+      bgColor: "var(--color-status-success-light)",
       icon: <LuUserRoundCheck />,
     },
     {
@@ -894,7 +884,8 @@ export const UsersPage = () => {
         .length.toString(),
       change: "+0%",
       desc: "Staff checked in for the ongoing shift",
-      color: "#3b82f6",
+      color: "var(--color-primary-600)",
+      bgColor: "var(--color-primary-bg-light)",
       icon: <LuUserRoundCheck />,
     },
     {
@@ -904,7 +895,8 @@ export const UsersPage = () => {
         .length.toString(),
       change: "0%",
       desc: "Staff offcially marked on leave",
-      color: "#f59e0b",
+      color: "var(--color-status-warning)",
+      bgColor: "var(--color-status-warning-light)",
       icon: <LuUserRoundX />,
     },
     {
@@ -912,7 +904,8 @@ export const UsersPage = () => {
       value: users.filter((u) => u.status === "inactive").length.toString(),
       change: "0%",
       desc: "Staff no longer of operations",
-      color: "#ef4444",
+      color: "var(--color-status-error)",
+      bgColor: "var(--color-status-error-light)",
       icon: <LuUserRoundX />,
     },
   ];
@@ -969,6 +962,7 @@ export const UsersPage = () => {
         {...{
           users,
           isLoading,
+          error,
           currentPage,
           setCurrentPage,
           totalPages,

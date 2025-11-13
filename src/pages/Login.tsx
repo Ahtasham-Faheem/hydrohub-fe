@@ -82,10 +82,11 @@ export const Login = () => {
     setErrors({ email: "", password: "", phone: "" });
 
     try {
-      await login({
-        email: loginMode === "email" ? email : `${countryCode}${phone}`,
-        password: useCodeLogin ? otp : password,
-      });
+      const loginPayload = loginMode === "email" 
+        ? { email, password: useCodeLogin ? otp : password }
+        : { phone: `${countryCode}${phone}`, password: useCodeLogin ? otp : password };
+      
+      await login(loginPayload);
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { Box } from "@mui/material";
 import { Sidebar } from "../components/Sidebar";
 import { Header } from "../components/Header";
 import { Breadcrumb } from "../components/Breadcrumb";
@@ -51,7 +51,7 @@ export const Dashboard = () => {
               <Route path="users/create" element={<CreateUser />} />
               <Route
                 path="*"
-                element={<div className="relative">Coming Soon...</div>}
+                element={<div className="h-[75vh]">Coming Soon...</div>}
               />
             </Routes>
           </Box>

@@ -34,7 +34,8 @@ api.interceptors.request.use((config) => {
 });
 
 export interface LoginCredentials {
-  email: string;
+  email?: string;
+  phone?: string;
   password: string;
 }
 
@@ -86,6 +87,7 @@ export interface CreateUserData {
   firstName: string;
   lastName: string;
   fathersName?: string;
+  userRole: string;
   dateOfBirth?: string;
   gender?: string;
   nationalId?: string;
@@ -95,7 +97,6 @@ export interface CreateUserData {
 
 export interface CreateStaffData {
   userId: string;
-  userRole: string;
   accessLevel: string;
   accessExpiry: string;
   branchAssignment: string;
