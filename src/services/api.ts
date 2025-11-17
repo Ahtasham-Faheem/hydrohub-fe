@@ -33,6 +33,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Handle 401 responses globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear auth data and redirect to login
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      window.location.href = '/login-access';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export interface LoginCredentials {
   email?: string;
   phone?: string;
@@ -64,6 +78,11 @@ export interface ResetPasswordData {
 export const authService = {
   login: async (credentials: LoginCredentials, userType: string): Promise<LoginResponse> => {
     const response = await api.post(`/auth/${userType}/login`, credentials);
+    return response.data;
+  },
+  
+  getProfile: async (): Promise<any> => {
+    const response = await api.get('/auth/getProfile');
     return response.data;
   },
   

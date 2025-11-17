@@ -40,7 +40,7 @@ export const PrimaryButton = ({
         borderRadius: 2,
         fontSize: 16,
         fontWeight: 600,
-        bgcolor: "#2092ec",
+        bgcolor: "var(--color-primary-600)",
         textTransform: "none",
         px: 4,
         "&:hover": { bgcolor: "#187bcd" },

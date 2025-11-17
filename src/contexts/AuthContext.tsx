@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authService } from '../services/api';
 import type { LoginCredentials } from '../services/api';
+import { useProfile } from '../hooks/useAuth';
 
 // TODO: Change this to false when backend is ready
 const DEMO_MODE = false;
@@ -31,27 +32,35 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+const AuthProviderInner = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Use profile query to validate token
+  const { data: profileData, isLoading: profileLoading, error: profileError } = useProfile();
 
   useEffect(() => {
-    // Check for existing token on app load
     const token = localStorage.getItem('authToken');
-    const userData = localStorage.getItem('userData');
     
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-        setIsAuthenticated(true);
-      } catch (error) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userData');
-      }
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false);
-  }, []);
+    
+    if (profileData) {
+      setUser(profileData);
+      setIsAuthenticated(true);
+      setIsLoading(false);
+    } else if (profileError) {
+      // Token is invalid, clear auth state
+      setUser(null);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    } else if (!profileLoading && token) {
+      setIsLoading(false);
+    }
+  }, [profileData, profileError, profileLoading]);
 
   const login = async (credentials: LoginCredentials) => {
     if (DEMO_MODE) {
@@ -97,5 +106,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
+  );
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  return (
+    <AuthProviderInner>
+      {children}
+    </AuthProviderInner>
   );
 };

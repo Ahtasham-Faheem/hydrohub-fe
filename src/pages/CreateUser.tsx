@@ -23,14 +23,12 @@ import {
   MdOutlineWork,
 } from "react-icons/md";
 import { AiOutlineIdcard } from "react-icons/ai";
-import { RiSettings4Line } from "react-icons/ri";
 import { GiLaptop } from "react-icons/gi";
 import { HiOutlineDocumentDuplicate } from "react-icons/hi";
 import { IoMdClipboard } from "react-icons/io";
 
 // Components
 import { PersonalInformation } from "../components/forms/PersonalInformation";
-import { SystemAccessRole } from "../components/forms/SystemAccessRole";
 import { ContactInformation } from "../components/forms/ContactInformation";
 import { EmploymentDetails } from "../components/forms/EmploymentDetails";
 import { DocumentsUpload } from "../components/forms/DocumentsUpload";
@@ -47,7 +45,6 @@ const steps = [
   { label: "Employment Details", icon: <MdOutlineWork size={22} /> },
   { label: "Salary & Benefits", icon: <MdOutlineAttachMoney size={22} /> },
   { label: "Identification & Verification", icon: <AiOutlineIdcard size={22} /> },
-  { label: "System Access & Role", icon: <RiSettings4Line size={22} /> },
   { label: "Attendance & Duty Info", icon: <FaRegCalendarCheck size={22} /> },
   { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
   { label: "Documents Upload", icon: <HiOutlineDocumentDuplicate size={22} /> },
@@ -73,7 +70,6 @@ const CreateUserForm = () => {
   const handleNext = async () => {
     setError(null);
 
-    // If it's the first step, validate required fields and submit
     if (currentStep === 0) {
       const validation = validateRequiredFields();
       if (!validation.isValid) {
@@ -184,14 +180,12 @@ const CreateUserForm = () => {
       case 4:
         return <IdentificationVerification />;
       case 5:
-        return <SystemAccessRole />;
-      case 6:
         return <AttendanceDutyInfo />;
-      case 7:
+      case 6:
         return <AssetsAndEquipmentAssigned />;
-      case 8:
+      case 7:
         return <DocumentsUpload />;
-      case 9:
+      case 8:
         return <AdditionalNotes />;
       default:
         return (

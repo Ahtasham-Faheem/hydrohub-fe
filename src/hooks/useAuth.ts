@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { authService } from '../services/api';
 import type { LoginCredentials, RequestResetPasswordData, ResetPasswordData } from '../services/api';
 
@@ -30,5 +30,16 @@ export const useResetPassword = () => {
     onError: (error) => {
       console.error('Failed to reset password:', error);
     },
+  });
+};
+
+// Get Profile Query
+export const useProfile = () => {
+  return useQuery({
+    queryKey: ['auth', 'profile'],
+    queryFn: () => authService.getProfile(),
+    enabled: !!localStorage.getItem('authToken'),
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
