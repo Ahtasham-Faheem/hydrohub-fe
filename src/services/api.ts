@@ -41,7 +41,7 @@ api.interceptors.response.use(
       // Clear auth data and redirect to login
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');
-      window.location.href = '/login-access';
+      window.location.href = '/#/login-access';
     }
     return Promise.reject(error);
   }

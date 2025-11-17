@@ -7,15 +7,20 @@ interface PrivateRouteProps {
 }
 
 export const PrivateRoute = ({ children, roles }: PrivateRouteProps) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
+  
+  // Show loading state while auth is being validated
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
   
   if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/#/login" />;
   }
 
   if (roles && user?.role && !roles.includes(user.role)) {
     // User's role is not authorized
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/#/dashboard" />;
   }
 
   return <>{children}</>;
