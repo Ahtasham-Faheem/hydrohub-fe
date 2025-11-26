@@ -22,11 +22,11 @@ import NightIcon from "../assets/HeaderIcons/night.svg";
 import BellIcon from "../assets/HeaderIcons/bell.svg";
 import boxesIcon from "../assets/HeaderIcons/boxes.svg";
 import chatIcon from "../assets/HeaderIcons/chat.svg";
-import sunIcon from "../assets/HeaderIcons/sun.svg";
-import mailIcon from "../assets/HeaderIcons/mail.svg";
+// import sunIcon from "../assets/HeaderIcons/sun.svg";
+// import mailIcon from "../assets/HeaderIcons/mail.svg";
 import cornersIcon from "../assets/HeaderIcons/corners.svg";
 import languageIcon from "../assets/HeaderIcons/language.svg";
-import starIcon from "../assets/HeaderIcons/star.svg";
+// import starIcon from "../assets/HeaderIcons/star.svg";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
