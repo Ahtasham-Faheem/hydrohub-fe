@@ -36,6 +36,8 @@ interface SortAndManageColumnsProps {
   handleSaveColumns: () => void;
   search: string;
   setSearch: (search: string) => void;
+  addButtonLabel?: string;
+  addButtonPath?: string;
 }
 
 export const SortAndManageColumns = ({
@@ -49,6 +51,8 @@ export const SortAndManageColumns = ({
   handleSaveColumns,
   search,
   setSearch,
+  addButtonLabel = "Add New User",
+  addButtonPath = "/dashboard/users/create",
 }: SortAndManageColumnsProps) => {
   const navigate = useNavigate();
   return (
@@ -156,9 +160,9 @@ export const SortAndManageColumns = ({
         </Popover>
         <PrimaryButton 
           className="px-16! font-medium!"
-          onClick={() => navigate('/dashboard/users/create')}
+          onClick={() => navigate(addButtonPath)}
         >
-          Add New User
+          {addButtonLabel}
         </PrimaryButton>
       </Box>
     </Box>

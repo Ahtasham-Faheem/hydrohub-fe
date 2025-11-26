@@ -17,6 +17,12 @@ export const IdentificationVerification = () => {
             updateFormData("idCardIssued", checked ? "true" : "")
           }
         />
+        <CustomInput
+          label="ID Card Number"
+          placeholder="35101-9889455-3"
+          value={formData.idCardNumber || ""}
+          onChange={(e) => updateFormData("idCardNumber", e.target.value)}
+        />
         <CustomCheckbox
           label="Police Verification"
           checked={formData.policeVerification ? true : false}
@@ -29,19 +35,11 @@ export const IdentificationVerification = () => {
       {/* Referral Person + Referral Person Relation + Referral Contact */}
       <Stack direction="row" spacing={2}>
         <CustomInput
-          label="ID Card Number"
-          placeholder="35101-9889455-3"
-          value={formData.idCardNumber || ""}
-          onChange={(e) => updateFormData("idCardNumber", e.target.value)}
-        />
-        <CustomInput
           label="Referral Person"
           placeholder="Who refers the staff"
           value={formData.referralPerson || ""}
           onChange={(e) => updateFormData("referralPerson", e.target.value)}
         />
-      </Stack>
-      <Stack direction="row" spacing={2}>
         <CustomInput
           label="Referral Person Relation"
           placeholder="Enter relation"

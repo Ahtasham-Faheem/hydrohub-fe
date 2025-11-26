@@ -10,12 +10,12 @@ import {
 } from "@mui/material";
 import { BsQrCode } from "react-icons/bs";
 import { RiUserLine } from "react-icons/ri";
-import InstagramIcon from "../assets/instagram.svg";
-import FacebookIcon from "../assets/facebook.svg";
-import TwitterIcon from "../assets/twitter.svg";
-import XIcon from "../assets/X.svg";
-import WaterLogo from "../assets/WATER-INN-logo.svg";
-import { Footer } from "../components/auth/Footer";
+import InstagramIcon from "../../assets/instagram.svg";
+import FacebookIcon from "../../assets/facebook.svg";
+import TwitterIcon from "../../assets/twitter.svg";
+import XIcon from "../../assets/X.svg";
+import WaterLogo from "../../assets/WATER-INN-logo.svg";
+import { Footer } from "../../components/auth/Footer";
 
 export const LoginAccess = () => {
   const navigate = useNavigate();

@@ -1,4 +1,5 @@
 import { Navigate } from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 interface PrivateRouteProps {
@@ -11,7 +12,19 @@ export const PrivateRoute = ({ children, roles }: PrivateRouteProps) => {
   
   // Show loading state while auth is being validated
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "100vh",
+          bgcolor: "background.default",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
   
   if (!isAuthenticated) {

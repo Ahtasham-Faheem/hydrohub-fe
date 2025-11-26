@@ -9,14 +9,15 @@ import {
   Card,
   Alert,
 } from "@mui/material";
-import { PrimaryButton } from "../components/PrimaryButton";
+import { PrimaryButton } from "../../components/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
-import { FormProvider, useFormContext } from "../contexts/FormContext";
-import { useCreateUser } from "../hooks/useUsers";
-import { useCreateStaff } from "../hooks/useStaff";
+import { FaCircle } from "react-icons/fa";
+import { FormProvider, useFormContext } from "../../contexts/FormContext";
+import { useCreateUser } from "../../hooks/useUsers";
+import { useCreateStaff } from "../../hooks/useStaff";
 
 // React Icons
-import { FaUserAlt, FaRegCalendarCheck } from "react-icons/fa";
+import { FaRegCalendarCheck } from "react-icons/fa";
 import {
   MdContactMail,
   MdOutlineAttachMoney,
@@ -26,25 +27,50 @@ import { AiOutlineIdcard } from "react-icons/ai";
 import { GiLaptop } from "react-icons/gi";
 import { HiOutlineDocumentDuplicate } from "react-icons/hi";
 import { IoMdClipboard } from "react-icons/io";
+import { LuUserRoundPen } from "react-icons/lu";
 
 // Components
-import { PersonalInformation } from "../components/forms/PersonalInformation";
-import { ContactInformation } from "../components/forms/ContactInformation";
-import { EmploymentDetails } from "../components/forms/EmploymentDetails";
-import { DocumentsUpload } from "../components/forms/DocumentsUpload";
-import { SalaryBenefits } from "../components/forms/SalaryBenefits";
-import { AttendanceDutyInfo } from "../components/forms/AttendanceDutyInfo";
-import { AdditionalNotes } from "../components/forms/AdditionalNotes";
-import { AssetsAndEquipmentAssigned } from "../components/forms/AssetsAndEquipmentAssigned";
-import { IdentificationVerification } from "../components/forms/IdentificationVerification";
+import { PersonalInformation } from "../../components/forms/PersonalInformation";
+import { AdditionalPersonalInfo } from "../../components/forms/AdditionalPersonalInfo";
+import { EmploymentDetails } from "../../components/forms/EmploymentDetails";
+import { DocumentsUpload } from "../../components/forms/DocumentsUpload";
+import { SalaryBenefits } from "../../components/forms/SalaryBenefits";
+import { AttendanceDutyInfo } from "../../components/forms/AttendanceDutyInfo";
+import { AdditionalNotes } from "../../components/forms/AdditionalNotes";
+import { AssetsAndEquipmentAssigned } from "../../components/forms/AssetsAndEquipmentAssigned";
+import { IdentificationVerification } from "../../components/forms/IdentificationVerification";
+
+// Custom Step Icon Component
+const CustomStepIcon = ({ active }: { active: boolean }) => (
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      width: 22,
+      height: 22,
+      borderRadius: "50%",
+      bgcolor: active ? "var(--color-primary-600)" : "#e5e7eb",
+      color: "white",
+    }}
+  >
+    <FaCircle size={12} style={{ color: "white" }} />
+  </Box>
+);
 
 // ✅ Ordered according to renderStepContent
 const steps = [
-  { label: "Personal Information", icon: <FaUserAlt size={22} /> },
-  { label: "Contact Information", icon: <MdContactMail size={22} /> },
+  { label: "Personal Information", icon: <LuUserRoundPen size={22} /> },
+  {
+    label: "Additional Personal Information",
+    icon: <MdContactMail size={22} />,
+  },
   { label: "Employment Details", icon: <MdOutlineWork size={22} /> },
   { label: "Salary & Benefits", icon: <MdOutlineAttachMoney size={22} /> },
-  { label: "Identification & Verification", icon: <AiOutlineIdcard size={22} /> },
+  {
+    label: "Identification & Verification",
+    icon: <AiOutlineIdcard size={22} />,
+  },
   { label: "Attendance & Duty Info", icon: <FaRegCalendarCheck size={22} /> },
   { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
   { label: "Documents Upload", icon: <HiOutlineDocumentDuplicate size={22} /> },
@@ -172,7 +198,7 @@ const CreateUserForm = () => {
           />
         );
       case 1:
-        return <ContactInformation />;
+        return <AdditionalPersonalInfo />;
       case 2:
         return <EmploymentDetails />;
       case 3:
@@ -223,17 +249,40 @@ const CreateUserForm = () => {
             },
           }}
         >
-          {steps.map((step) => (
+          {steps.map((step, index) => (
             <Step key={step.label}>
               <StepLabel
+                StepIconComponent={() => (
+                  <CustomStepIcon active={index === currentStep} />
+                )}
                 sx={{
                   cursor: "pointer",
                   "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {step.icon}
-                  <Typography variant="body2">{step.label}</Typography>
+                  <Box
+                    sx={{
+                      color:
+                        index === currentStep
+                          ? "var(--color-primary-600)"
+                          : "inherit",
+                    }}
+                  >
+                    {step.icon}
+                  </Box>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color:
+                        index === currentStep
+                          ? "var(--color-primary-600)"
+                          : "inherit",
+                      fontWeight: index === currentStep ? 600 : 400,
+                    }}
+                  >
+                    {step.label}
+                  </Typography>
                 </Box>
               </StepLabel>
             </Step>

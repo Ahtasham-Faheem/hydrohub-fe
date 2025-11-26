@@ -8,12 +8,15 @@ export interface FormData {
   lastName: string;
   email: string;
   password: string;
+  confirmPassword?: string;
   phone: string;
 
   // New / requested personal fields
   employeeId?: string;
+  employeeCreationDate?: string;
   title?: string;
   nationality?: string;
+  mothersName?: string;
 
   // Contact Information fields
   secondaryEmail?: string;
@@ -105,10 +108,13 @@ const initialFormData: FormData = {
   lastName: "",
   email: "",
   password: "",
+  confirmPassword: "",
   phone: "",
   employeeId: "",
+  employeeCreationDate: "",
   title: "",
   nationality: "",
+  mothersName: "",
   secondaryEmail: "",
   presentAddress: "",
   permanentAddress: "",

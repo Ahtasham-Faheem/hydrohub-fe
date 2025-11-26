@@ -1,10 +1,8 @@
 import { Box, Typography, Button, Stack, IconButton } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
-import dayjs from "dayjs";
 import { PrimaryButton } from "../PrimaryButton";
 import { CustomInput } from "../CustomInput";
 import { CustomSelect } from "../CustomSelect";
-import { CustomDateInput } from "../CustomDateInput";
 import { useFormContext } from "../../contexts/FormContext";
 import { useUploadFile } from "../../hooks/useAssets";
 import { useState } from "react";
@@ -23,6 +21,7 @@ export const PersonalInformation = ({
   const { formData, updateFormData } = useFormContext();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // TanStack Query mutation
   const uploadMutation = useUploadFile();
@@ -127,7 +126,7 @@ export const PersonalInformation = ({
         </Box>
       </Box>
 
-      {/* Title + Role */}
+      {/* Employee ID + Employee Creation Date + Title */}
       <Stack direction="row" spacing={2}>
         <CustomSelect
           label="Title"
@@ -141,27 +140,21 @@ export const PersonalInformation = ({
           ]}
         />
         <CustomInput
-          label="Login Username *"
-          placeholder="johndoe"
-          value={formData.username}
-          onChange={(e) => updateFormData("username", e.target.value)}
-        />
-        <CustomInput
           label="First Name *"
           placeholder="John"
           value={formData.firstName}
           onChange={(e) => updateFormData("firstName", e.target.value)}
         />
-      </Stack>
-
-      {/* Login Username + First Name */}
-      <Stack direction="row" spacing={2}>
         <CustomInput
           label="Last Name *"
           placeholder="Doe"
           value={formData.lastName}
           onChange={(e) => updateFormData("lastName", e.target.value)}
         />
+      </Stack>
+
+      {/* First Name + Last Name + Primary Email Address */}
+      <Stack direction="row" spacing={2}>
         <CustomInput
           label="Primary Email Address *"
           placeholder="john.doe@waterinn.com"
@@ -175,16 +168,16 @@ export const PersonalInformation = ({
           value={formData.phone}
           onChange={(e) => updateFormData("phone", e.target.value)}
         />
+        <CustomInput
+          label="Login Username *"
+          placeholder="johndoe"
+          value={formData.username}
+          onChange={(e) => updateFormData("username", e.target.value)}
+        />
       </Stack>
 
-      {/* Primary Mobile Number + Father Name */}
+      {/* Primary Mobile Number + Login Username + Role */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
-          label="Father's Name"
-          placeholder="Michael Doe"
-          value={formData.fathersName}
-          onChange={(e) => updateFormData("fathersName", e.target.value)}
-        />
         <CustomSelect
           label="Role"
           value={formData.userRole}
@@ -198,54 +191,6 @@ export const PersonalInformation = ({
             { value: "customer_support", label: "Customer Support" },
             { value: "data_entry", label: "Data Entry" },
             { value: "customer", label: "Customer" },
-          ]}
-        />
-        <CustomDateInput
-          label="Date of Birth"
-          value={formData.dateOfBirth ? dayjs(formData.dateOfBirth) : null}
-          onChange={(date) =>
-            updateFormData("dateOfBirth", date ? date.format("YYYY-MM-DD") : "")
-          }
-        />
-      </Stack>
-
-      {/* Date of Birth + Gender */}
-      <Stack direction="row" spacing={2}>
-        <CustomSelect
-          label="Gender"
-          value={formData.gender}
-          onChange={(e) => updateFormData("gender", e.target.value)}
-          options={[
-            { value: "Male", label: "Male" },
-            { value: "Female", label: "Female" },
-            { value: "Other", label: "Other" },
-          ]}
-        />
-        <CustomInput
-          label="National ID"
-          placeholder="12345-6789012-3"
-          value={formData.nationalId}
-          onChange={(e) => updateFormData("nationalId", e.target.value)}
-        />
-        <CustomInput
-          label="Nationality"
-          placeholder="e.g., Pakistani"
-          value={formData.nationality || ""}
-          onChange={(e) => updateFormData("nationality", e.target.value)}
-        />
-      </Stack>
-
-      {/* National ID + Nationality */}
-      <Stack direction="row" spacing={2}>
-        <CustomSelect
-          label="Marital Status"
-          value={formData.maritalStatus}
-          onChange={(e) => updateFormData("maritalStatus", e.target.value)}
-          options={[
-            { value: "Single", label: "Single" },
-            { value: "Married", label: "Married" },
-            { value: "Divorced", label: "Divorced" },
-            { value: "Widowed", label: "Widowed" },
           ]}
         />
         <CustomInput
@@ -264,7 +209,22 @@ export const PersonalInformation = ({
             </IconButton>
           }
         />
-        <div className="w-full"></div>
+        <CustomInput
+          label="Confirm Password *"
+          type={showConfirmPassword ? "text" : "password"}
+          placeholder="********"
+          value={formData.confirmPassword || ""}
+          onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+          endAdornment={
+            <IconButton
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              edge="end"
+              sx={{ mr: -1 }}
+            >
+              {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+            </IconButton>
+          }
+        />
       </Stack>
     </Stack>
   );

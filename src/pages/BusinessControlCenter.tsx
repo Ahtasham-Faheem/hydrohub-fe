@@ -25,7 +25,7 @@ const cardToRouteMap: { [key: string]: string } = {
   "Start of the Day": "/start-of-day",
   "Close of the Day": "/close-of-day",
   "Customer Management": "customer-management",
-  "Customer Profiles": "/customer-profiles",
+  "Customer Profiles": "customer-profiles",
   "Customer Orders": "/customer-orders",
   "Customer Payments": "/customer-payments",
   "Customer Ranking": "/customer-ranking",
@@ -56,7 +56,11 @@ const cardToRouteMap: { [key: string]: string } = {
   "Logistics Management": "/logistics-management",
 };
 
-export default function BusinessControlCenter() {
+interface BusinessControlCenterProps {
+  onHideHeader?: () => void;
+}
+
+export default function BusinessControlCenter({ onHideHeader }: BusinessControlCenterProps) {
   const [modules, setModules] = useState(initialModules);
   const [isDraggable, setIsDraggable] = useState(true);
 
@@ -73,10 +77,14 @@ export default function BusinessControlCenter() {
     }
   };
 
+  const handleIsolationClick = () => {
+    onHideHeader?.();
+  };
+
   return (
     <div className="">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-xl font-bold text-gray-800">
           Business Control Center
         </h1>
@@ -84,8 +92,9 @@ export default function BusinessControlCenter() {
         <div className="flex items-center gap-2">
           <div className="mr-1">
             <img
+              onClick={handleIsolationClick}
               src={Isolation}
-              className="bg-white p-2 rounded hover:shadow-md"
+              className="bg-white p-2 rounded hover:shadow-md cursor-pointer transition-shadow"
               alt="Isolation Mode"
             />
           </div>
@@ -100,7 +109,7 @@ export default function BusinessControlCenter() {
             <div className="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-blue-600 transition-colors"></div>
             <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
           </label>
-          <span className="text-sm text-gray-700">Enable Drag and Drop</span>
+          <span className="text-sm text-gray-700 mr-10">Enable Drag and Drop</span>
         </div>
       </div>
 

@@ -6,7 +6,7 @@ interface CustomInputProps {
   label: string;
   type?: string;
   value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   error?: string;
   endAdornment?: React.ReactNode;
   startAdornment?: React.ReactNode;
@@ -16,6 +16,7 @@ interface CustomInputProps {
   disabled?: boolean;
   multiline?: boolean;
   rows?: number;
+  required?: boolean;
 }
 
 export const CustomInput = ({
@@ -32,6 +33,7 @@ export const CustomInput = ({
   disabled = false,
   multiline = false,
   rows = 1,
+  required,
 }: CustomInputProps) => {
   return (
     <TextField
@@ -49,6 +51,7 @@ export const CustomInput = ({
       disabled={disabled}
       multiline={multiline}
       rows={multiline ? rows : undefined}
+      required={required}
       InputProps={{
         startAdornment: startAdornment ? (
           <InputAdornment position="start">{startAdornment}</InputAdornment>

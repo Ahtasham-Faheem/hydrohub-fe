@@ -9,11 +9,11 @@ import {
 } from "@mui/material";
 import { Visibility, VisibilityOff, Phone, Email } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
-import { CustomInput } from "../components/CustomInput";
-import { PrimaryButton } from "../components/PrimaryButton";
-import WaterLogo from "../assets/WATER-INN-logo.svg";
-import { Footer } from "../components/auth/Footer";
-import { authService } from "../services/api";
+import { CustomInput } from "../../components/CustomInput";
+import { PrimaryButton } from "../../components/PrimaryButton";
+import WaterLogo from "../../assets/WATER-INN-logo.svg";
+import { Footer } from "../../components/auth/Footer";
+import { authService } from "../../services/api";
 
 export const ResetPassword = () => {
   const [resetMode, setResetMode] = useState<"email" | "phone">("email");

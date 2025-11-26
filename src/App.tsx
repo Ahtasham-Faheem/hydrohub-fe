@@ -7,11 +7,11 @@ import {
 import { ThemeProvider } from "@mui/material/styles";
 import { AuthProvider } from "./contexts/AuthContext";
 import { PrivateRoute } from "./components/PrivateRoute";
-import { Login } from "./pages/Login";
+import { Login } from "./pages/auth/Login";
 import { Dashboard } from "./pages/Dashboard";
 import { muiTheme } from "./theme/muiTheme";
-import { ResetPassword } from "./pages/ResetPassword";
-import { LoginAccess } from "./pages/LoginAccess";
+import { ResetPassword } from "./pages/auth/ResetPassword";
+import { LoginAccess } from "./pages/auth/LoginAccess";
 
 export default function App() {
   return (

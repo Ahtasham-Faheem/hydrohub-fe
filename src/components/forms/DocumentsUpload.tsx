@@ -23,7 +23,7 @@ export const DocumentsUpload = () => {
 
       {/* Other Attachments + Remarks */}
       <Box sx={{ display: "flex", gap: 2 }}>
-        <FileUploadField label="Other Attachments" />
+        <FileUploadField label="Other Attachments" multiple={true} />
       </Box>
       <Box sx={{ display: "flex", gap: 2 }}>
         <CustomInput

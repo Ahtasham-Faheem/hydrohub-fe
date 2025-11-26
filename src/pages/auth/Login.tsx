@@ -11,12 +11,12 @@ import {
   IconButton,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
-import { useAuth } from "../contexts/AuthContext";
-import WaterLogo from "../assets/WATER-INN-logo.svg";
+import { useAuth } from "../../contexts/AuthContext";
+import WaterLogo from "../../assets/WATER-INN-logo.svg";
 import { LuMail } from "react-icons/lu";
-import { Footer } from "../components/auth/Footer";
-import { PrimaryButton } from "../components/PrimaryButton";
-import { CustomInput } from "../components/CustomInput";
+import { Footer } from "../../components/auth/Footer";
+import { PrimaryButton } from "../../components/PrimaryButton";
+import { CustomInput } from "../../components/CustomInput";
 
 export const Login = () => {
   const [loginMode, setLoginMode] = useState<"email" | "phone">("email");

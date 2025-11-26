@@ -30,9 +30,10 @@ import starIcon from "../assets/HeaderIcons/star.svg";
 
 interface HeaderProps {
   onToggleSidebar: () => void;
+  isVisible?: boolean;
 }
 
-export const Header = ({ onToggleSidebar }: HeaderProps) => {
+export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
   const { logout } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -53,13 +54,24 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
         px: 3,
         py: 1,
         ml: 2,
-        display: "flex",
+        display: isVisible ? "flex" : "none",
         alignItems: "center",
         justifyContent: "space-between",
         position: "sticky",
         top: 0,
         zIndex: 1200,
         boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+        animation: isVisible ? "slideDown 0.4s ease-out" : "none",
+        '@keyframes slideDown': {
+          '0%': {
+            transform: 'translateY(-100%)',
+            opacity: 0,
+          },
+          '100%': {
+            transform: 'translateY(0)',
+            opacity: 1,
+          },
+        },
       }}
     >
       {/* Left Section: Sidebar Toggle + Search */}
@@ -133,26 +145,26 @@ export const Header = ({ onToggleSidebar }: HeaderProps) => {
             <img src={boxesIcon} alt="apps" style={{ width: 15, height: 15 }} />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Favorites">
+        {/* <Tooltip title="Favorites">
           <IconButton sx={{ p: 0.5 }}>
             <img src={starIcon} alt="favorites" style={{ width: 16, height: 16, opacity: 0.85 }} />
           </IconButton>
-        </Tooltip>
+        </Tooltip> */}
         <Tooltip title="Language">
           <IconButton sx={{ p: 0.5 }}>
             <img src={languageIcon} alt="language" style={{ width: 16, height: 16, opacity: 0.85 }} />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Theme">
+        {/* <Tooltip title="Theme">
           <IconButton sx={{ p: 0.5 }}>
             <img src={sunIcon} alt="theme" style={{ width: 16, height: 16, opacity: 0.85 }} />
           </IconButton>
-        </Tooltip>
-        <Tooltip title="Mail">
+        </Tooltip> */}
+        {/* <Tooltip title="Mail">
           <IconButton sx={{ p: 0.5 }}>
             <img src={mailIcon} alt="apps" style={{ width: 16, height: 16 }} />
           </IconButton>
-        </Tooltip>
+        </Tooltip> */}
         <Tooltip title="Chat">
           <IconButton sx={{ p: 0.5 }}>
             <img src={chatIcon} alt="apps" style={{ width: 16, height: 16 }} />
