@@ -13,10 +13,10 @@ import {
   Button,
 } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
-import type { User } from "../../types/user";
+import type { StaffMember } from "../../types/user";
 
 interface UsersTableProps {
-  users: User[];
+  users: StaffMember[];
   isLoading: boolean;
   currentPage: number;
   setCurrentPage: (page: number | ((prev: number) => number)) => void;
@@ -57,48 +57,48 @@ export const UsersTable = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((u: User) => (
-                <TableRow key={u.id} hover>
+              {users.map((staff: StaffMember) => (
+                <TableRow key={staff.id} hover>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={2}>
-                      <Avatar>{u.firstName[0]}{u.lastName[0]}</Avatar>
+                      <Avatar>{(staff.user.firstName?.[0] || 'U') + (staff.user.lastName?.[0] || 'S')}</Avatar>
                       <Box>
                         <Typography fontWeight={600} fontSize={14}>
-                          {u.firstName} {u.lastName}
+                          {staff.user.firstName || 'N/A'} {staff.user.lastName || 'N/A'}
                         </Typography>
                         <Typography
                           variant="body2"
                           color="text.secondary"
                           fontSize={12}
                         >
-                          @{u.username}
+                          @{staff.staffId}
                         </Typography>
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell>{u.email}</TableCell>
-                  <TableCell>{u.vendorRoles.map((r: { role: string }) => r.role).join(", ")}</TableCell>
+                  <TableCell>{staff.user.email || 'N/A'}</TableCell>
+                  <TableCell>{staff.userRole || 'N/A'}</TableCell>
                   <TableCell>
                     <Chip
-                      label={u.status}
+                      label={staff.user.status}
                       size="small"
                       sx={{
-                        bgcolor: u.status === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
-                        color: u.status === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
+                        bgcolor: staff.user.status === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
+                        color: staff.user.status === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
                       }}
                     />
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={u.isEmailVerified && u.isPhoneVerified ? "Verified" : "Unverified"}
+                      label={staff.user.isEmailVerified && staff.user.isPhoneVerified ? "Verified" : "Unverified"}
                       size="small"
                       sx={{
                         bgcolor:
-                          u.isEmailVerified && u.isPhoneVerified
+                          staff.user.isEmailVerified && staff.user.isPhoneVerified
                             ? "var(--color-status-success-light)"
                             : "var(--color-status-error-light)",
                         color:
-                          u.isEmailVerified && u.isPhoneVerified
+                          staff.user.isEmailVerified && staff.user.isPhoneVerified
                             ? "var(--color-status-success)"
                             : "var(--color-status-error)",
                       }}

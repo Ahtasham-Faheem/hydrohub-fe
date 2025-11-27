@@ -239,7 +239,6 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
     if (!state.data.mobileNumber) errors.push('Mobile Number is required');
     if (!state.data.username) errors.push('Username is required');
     if (!state.data.password) errors.push('Password is required');
-    if (!state.data.dateOfBirth) errors.push('Date of Birth is required');
 
     if ('businessName' in state.data) {
       if (!state.data.businessName) errors.push('Business Name is required');

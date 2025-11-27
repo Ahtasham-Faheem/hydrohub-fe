@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Box, Card, Divider } from "@mui/material";
 import dayjs from "dayjs";
-import { useUsers } from "../../hooks/useUsers";
+import { useGetStaff } from "../../hooks/useStaff";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
 import { UserStatsCards } from "../../components/users/UserStatsCards";
 import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
-import { UsersTable } from "../../components/users/UsersTable";
+import { DataTable } from "../../components/common/DataTable";
+import type { Column } from "../../components/common/DataTable";
 
 export const UsersPage = () => {
   const [status, setStatus] = useState("");
@@ -17,11 +18,15 @@ export const UsersPage = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   
-  // Using TanStack Query
-  const { data: usersData, isLoading, error } = useUsers(currentPage, 10);
+  // Get vendorId from localStorage
+  const vendorData = localStorage.getItem('userData');
+  const vendorId = vendorData ? JSON.parse(vendorData).id : null;
   
-  const users = usersData?.data || [];
-  const totalPages = usersData?.pagination?.totalPages || 1;
+  // Using TanStack Query to fetch staff members
+  const { data: staffData, isLoading } = useGetStaff(vendorId, currentPage, 10);
+  
+  const staff = staffData?.data || [];
+  const totalPages = staffData?.pagination?.totalPages || 1;
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(
     null
@@ -78,10 +83,10 @@ export const UsersPage = () => {
   // TanStack Query handles the data fetching automatically
 
   // Filter users based on selected filters
-  const filteredUsers = users.filter((user) => {
+  const filteredStaff = staff.filter((staffMember: any) => {
     // Filter by date range
     if (startDate && endDate) {
-      const userCreatedDate = dayjs(user.createdAt);
+      const userCreatedDate = dayjs(staffMember.createdAt);
       const isInRange =
         userCreatedDate.isAfter(startDate) && userCreatedDate.isBefore(endDate) ||
         userCreatedDate.isSame(startDate, "day") ||
@@ -92,23 +97,28 @@ export const UsersPage = () => {
     }
 
     // Filter by status
-    if (status && user.status !== status.toLowerCase()) {
+    if (status && staffMember.user?.status !== status.toLowerCase()) {
       return false;
     }
 
     // Filter by role
-    if (role && !user.vendorRoles.some((r) => r.role === role)) {
+    if (role && staffMember.userRole !== role) {
       return false;
     }
 
     // Filter by search
     if (search) {
       const searchLower = search.toLowerCase();
+      const firstName = staffMember.user?.firstName || '';
+      const lastName = staffMember.user?.lastName || '';
+      const email = staffMember.user?.email || '';
+      const username = staffMember.user?.username || '';
+      
       if (
-        !user.firstName.toLowerCase().includes(searchLower) &&
-        !user.lastName.toLowerCase().includes(searchLower) &&
-        !user.email.toLowerCase().includes(searchLower) &&
-        !user.username.toLowerCase().includes(searchLower)
+        !firstName.toLowerCase().includes(searchLower) &&
+        !lastName.toLowerCase().includes(searchLower) &&
+        !email.toLowerCase().includes(searchLower) &&
+        !username.toLowerCase().includes(searchLower)
       ) {
         return false;
       }
@@ -133,7 +143,7 @@ export const UsersPage = () => {
   const cards = [
     {
       title: "Active Users",
-      value: users.filter((u) => u.status === "active").length.toString(),
+      value: staff.filter((u: any) => u.user?.status === "active").length.toString(),
       change: "+0%",
       desc: "All staff currently authorized in the system",
       color: "var(--color-status-success)",
@@ -141,35 +151,128 @@ export const UsersPage = () => {
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "Present User",
-      value: users
-        .filter((u) => u.isEmailVerified && u.isPhoneVerified)
+      title: "Verified Users",
+      value: staff
+        .filter((u: any) => u.user?.isEmailVerified && u.user?.isPhoneVerified)
         .length.toString(),
       change: "+0%",
-      desc: "Staff checked in for the ongoing shift",
+      desc: "Users verified via email and phone",
       color: "var(--color-primary-600)",
       bgColor: "var(--color-primary-bg-light)",
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "On Leaves User",
-      value: users
-        .filter((u) => !u.isEmailVerified || !u.isPhoneVerified)
+      title: "Unverified Users",
+      value: staff
+        .filter((u: any) => !u.user?.isEmailVerified || !u.user?.isPhoneVerified)
         .length.toString(),
       change: "0%",
-      desc: "Staff offcially marked on leave",
+      desc: "Users pending verification",
       color: "var(--color-status-warning)",
       bgColor: "var(--color-status-warning-light)",
       icon: <LuUserRoundX />,
     },
     {
-      title: "Inactive user",
-      value: users.filter((u) => u.status === "inactive").length.toString(),
+      title: "Inactive Users",
+      value: staff.filter((u: any) => u.user?.status === "inactive").length.toString(),
       change: "0%",
-      desc: "Staff no longer of operations",
+      desc: "Users no longer active in operations",
       color: "var(--color-status-error)",
       bgColor: "var(--color-status-error-light)",
       icon: <LuUserRoundX />,
+    },
+  ];
+
+  // Define columns for the DataTable
+  const tableColumns: Column[] = [
+    {
+      key: "user.firstName",
+      label: "User",
+      render: (_: any, item: any) => {
+        const firstName = item.user?.firstName || 'N/A';
+        const lastName = item.user?.lastName || 'N/A';
+        const initials = (firstName?.[0] || 'U') + (lastName?.[0] || 'S');
+        return (
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: 'var(--color-primary-600)',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+              }}
+            >
+              {initials}
+            </Box>
+            <Box>
+              <Box sx={{ fontWeight: 600, fontSize: 14 }}>
+                {firstName} {lastName}
+              </Box>
+              <Box sx={{ fontSize: 12, color: '#6b7280' }}>
+                @{item.staffId}
+              </Box>
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      key: "user.email",
+      label: "Email",
+    },
+    {
+      key: "userRole",
+      label: "Role",
+    },
+    {
+      key: "user.status",
+      label: "Status",
+      render: (value: string) => (
+        <Box
+          sx={{
+            display: 'inline-block',
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 1,
+            bgcolor: value === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
+            color: value === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            textTransform: 'capitalize',
+          }}
+        >
+          {value || 'N/A'}
+        </Box>
+      ),
+    },
+    {
+      key: "user.isEmailVerified",
+      label: "Verified",
+      render: (_: boolean, item: any) => {
+        const isVerified = item.user?.isEmailVerified && item.user?.isPhoneVerified;
+        return (
+          <Box
+            sx={{
+              display: 'inline-block',
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 1,
+              bgcolor: isVerified ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
+              color: isVerified ? "var(--color-status-success)" : "var(--color-status-error)",
+              fontSize: '0.75rem',
+              fontWeight: 600,
+            }}
+          >
+            {isVerified ? 'Verified' : 'Unverified'}
+          </Box>
+        );
+      },
     },
   ];
 
@@ -219,15 +322,18 @@ export const UsersPage = () => {
           }}
         />
       </Card>
-      <UsersTable
-        {...{
-          users: filteredUsers,
-          isLoading,
-          error,
-          currentPage,
-          setCurrentPage,
-          totalPages,
-        }}
+      <DataTable
+        columns={tableColumns}
+        data={filteredStaff}
+        isLoading={isLoading}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        keyField="id"
+        showActions={true}
+        onView={(item) => console.log("View", item)}
+        onEdit={(item) => console.log("Edit", item)}
+        onDelete={(item) => console.log("Delete", item)}
       />
     </Box>
   );

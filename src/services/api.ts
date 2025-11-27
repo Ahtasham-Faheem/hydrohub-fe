@@ -1,5 +1,6 @@
 import axios from 'axios';
-import type { UsersResponse } from '../types/user';
+import type { UsersResponse, StaffResponse } from '../types/user';
+import type { CustomersResponse } from '../types/customer';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = import.meta.env.VITE_API_VERSION;
@@ -106,7 +107,6 @@ export interface CreateUserData {
   firstName: string;
   lastName: string;
   fathersName?: string;
-  userRole: string;
   dateOfBirth?: string;
   gender?: string;
   nationalId?: string;
@@ -119,7 +119,19 @@ export interface CreateStaffData {
   accessLevel: string;
   accessExpiry: string;
   branchAssignment: string;
+  userRole: string;
   twoFactorAuth: boolean;
+}
+
+export interface CreateCustomerData {
+  userId: string;
+  customerType: 'domestic' | 'business' | 'commercial';
+  motherName?: string;
+  nationality?: string;
+  alternateContact?: string;
+  preferredContactMethod?: string;
+  category?: string;
+  accountType?: string;
 }
 
 export interface CreateUserResponse {
@@ -170,6 +182,35 @@ export const usersService = {
 export const staffService = {
   createStaff: async (staffData: CreateStaffData): Promise<any> => {
     const response = await api.post('/staff', staffData);
+    return response.data;
+  },
+
+  getStaff: async (vendorId: string, page = 1, limit = 10): Promise<StaffResponse> => {
+    const response = await api.get(`/staff`, {
+      params: {
+        vendorId,
+        page,
+        limit,
+      },
+    });
+    return response.data;
+  },
+};
+
+export const customerService = {
+  createCustomer: async (customerData: CreateCustomerData): Promise<any> => {
+    const response = await api.post('/customers', customerData);
+    return response.data;
+  },
+
+  getCustomers: async (vendorId: string, page = 1, limit = 10): Promise<CustomersResponse> => {
+    const response = await api.get(`/customers`, {
+      params: {
+        vendorId,
+        page,
+        limit,
+      },
+    });
     return response.data;
   },
 };

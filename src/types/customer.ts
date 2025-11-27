@@ -171,3 +171,49 @@ export interface CustomerFormState {
   data: DomesticCustomer | BusinessCustomer | null;
   errors: Record<string, string>;
 }
+
+export interface CustomerUser {
+  id: string;
+  email: string;
+  phone: string;
+  status: 'active' | 'inactive';
+  firstName: string;
+  lastName: string;
+}
+
+export interface CustomerProfile {
+  id: string;
+  customerId: string;
+  userId: string;
+  user: CustomerUser;
+  vendorId: string;
+  customerType: 'domestic' | 'business' | 'commercial' | null;
+  motherName: string | null;
+  nationality: string | null;
+  alternateContact: string | null;
+  preferredContactMethod: string | null;
+  category: string;
+  accountType: string;
+  customerStatus: 'active' | 'inactive';
+  masterAccountId: string | null;
+  openingBalance: string;
+  deliveryCharges: string;
+  discountPercentage: string;
+  bottleSecurityDeposit: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export interface CustomersResponse {
+  data: CustomerProfile[];
+  pagination: Pagination;
+}

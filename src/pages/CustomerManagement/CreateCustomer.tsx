@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -28,6 +28,7 @@ import {
   LuShield,
   LuFileText,
 } from "react-icons/lu";
+import { useCreateUser } from "../../hooks";
 
 // Import form components
 import { DomesticStep1BasicProfile } from "../../components/customer-forms/DomesticStep1BasicProfile";
@@ -39,6 +40,7 @@ import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/Dom
 import { DomesticStep7Referral } from "../../components/customer-forms/DomesticStep7Referral";
 import { DomesticStep8Security } from "../../components/customer-forms/DomesticStep8Security";
 import { DomesticStep9AdditionalNotes } from "../../components/customer-forms/DomesticStep9AdditionalNotes";
+import { useCreateCustomer } from "../../hooks/useCreateCustomer";
 
 // Custom Step Icon Component
 const CustomStepIcon = ({ active }: { active: boolean }) => (
@@ -85,10 +87,15 @@ const businessSteps = [
 const CreateCustomerFormContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
   const { state, setCurrentStep, validateRequiredFields, setCustomerType } =
     useCustomerForm();
   const location = useLocation();
+  const navigate = useNavigate();
   const [isInitialized, setIsInitialized] = useState(false);
+
+  const createUserMutation = useCreateUser();
+  const createCustomerMutation = useCreateCustomer();
 
   // Initialize customer type based on route
   useEffect(() => {
@@ -113,23 +120,69 @@ const CreateCustomerFormContent = () => {
   const handleNext = async () => {
     setError(null);
 
-    if (state.currentStep === steps.length - 1) {
-      // Final submission
+    // Step 1 (Basic Profile): Create user
+    if (state.currentStep === 0 && !createdUserId) {
       const validation = validateRequiredFields();
       if (!validation.isValid) {
         setError(validation.errors.join(", "));
         return;
       }
 
-      // TODO: Submit customer data
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        // Redirect to customer profiles
-      }, 2000);
-      return;
+      const data = state.data as any;
+
+      try {
+        const newUser = await createUserMutation.mutateAsync({
+          username: data.username,
+          email: data.email,
+          phone: data.mobileNumber,
+          password: data.password,
+          status: 'active',
+          firstName: data.firstName,
+          lastName: data.lastName,
+          gender: data.gender || 'male',
+        });
+
+        setCreatedUserId(newUser.id);
+        setCurrentStep(1);
+        return;
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to create user');
+        return;
+      }
     }
 
+    // Final submission: Create customer profile
+    if (state.currentStep === 1) {
+      if (!createdUserId) {
+        setError('User not created. Please go back to step 1.');
+        return;
+      }
+
+      try {
+        await createCustomerMutation.mutateAsync({
+          userId: createdUserId,
+          customerType: state.customerType as 'domestic' | 'business' | 'commercial',
+          motherName: (state.data as any).motherName,
+          nationality: (state.data as any).nationality,
+          alternateContact: (state.data as any).alternateContact,
+          preferredContactMethod: (state.data as any).preferredContactMethod,
+          category: 'standard',
+          accountType: 'retail',
+        });
+
+        setSuccess(true);
+        setTimeout(() => {
+          setSuccess(false);
+          navigate('/dashboard/customer-profiles');
+        }, 2000);
+        return;
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to create customer');
+        return;
+      }
+    }
+
+    // Regular step navigation
     setCurrentStep(Math.min(state.currentStep + 1, steps.length - 1));
   };
 

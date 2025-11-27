@@ -114,7 +114,6 @@ const CreateUserForm = () => {
           lastName: formData.lastName,
           fathersName: formData.fathersName,
           dateOfBirth: formData.dateOfBirth,
-          userRole: formData.userRole,
           gender: formData.gender,
           nationalId: formData.nationalId,
           maritalStatus: formData.maritalStatus,
@@ -123,46 +122,35 @@ const CreateUserForm = () => {
         {
           onSuccess: (userResponse) => {
             updateFormData("userId", userResponse.id);
-            setSuccess(true);
-            setCurrentStep(1);
-            setTimeout(() => {
-              setSuccess(false);
-            }, 2000);
+            
+            // After user creation, immediately create staff
+            createStaffMutation.mutate(
+              {
+                userId: userResponse.id,
+                accessLevel: formData.accessLevel,
+                accessExpiry: formData.accessExpiry,
+                userRole: formData.userRole,
+                branchAssignment: formData.branchAssignment,
+                twoFactorAuth: formData.twoFactorAuth,
+              },
+              {
+                onSuccess: () => {
+                  setSuccess(true);
+                  setCurrentStep(1);
+                  setTimeout(() => {
+                    setSuccess(false);
+                  }, 2000);
+                },
+                onError: (error: any) => {
+                  setError(
+                    error.response?.data?.message || "Failed to assign staff role"
+                  );
+                },
+              }
+            );
           },
           onError: (error: any) => {
             setError(error.response?.data?.message || "Failed to create user");
-          },
-        }
-      );
-      return;
-    }
-
-    // If it's the second step, create staff
-    if (currentStep === 1) {
-      if (!formData.userId) {
-        setError("User ID is missing. Please go back and create user first.");
-        return;
-      }
-
-      createStaffMutation.mutate(
-        {
-          userId: formData.userId,
-          accessLevel: formData.accessLevel,
-          accessExpiry: formData.accessExpiry,
-          branchAssignment: formData.branchAssignment,
-          twoFactorAuth: formData.twoFactorAuth,
-        },
-        {
-          onSuccess: () => {
-            setSuccess(true);
-            setTimeout(() => {
-              setSuccess(false);
-            }, 2000);
-          },
-          onError: (error: any) => {
-            setError(
-              error.response?.data?.message || "Failed to assign staff role"
-            );
           },
         }
       );
@@ -347,8 +335,6 @@ const CreateUserForm = () => {
                 ? "Processing..."
                 : currentStep === 0
                 ? "Create User"
-                : currentStep === 1
-                ? "Assign Role"
                 : "Next"}
             </PrimaryButton>
           </Box>

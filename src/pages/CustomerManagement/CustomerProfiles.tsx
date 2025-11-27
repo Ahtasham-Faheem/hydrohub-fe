@@ -1,90 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Box, Card, Divider } from "@mui/material";
 import dayjs from "dayjs";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
 import { UserStatsCards } from "../../components/users/UserStatsCards";
 import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
-import { UsersTable } from "../../components/users/UsersTable";
-
-// Dummy customer data
-const dummyCustomers = [
-  {
-    id: 1,
-    firstName: "Ahmed",
-    lastName: "Khan",
-    email: "ahmed.khan@example.com",
-    username: "ahmedkhan",
-    status: "active",
-    isEmailVerified: true,
-    isPhoneVerified: true,
-    createdAt: dayjs().subtract(5, "days").toISOString(),
-    vendorRoles: [{ role: "Customer" }],
-    phone: "+92-300-1234567",
-    companyName: "Khan Trading Co.",
-    profilePictureAssetId: '',
-  },
-  {
-    id: 2,
-    firstName: "Fatima",
-    lastName: "Ali",
-    email: "fatima.ali@example.com",
-    username: "fatimaali",
-    status: "active",
-    isEmailVerified: true,
-    isPhoneVerified: false,
-    createdAt: dayjs().subtract(10, "days").toISOString(),
-    vendorRoles: [{ role: "Customer" }],
-    phone: "+92-300-2345678",
-    companyName: "Ali Enterprises",
-    profilePictureAssetId: '',
-  },
-  {
-    id: 3,
-    firstName: "Hassan",
-    lastName: "Malik",
-    email: "hassan.malik@example.com",
-    username: "hassanmalik",
-    status: "inactive",
-    isEmailVerified: false,
-    isPhoneVerified: true,
-    createdAt: dayjs().subtract(15, "days").toISOString(),
-    vendorRoles: [{ role: "Customer" }],
-    phone: "+92-300-3456789",
-    companyName: "Malik Industries",
-    profilePictureAssetId: '',
-  },
-  {
-    id: 4,
-    firstName: "Aisha",
-    lastName: "Hussain",
-    email: "aisha.hussain@example.com",
-    username: "aishahussain",
-    status: "active",
-    isEmailVerified: true,
-    isPhoneVerified: true,
-    createdAt: dayjs().subtract(20, "days").toISOString(),
-    vendorRoles: [{ role: "Customer" }],
-    phone: "+92-300-4567890",
-    companyName: "Hussain Group",
-    profilePictureAssetId: '',
-  },
-  {
-    id: 5,
-    firstName: "Muhammad",
-    lastName: "Raza",
-    email: "muhammad.raza@example.com",
-    username: "muhammadraza",
-    status: "active",
-    isEmailVerified: true,
-    isPhoneVerified: true,
-    createdAt: dayjs().subtract(25, "days").toISOString(),
-    vendorRoles: [{ role: "Customer" }],
-    phone: "+92-300-5678901",
-    companyName: "Raza Logistics",
-    profilePictureAssetId: '',
-  },
-];
+import { DataTable } from "../../components/common/DataTable";
+import type { Column } from "../../components/common/DataTable";
+import { useGetCustomers } from "../../hooks/useCustomer";
 
 export const CustomerProfiles = () => {
   const [status, setStatus] = useState("");
@@ -95,7 +18,23 @@ export const CustomerProfiles = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
-  const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(null);
+  const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(
+    null
+  );
+
+  // Get vendorId from localStorage
+  const vendorData = localStorage.getItem("userData");
+  const vendorId = vendorData ? JSON.parse(vendorData).id : null;
+
+  // Fetch customers using the API
+  const { data: customerData, isLoading } = useGetCustomers(
+    vendorId,
+    currentPage,
+    10
+  );
+
+  const customers = customerData?.data || [];
+  const totalPages = customerData?.pagination?.totalPages || 1;
 
   const [columns, setColumns] = useState([
     { id: 1, label: "User", enabled: true },
@@ -146,44 +85,45 @@ export const CustomerProfiles = () => {
   ];
 
   // Filter customers based on selected filters
-  // const filteredCustomers = dummyCustomers.filter((customer) => {
-  //   // Filter by date range
-  //   if (startDate && endDate) {
-  //     const customerCreatedDate = dayjs(customer.createdAt);
-  //     const isInRange =
-  //       (customerCreatedDate.isAfter(startDate) && customerCreatedDate.isBefore(endDate)) ||
-  //       customerCreatedDate.isSame(startDate, "day") ||
-  //       customerCreatedDate.isSame(endDate, "day");
-  //     if (!isInRange) {
-  //       return false;
-  //     }
-  //   }
+  const filteredCustomers = useMemo(() => {
+    return customers.filter((customer: any) => {
+      // Filter by date range
+      if (startDate && endDate) {
+        const customerCreatedDate = dayjs(customer.createdAt);
+        const isInRange =
+          (customerCreatedDate.isAfter(startDate) &&
+            customerCreatedDate.isBefore(endDate)) ||
+          customerCreatedDate.isSame(startDate, "day") ||
+          customerCreatedDate.isSame(endDate, "day");
+        if (!isInRange) {
+          return false;
+        }
+      }
 
-  //   // Filter by status
-  //   if (status && customer.status !== status.toLowerCase()) {
-  //     return false;
-  //   }
+      // Filter by status - check customerStatus field
+      if (status && customer.customerStatus !== status.toLowerCase()) {
+        return false;
+      }
 
-  //   // Filter by role
-  //   if (role && !customer.vendorRoles.some((r) => r.role === role)) {
-  //     return false;
-  //   }
+      // Filter by search
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const firstName = customer.user?.firstName || "";
+        const lastName = customer.user?.lastName || "";
+        const email = customer.user?.email || "";
 
-  //   // Filter by search
-  //   if (search) {
-  //     const searchLower = search.toLowerCase();
-  //     if (
-  //       !customer.firstName.toLowerCase().includes(searchLower) &&
-  //       !customer.lastName.toLowerCase().includes(searchLower) &&
-  //       !customer.email.toLowerCase().includes(searchLower) &&
-  //       !customer.username.toLowerCase().includes(searchLower)
-  //     ) {
-  //       return false;
-  //     }
-  //   }
+        if (
+          !firstName.toLowerCase().includes(searchLower) &&
+          !lastName.toLowerCase().includes(searchLower) &&
+          !email.toLowerCase().includes(searchLower)
+        ) {
+          return false;
+        }
+      }
 
-  //   return true;
-  // });
+      return true;
+    });
+  }, [customers, status, startDate, endDate, search]);
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -201,7 +141,9 @@ export const CustomerProfiles = () => {
   const cards = [
     {
       title: "Active Customers",
-      value: dummyCustomers.filter((c) => c.status === "active").length.toString(),
+      value: customers
+        .filter((c: any) => c.customerStatus === "active")
+        .length.toString(),
       change: "+0%",
       desc: "All customers currently active in the system",
       color: "var(--color-status-success)",
@@ -210,8 +152,8 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Verified Customers",
-      value: dummyCustomers
-        .filter((c) => c.isEmailVerified && c.isPhoneVerified)
+      value: customers
+        .filter((c: any) => c.user?.status === "active")
         .length.toString(),
       change: "+0%",
       desc: "Customers with verified email and phone",
@@ -220,24 +162,129 @@ export const CustomerProfiles = () => {
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "Pending Verification",
-      value: dummyCustomers
-        .filter((c) => !c.isEmailVerified || !c.isPhoneVerified)
-        .length.toString(),
+      title: "Total Customers",
+      value: customers.length.toString(),
       change: "0%",
-      desc: "Customers awaiting email or phone",
+      desc: "Total customers in the system",
       color: "var(--color-status-warning)",
       bgColor: "var(--color-status-warning-light)",
       icon: <LuUserRoundX />,
     },
     {
       title: "Inactive Customers",
-      value: dummyCustomers.filter((c) => c.status === "inactive").length.toString(),
+      value: customers
+        .filter((c: any) => c.customerStatus === "inactive")
+        .length.toString(),
       change: "0%",
       desc: "Customers no longer active",
       color: "var(--color-status-error)",
       bgColor: "var(--color-status-error-light)",
       icon: <LuUserRoundX />,
+    },
+  ];
+
+  const tableColumns: Column[] = [
+    {
+      key: "user.firstName",
+      label: "Customer Name",
+      render: (_: any, item: any) => {
+        const firstName = item.user?.firstName || "N/A";
+        const lastName = item.user?.lastName || "N/A";
+        const initials = (firstName?.[0] || "C") + (lastName?.[0] || "U");
+        return (
+          <Box display="flex" alignItems="center" gap={2}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "var(--color-primary-600)",
+                color: "white",
+                fontWeight: 600,
+                fontSize: "0.875rem",
+              }}
+            >
+              {initials}
+            </Box>
+            <Box>
+              <Box sx={{ fontWeight: 600, fontSize: 14 }}>
+                {firstName} {lastName}
+              </Box>
+              <Box sx={{ fontSize: 12, color: "#6b7280" }}>
+                ID: {item.customerId}
+              </Box>
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      key: "user.email",
+      label: "Email",
+    },
+    {
+      key: "customerType",
+      label: "Type",
+      render: (value: string) => {
+        return value ? value.charAt(0).toUpperCase() + value.slice(1) : "N/A";
+      },
+    },
+    {
+      key: "customerStatus",
+      label: "Status",
+      render: (value: string) => (
+        <Box
+          sx={{
+            display: "inline-block",
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 1,
+            bgcolor:
+              value === "active"
+                ? "var(--color-status-success-light)"
+                : "var(--color-status-error-light)",
+            color:
+              value === "active"
+                ? "var(--color-status-success)"
+                : "var(--color-status-error)",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            textTransform: "capitalize",
+          }}
+        >
+          {value || "N/A"}
+        </Box>
+      ),
+    },
+    {
+      key: "user.status",
+      label: "User Status",
+      render: (value: string) => (
+        <Box
+          sx={{
+            display: "inline-block",
+            px: 1.5,
+            py: 0.5,
+            borderRadius: 1,
+            bgcolor:
+              value === "active"
+                ? "var(--color-status-success-light)"
+                : "var(--color-status-error-light)",
+            color:
+              value === "active"
+                ? "var(--color-status-success)"
+                : "var(--color-status-error)",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            textTransform: "capitalize",
+          }}
+        >
+          {value || "N/A"}
+        </Box>
+      ),
     },
   ];
 
@@ -254,7 +301,14 @@ export const CustomerProfiles = () => {
           overflow: "visible",
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
           <h2 className="text-lg">Filters</h2>
         </Box>
 
@@ -291,15 +345,18 @@ export const CustomerProfiles = () => {
           }}
         />
       </Card>
-      <UsersTable
-        {...{
-          users: dummyCustomers as any,
-          isLoading: false,
-          error: '',
-          currentPage,
-          setCurrentPage,
-          totalPages: 1,
-        }}
+      <DataTable
+        columns={tableColumns}
+        data={filteredCustomers}
+        isLoading={isLoading}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        keyField="id"
+        showActions={true}
+        onView={(item) => console.log("View customer", item)}
+        onEdit={(item) => console.log("Edit customer", item)}
+        onDelete={(item) => console.log("Delete customer", item)}
       />
     </Box>
   );

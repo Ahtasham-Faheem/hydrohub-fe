@@ -18,6 +18,34 @@ export interface User {
   vendorRoles: VendorRole[];
 }
 
+export interface UserData {
+  id: string;
+  email: string;
+  phone: string;
+  status: string;
+  firstName: string;
+  lastName: string;
+  profilePictureAssetId?: string;
+  username?: string;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
+}
+
+export interface StaffMember {
+  id: string;
+  staffId: string;
+  userId: string;
+  user: UserData;
+  vendorId: string;
+  userRole: string;
+  accessLevel: string;
+  accessExpiry: string;
+  branchAssignment: string;
+  twoFactorAuth: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface PaginationInfo {
   page: number;
   limit: number;
@@ -29,5 +57,10 @@ export interface PaginationInfo {
 
 export interface UsersResponse {
   data: User[];
+  pagination: PaginationInfo;
+}
+
+export interface StaffResponse {
+  data: StaffMember[];
   pagination: PaginationInfo;
 }
