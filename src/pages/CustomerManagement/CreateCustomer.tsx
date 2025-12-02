@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Box,
@@ -13,6 +13,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Stack,
+  CircularProgress,
 } from "@mui/material";
 import { PrimaryButton } from "../../components/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
@@ -33,8 +34,10 @@ import { useCreateUser } from "../../hooks";
 // Import form components
 import { DomesticStep1BasicProfile } from "../../components/customer-forms/DomesticStep1BasicProfile";
 import { DomesticStep2PersonalInfo } from "../../components/customer-forms/DomesticStep2PersonalInfo";
+import type { DomesticStep3BuildingAccessHandle } from "../../components/customer-forms/DomesticStep3BuildingAccess";
 import { DomesticStep3BuildingAccess } from "../../components/customer-forms/DomesticStep3BuildingAccess";
 import { DomesticStep4Addresses } from "../../components/customer-forms/DomesticStep4Addresses";
+import type { DomesticStep5PreferencesHandle } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep5Preferences } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
 import { DomesticStep7Referral } from "../../components/customer-forms/DomesticStep7Referral";
@@ -86,13 +89,18 @@ const businessSteps = [
 
 const CreateCustomerFormContent = () => {
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [customerProfileId, setCustomerProfileId] = useState<string | null>(null);
   const [createdUserId, setCreatedUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { state, setCurrentStep, validateRequiredFields, setCustomerType } =
     useCustomerForm();
   const location = useLocation();
   const navigate = useNavigate();
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Refs for manual form submission
+  const buildingAccessRef = useRef<DomesticStep3BuildingAccessHandle>(null);
+  const preferencesRef = useRef<DomesticStep5PreferencesHandle>(null);
 
   const createUserMutation = useCreateUser();
   const createCustomerMutation = useCreateCustomer();
@@ -131,6 +139,7 @@ const CreateCustomerFormContent = () => {
       const data = state.data as any;
 
       try {
+        setIsLoading(true);
         const newUser = await createUserMutation.mutateAsync({
           username: data.username,
           email: data.email,
@@ -148,6 +157,8 @@ const CreateCustomerFormContent = () => {
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to create user');
         return;
+      } finally {
+        setIsLoading(false);
       }
     }
 
@@ -159,7 +170,8 @@ const CreateCustomerFormContent = () => {
       }
 
       try {
-        await createCustomerMutation.mutateAsync({
+        setIsLoading(true);
+        const newCustomer = await createCustomerMutation.mutateAsync({
           userId: createdUserId,
           customerType: state.customerType as 'domestic' | 'business' | 'commercial',
           motherName: (state.data as any).motherName,
@@ -170,19 +182,56 @@ const CreateCustomerFormContent = () => {
           accountType: 'retail',
         });
 
-        setSuccess(true);
-        setTimeout(() => {
-          setSuccess(false);
-          navigate('/dashboard/customer-profiles');
-        }, 2000);
+        // Store customerProfileId for future steps
+        setCustomerProfileId(newCustomer.id);
+        setCurrentStep(2);
         return;
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to create customer');
         return;
+      } finally {
+        setIsLoading(false);
       }
     }
 
-    // Regular step navigation
+    // Step 2 (Building Access): Submit and move to next step
+    if (state.currentStep === 2) {
+      try {
+        setIsLoading(true);
+        await buildingAccessRef.current?.submit();
+        setCurrentStep(3);
+        return;
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to save building access information');
+        return;
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    // Step 4 (Preferences): Submit and move to next step
+    if (state.currentStep === 4) {
+      try {
+        setIsLoading(true);
+        await preferencesRef.current?.submit();
+        setCurrentStep(5);
+        return;
+      } catch (err: any) {
+        setError(err.response?.data?.message || 'Failed to save preferences');
+        return;
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    // Check if on last step (Linked Accounts - step 5) and redirect after completion
+    if (state.currentStep === 5) {
+      setIsLoading(false);
+      navigate('/dashboard/customer-profiles');
+      return;
+    }
+
+    // Regular step navigation (for other steps)
     setCurrentStep(Math.min(state.currentStep + 1, steps.length - 1));
   };
 
@@ -198,13 +247,13 @@ const CreateCustomerFormContent = () => {
         case 1:
           return <DomesticStep2PersonalInfo />;
         case 2:
-          return <DomesticStep3BuildingAccess />;
+          return <DomesticStep3BuildingAccess ref={buildingAccessRef} customerProfileId={customerProfileId || undefined} />;
         case 3:
-          return <DomesticStep4Addresses />;
+          return <DomesticStep4Addresses customerProfileId={customerProfileId || undefined} />;
         case 4:
-          return <DomesticStep5Preferences />;
+          return <DomesticStep5Preferences ref={preferencesRef} customerProfileId={customerProfileId || undefined} />;
         case 5:
-          return <DomesticStep6LinkedAccounts />;
+          return <DomesticStep6LinkedAccounts customerProfileId={customerProfileId || undefined} />;
         case 6:
           return <DomesticStep7Referral />;
         case 7:
@@ -335,29 +384,47 @@ const CreateCustomerFormContent = () => {
                 {error}
               </Alert>
             )}
-            {success && (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                Customer created successfully!
-              </Alert>
-            )}
             {renderStepContent(state.currentStep)}
           </Box>
 
           <Stack
             direction="row"
             spacing={2}
-            sx={{ mt: 4, justifyContent: "space-between" }}
+            sx={{ mt: 4, justifyContent: "space-between", position: "relative" }}
           >
+            {isLoading && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: 1,
+                  zIndex: 10,
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            )}
             <Button
               variant="outlined"
               onClick={handleBack}
-              disabled={state.currentStep === 0}
+              disabled={state.currentStep === 0 || isLoading}
               startIcon={<BsArrowLeft />}
               sx={{ px: 4 }}
             >
               Previous
             </Button>
-            <PrimaryButton endIcon={<BsArrowRight />} onClick={handleNext}>
+            <PrimaryButton
+              endIcon={<BsArrowRight />}
+              onClick={handleNext}
+              disabled={isLoading}
+            >
               {state.currentStep === steps.length - 1
                 ? "Create Customer"
                 : "Next"}

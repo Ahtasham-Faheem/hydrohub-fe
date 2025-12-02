@@ -1,34 +1,38 @@
-import { Box, Typography, Card, Button, IconButton, Collapse } from '@mui/material';
+import { Box, Typography, Card, Button, IconButton, Collapse, Alert, CircularProgress } from '@mui/material';
 import { CustomInput } from '../CustomInput';
 import { CustomSelect } from '../CustomSelect';
 import { FileUploadField } from '../FileUploadField';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer, LinkedAccount } from '../../types/customer';
 import { MdAdd, MdDelete, MdEdit } from 'react-icons/md';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useGetLinkedAccounts, useCreateLinkedAccount, useUpdateLinkedAccount, useDeleteLinkedAccount } from '../../hooks/useLinkedAccounts';
+import { assetsService } from '../../services/api';
+import type { CreateLinkedAccountData, LinkedAccountResponse } from '../../services/api';
 
-export const DomesticStep6LinkedAccounts = () => {
+interface DomesticStep6LinkedAccountsProps {
+  customerProfileId?: string;
+}
+
+export const DomesticStep6LinkedAccounts = ({ customerProfileId }: DomesticStep6LinkedAccountsProps) => {
   const { state, addLinkedAccount, removeLinkedAccount, updateLinkedAccount } = useCustomerForm();
   const data = state.data as DomesticCustomer;
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newAccountMode, setNewAccountMode] = useState(false);
-  const [formAccount, setFormAccount] = useState<LinkedAccount>({
-    title: '',
-    contactNumber: '',
-    visibility: 'private',
-    status: 'active',
-    authorizedAddress: '',
-  });
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [loadedAccounts, setLoadedAccounts] = useState<(LinkedAccountResponse & { localId?: string })[]>([]);
+  // API hooks
+  const { data: accountsData, isLoading: isLoadingAccounts } = useGetLinkedAccounts(customerProfileId);
+  const createAccountMutation = useCreateLinkedAccount();
+  const updateAccountMutation = useUpdateLinkedAccount();
+  const deleteAccountMutation = useDeleteLinkedAccount();
 
-  const linkedAccounts = data.linkedAccounts || [];
-
-  const handleAccountChange = (field: keyof LinkedAccount, value: any) => {
-    setFormAccount((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
+  useEffect(() => {
+    if (accountsData?.data) {
+      setLoadedAccounts(accountsData.data);
+    }
+  }, [accountsData]);
 
   const emptyAccount: LinkedAccount = {
     title: '',
@@ -38,31 +42,152 @@ export const DomesticStep6LinkedAccounts = () => {
     authorizedAddress: '',
   };
 
-  const handleAddNewAccount = () => {
-    if (formAccount.title && formAccount.contactNumber) {
-      addLinkedAccount(formAccount);
-      setFormAccount(emptyAccount);
-      setNewAccountMode(false);
+  const [formAccount, setFormAccount] = useState<LinkedAccount>(emptyAccount);
+
+  const handleAccountChange = (field: keyof LinkedAccount, value: any) => {
+    setFormAccount((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const mapToApiPayload = (account: LinkedAccount): CreateLinkedAccountData => {
+    // Map visibility and status to capitalized values for API
+    const visibilityMap: { [key: string]: string } = {
+      'public': 'Public',
+      'private': 'Private',
+    };
+
+    const statusMap: { [key: string]: string } = {
+      'active': 'Active',
+      'inactive': 'Inactive',
+      'pending': 'Pending',
+      'left': 'Left',
+    };
+
+    return {
+      linkedAccountTitle: account.title,
+      parentProfilePicture: account.photo,
+      contactNo: account.contactNumber,
+      accountVisibilityLevel: visibilityMap[account.visibility] || account.visibility,
+      accountStatus: statusMap[account.status] || account.status,
+      authorizedAddressId: account.authorizedAddressId,
+    };
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    try {
+      const response = await assetsService.uploadFile(file);
+      return response.fileUrl;
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to upload photo';
+      setApiError(errorMessage);
+      return null;
     }
   };
 
-  const handleUpdateAccount = (index: number) => {
+  const handleAddNewAccount = async () => {
     if (formAccount.title && formAccount.contactNumber) {
-      updateLinkedAccount(index, formAccount);
-      setFormAccount(emptyAccount);
-      setEditingIndex(null);
+      if (!customerProfileId) {
+        setApiError('Customer profile not initialized. Please try again.');
+        return;
+      }
+
+      try {
+        setApiError(null);
+        const apiPayload = mapToApiPayload(formAccount);
+        
+        await createAccountMutation.mutateAsync({
+          customerProfileId,
+          accountData: apiPayload,
+        });
+
+        addLinkedAccount(formAccount);
+        setFormAccount(emptyAccount);
+        setNewAccountMode(false);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || 'Failed to create linked account';
+        setApiError(errorMessage);
+      }
     }
   };
 
-  const handleRemoveAccount = (index: number) => {
-    removeLinkedAccount(index);
-    if (expandedIndex === index) {
-      setExpandedIndex(index > 0 ? index - 1 : null);
+  const handleUpdateAccount = async (index: number) => {
+    if (formAccount.title && formAccount.contactNumber) {
+      if (!customerProfileId) {
+        setApiError('Customer profile not initialized. Please try again.');
+        return;
+      }
+
+      try {
+        setApiError(null);
+        const accountToUpdate = loadedAccounts[index];
+        
+        if (accountToUpdate?.id) {
+          const apiPayload = mapToApiPayload(formAccount);
+          
+          await updateAccountMutation.mutateAsync({
+            customerProfileId,
+            accountId: accountToUpdate.id,
+            accountData: apiPayload,
+          });
+        }
+
+        updateLinkedAccount(index, formAccount);
+        setFormAccount(emptyAccount);
+        setEditingIndex(null);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || 'Failed to update linked account';
+        setApiError(errorMessage);
+      }
     }
   };
+
+  const handleRemoveAccount = async (index: number) => {
+    if (!customerProfileId) {
+      setApiError('Customer profile not initialized. Please try again.');
+      return;
+    }
+
+    try {
+      setApiError(null);
+      const accountToDelete = loadedAccounts[index];
+      
+      if (accountToDelete?.id) {
+        await deleteAccountMutation.mutateAsync({
+          customerProfileId,
+          accountId: accountToDelete.id,
+        });
+      }
+
+      removeLinkedAccount(index);
+      if (expandedIndex === index) {
+        setExpandedIndex(index > 0 ? index - 1 : null);
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete linked account';
+      setApiError(errorMessage);
+    }
+  };
+
+  const linkedAccounts = data.linkedAccounts || [];
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Error Alert */}
+      {apiError && (
+        <Alert severity="error" onClose={() => setApiError(null)}>
+          {apiError}
+        </Alert>
+      )}
+
+      {/* Loading State */}
+      {isLoadingAccounts && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+          <CircularProgress size={40} />
+        </Box>
+      )}
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#374151' }}>
@@ -78,7 +203,7 @@ export const DomesticStep6LinkedAccounts = () => {
             }}
             sx={{ color: 'var(--color-primary-600)' }}
           >
-            Add Link Account
+            Add Account
           </Button>
         )}
       </Box>
@@ -148,7 +273,7 @@ export const DomesticStep6LinkedAccounts = () => {
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                     <CustomInput
-                      label="Linked Account Title *"
+                      label="Account Title *"
                       placeholder="e.g., Father, Mother, Son"
                       value={formAccount.title ?? ''}
                       onChange={(e) => handleAccountChange('title', e.target.value)}
@@ -163,13 +288,12 @@ export const DomesticStep6LinkedAccounts = () => {
 
                   <FileUploadField
                     label="Profile Picture (Optional)"
-                    onFileChange={(file) => {
+                    onFileChange={async (file) => {
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          handleAccountChange('photo', reader.result);
-                        };
-                        reader.readAsDataURL(file as File);
+                        const photoUrl = await handlePhotoUpload(file as File);
+                        if (photoUrl) {
+                          handleAccountChange('photo', photoUrl);
+                        }
                       }
                     }}
                   />
@@ -249,7 +373,7 @@ export const DomesticStep6LinkedAccounts = () => {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
               <CustomInput
-                label="Linked Account Title *"
+                label="Account Title *"
                 placeholder="e.g., Father, Mother, Son"
                 value={formAccount.title ?? ''}
                 onChange={(e) => handleAccountChange('title', e.target.value)}
@@ -264,13 +388,12 @@ export const DomesticStep6LinkedAccounts = () => {
 
             <FileUploadField
               label="Profile Picture (Optional)"
-              onFileChange={(file) => {
+              onFileChange={async (file) => {
                 if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    handleAccountChange('photo', reader.result);
-                  };
-                  reader.readAsDataURL(file as File);
+                  const photoUrl = await handlePhotoUpload(file as File);
+                  if (photoUrl) {
+                    handleAccountChange('photo', photoUrl);
+                  }
                 }
               }}
             />

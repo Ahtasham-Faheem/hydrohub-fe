@@ -183,14 +183,11 @@ export const PersonalInformation = ({
           value={formData.userRole}
           onChange={(e) => updateFormData("userRole", e.target.value)}
           options={[
-            { value: "super_admin", label: "Super Admin" },
-            { value: "vendor_admin", label: "Vendor Admin" },
             { value: "supervisor", label: "Supervisor" },
             { value: "delivery_staff", label: "Delivery Staff" },
             { value: "billing_operator", label: "Billing Operator" },
             { value: "customer_support", label: "Customer Support" },
             { value: "data_entry", label: "Data Entry" },
-            { value: "customer", label: "Customer" },
           ]}
         />
         <CustomInput

@@ -1,14 +1,68 @@
-import { Box, Typography, Card, Switch, FormControlLabel } from '@mui/material';
+import { Box, Typography, Card, Switch, FormControlLabel, Alert } from '@mui/material';
 import { CustomInput } from '../CustomInput';
 import { CustomSelect } from '../CustomSelect';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer } from '../../types/customer';
 import { MdLocationOn } from 'react-icons/md';
+import { useUpdateBuildingInfo } from '../../hooks/useUpdateBuildingInfo';
+import { useState, useRef, forwardRef, useImperativeHandle } from 'react';
 
-export const DomesticStep3BuildingAccess = () => {
-  const { state, updateFormData } = useCustomerForm();
-  const data = state.data as DomesticCustomer;
-  const buildingAccess = data.buildingAccessInfo || {};
+interface DomesticStep3BuildingAccessProps {
+  customerProfileId?: string;
+}
+
+export interface DomesticStep3BuildingAccessHandle {
+  submit: () => Promise<void>;
+}
+
+export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAccessHandle, DomesticStep3BuildingAccessProps>(
+  ({ customerProfileId }: DomesticStep3BuildingAccessProps, ref) => {
+    const { state, updateFormData } = useCustomerForm();
+    const data = state.data as DomesticCustomer;
+    const buildingAccess = data.buildingAccessInfo || {};
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    
+    const updateBuildingInfoMutation = useUpdateBuildingInfo();
+    const hasSubmittedRef = useRef(false);
+
+    const submitBuildingInfo = async () => {
+      if (!customerProfileId || isSubmitting || hasSubmittedRef.current) return;
+
+      // Only submit if we have required fields filled
+      if (!buildingAccess.ownershipStatus || !buildingAccess.deliveryAccessLevel) return;
+
+      hasSubmittedRef.current = true;
+      setIsSubmitting(true);
+      setSubmitError(null);
+
+      try {
+        await updateBuildingInfoMutation.mutateAsync({
+          customerProfileId,
+          buildingData: {
+            mapLocation: buildingAccess.mapLocation,
+            ownership: buildingAccess.ownershipStatus,
+            accessLevel: buildingAccess.deliveryAccessLevel,
+            floorPosition: buildingAccess.floorPosition,
+            basementPosition: buildingAccess.basementPosition,
+            liftStartTime: buildingAccess.liftServiceStartTime,
+            liftEndTime: buildingAccess.liftServiceCloseTime,
+            accessNotes: buildingAccess.accessNotes,
+          },
+        });
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || 'Failed to save building information';
+        setSubmitError(errorMessage);
+        hasSubmittedRef.current = false;
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    // Expose submit function via ref
+    useImperativeHandle(ref, () => ({
+      submit: submitBuildingInfo,
+    }));
 
   const handleAccessOptionChange = (option: string, checked: boolean) => {
     const currentOptions = buildingAccess.accessOptions || [];
@@ -20,6 +74,12 @@ export const DomesticStep3BuildingAccess = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {submitError}
+        </Alert>
+      )}
+      
       {/* Google Map Location */}
       <Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
@@ -181,4 +241,6 @@ export const DomesticStep3BuildingAccess = () => {
       </Box>
     </Box>
   );
-};
+});
+
+export default DomesticStep3BuildingAccess;

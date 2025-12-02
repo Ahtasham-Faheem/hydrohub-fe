@@ -41,7 +41,7 @@ const cardToRouteMap: { [key: string]: string } = {
   "Accounts Overview": "/accounts-overview",
   "Expenses Management": "/expenses-management",
   "Invoices & Billing": "/invoices-billing",
-  "Catalog Management": "/catalog-management",
+  "Catalog Management": "catalogue",
   "System Setting": "/system-settings",
   "Sales Summary": "/sales-summary",
   Scheduler: "/scheduler",

@@ -177,7 +177,7 @@ const CreateUserForm = () => {
 
   const renderStepContent = (step: number) => {
     switch (step) {
-      case 0:
+      case 2:
         return (
           <PersonalInformation
             image={image}
@@ -187,7 +187,7 @@ const CreateUserForm = () => {
         );
       case 1:
         return <AdditionalPersonalInfo />;
-      case 2:
+      case 0:
         return <EmploymentDetails />;
       case 3:
         return <SalaryBenefits />;

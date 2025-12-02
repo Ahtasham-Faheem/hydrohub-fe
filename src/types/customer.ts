@@ -13,6 +13,7 @@ export interface Address {
   province?: string;
   country: string;
   postalCode?: string;
+  access?: 'stairs' | 'lift' | 'service_lift' | 'none';
   concatenatedAddress?: string;
   isPrimary?: boolean;
   isActive?: boolean;
@@ -40,6 +41,9 @@ export interface Preferences {
   billingOption: 'cod' | 'weekly' | 'fortnightly' | 'monthly';
   paymentMode: 'cash' | 'online' | 'cheque';
   monthlyConsumption: '<20' | '20-50' | '51-100' | '100+';
+  customerRating?: string;
+  securitySummary?: string;
+  additionalRequests?: string;
 }
 
 export interface LinkedAccount {
@@ -48,8 +52,9 @@ export interface LinkedAccount {
   photo?: string;
   contactNumber: string;
   visibility: 'public' | 'private';
-  status: 'active' | 'inactive' | 'pending';
+  status: 'active' | 'inactive' | 'pending' | 'left';
   authorizedAddress: string;
+  authorizedAddressId?: string;
 }
 
 export interface Referral {

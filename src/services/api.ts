@@ -134,6 +134,105 @@ export interface CreateCustomerData {
   accountType?: string;
 }
 
+export interface UpdateBuildingInfoData {
+  mapLocation?: string;
+  ownership: 'personal' | 'rental' | 'mortgage' | 'other';
+  accessLevel: 'basement' | 'ground' | 'upstairs';
+  floorPosition?: string;
+  basementPosition?: string;
+  liftStartTime?: string;
+  liftEndTime?: string;
+  accessNotes?: string;
+}
+
+export interface UpdatePreferencesData {
+  preferredDeliveryTime?: string;
+  deliveryFrequency?: string;
+  bottleHandling?: string;
+  billingOption?: string;
+  paymentMode?: string;
+  expectedConsumption?: string;
+  customerRating?: string;
+  securitySummary?: string;
+  additionalRequests?: string;
+}
+
+export interface CreateLinkedAccountData {
+  linkedAccountTitle: string;
+  parentProfilePicture?: string;
+  contactNo: string;
+  accountVisibilityLevel: string;
+  accountStatus: string;
+  authorizedAddressId?: string;
+}
+
+export interface UpdateLinkedAccountData extends Partial<CreateLinkedAccountData> {
+  id?: string;
+}
+
+export interface LinkedAccountResponse {
+  id: string;
+  linkedAccountTitle: string;
+  parentProfilePicture?: string;
+  contactNo: string;
+  accountVisibilityLevel: 'public' | 'private';
+  accountStatus: 'active' | 'inactive' | 'pending' | 'left';
+  authorizedAddressId?: string;
+}
+
+export interface LinkedAccountsResponse {
+  data: LinkedAccountResponse[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CreateAddressData {
+  addressType: 'residential' | 'commercial' | 'business';
+  addressTitle: string;
+  ownership: 'personal' | 'rental' | 'mortgage' | 'other';
+  buildingNumber?: string;
+  access?: string;
+  street?: string;
+  block?: string;
+  sector?: string;
+  societyTown?: string;
+  city: string;
+  province?: string;
+  country: string;
+  postalCode?: string;
+  isDefault?: boolean;
+}
+
+export interface UpdateAddressData extends Partial<CreateAddressData> {
+  id?: string;
+}
+
+export interface AddressResponse {
+  id: string;
+  addressType: string;
+  addressTitle: string;
+  ownership: string;
+  buildingNumber?: string;
+  access?: string;
+  street?: string;
+  block?: string;
+  sector?: string;
+  societyTown?: string;
+  city: string;
+  province?: string;
+  country: string;
+  postalCode?: string;
+  isDefault: boolean;
+}
+
+export interface AddressesResponse {
+  data: AddressResponse[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface CreateUserResponse {
   id: string;
   username: string;
@@ -211,6 +310,58 @@ export const customerService = {
         limit,
       },
     });
+    return response.data;
+  },
+
+  updateBuildingInfo: async (customerProfileId: string, buildingData: UpdateBuildingInfoData): Promise<any> => {
+    const response = await api.patch(`/customers/${customerProfileId}/building-info`, buildingData);
+    return response.data;
+  },
+
+  updatePreferences: async (customerProfileId: string, preferencesData: UpdatePreferencesData): Promise<any> => {
+    const response = await api.patch(`/customers/${customerProfileId}/preferences`, preferencesData);
+    return response.data;
+  },
+
+  // Address CRUD operations
+  getAddresses: async (customerProfileId: string): Promise<AddressesResponse> => {
+    const response = await api.get(`/customer-addresses/${customerProfileId}`);
+    return response.data;
+  },
+
+  createAddress: async (customerProfileId: string, addressData: CreateAddressData): Promise<AddressResponse> => {
+    const response = await api.post(`/customer-addresses/${customerProfileId}`, addressData);
+    return response.data;
+  },
+
+  updateAddress: async (customerProfileId: string, addressId: string, addressData: UpdateAddressData): Promise<AddressResponse> => {
+    const response = await api.patch(`/customer-addresses/${customerProfileId}/${addressId}`, addressData);
+    return response.data;
+  },
+
+  deleteAddress: async (customerProfileId: string, addressId: string): Promise<any> => {
+    const response = await api.delete(`/customer-addresses/${customerProfileId}/${addressId}`);
+    return response.data;
+  },
+
+  // Linked Accounts CRUD operations
+  getLinkedAccounts: async (customerProfileId: string): Promise<LinkedAccountsResponse> => {
+    const response = await api.get(`/customer-linked-accounts/${customerProfileId}`);
+    return response.data;
+  },
+
+  createLinkedAccount: async (customerProfileId: string, accountData: CreateLinkedAccountData): Promise<LinkedAccountResponse> => {
+    const response = await api.post(`/customer-linked-accounts/${customerProfileId}`, accountData);
+    return response.data;
+  },
+
+  updateLinkedAccount: async (customerProfileId: string, accountId: string, accountData: UpdateLinkedAccountData): Promise<LinkedAccountResponse> => {
+    const response = await api.patch(`/customer-linked-accounts/${customerProfileId}/${accountId}`, accountData);
+    return response.data;
+  },
+
+  deleteLinkedAccount: async (customerProfileId: string, accountId: string): Promise<any> => {
+    const response = await api.delete(`/customer-linked-accounts/${customerProfileId}/${accountId}`);
     return response.data;
   },
 };

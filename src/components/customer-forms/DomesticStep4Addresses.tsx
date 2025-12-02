@@ -1,17 +1,39 @@
-import { Box, Typography, Card, Button, Switch, FormControlLabel, Collapse, IconButton } from '@mui/material';
+import { Box, Typography, Card, Button, Switch, FormControlLabel, Collapse, IconButton, Alert, CircularProgress } from '@mui/material';
 import { CustomInput } from '../CustomInput';
+import { CustomSelect } from '../CustomSelect';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer, Address } from '../../types/customer';
 import { MdAdd, MdDelete, MdEdit } from 'react-icons/md';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useGetAddresses, useCreateAddress, useUpdateAddress, useDeleteAddress } from '../../hooks/useAddresses';
+import type { CreateAddressData, AddressResponse } from '../../services/api';
 
-export const DomesticStep4Addresses = () => {
+interface DomesticStep4AddressesProps {
+  customerProfileId?: string;
+}
+
+export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4AddressesProps) => {
   const { state, updateFormData, addAddress, removeAddress, updateAddress } = useCustomerForm();
   const data = state.data as DomesticCustomer;
   const [expandedAddressIndex, setExpandedAddressIndex] = useState<number | null>(0);
   const [editingAddressIndex, setEditingAddressIndex] = useState<number | null>(null);
   const [newAddressMode, setNewAddressMode] = useState(false);
   const [sameAsBilling, setSameAsBilling] = useState(data.sameAsBillingAddress !== false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [loadedAddresses, setLoadedAddresses] = useState<(AddressResponse & { localId?: string })[]>([]);
+
+  // API hooks
+  const { data: addressesData, isLoading: isLoadingAddresses, error: loadError } = useGetAddresses(customerProfileId);
+  const createAddressMutation = useCreateAddress();
+  const updateAddressMutation = useUpdateAddress();
+  const deleteAddressMutation = useDeleteAddress();
+
+  // Load addresses from API when component mounts or customerProfileId changes
+  useEffect(() => {
+    if (addressesData?.data) {
+      setLoadedAddresses(addressesData.data);
+    }
+  }, [addressesData]);
 
   const emptyAddress: Address = {
     title: '',
@@ -25,6 +47,7 @@ export const DomesticStep4Addresses = () => {
     province: '',
     country: '',
     postalCode: '',
+    access: 'none',
   };
 
   const [formAddress, setFormAddress] = useState<Address>(emptyAddress);
@@ -36,67 +59,147 @@ export const DomesticStep4Addresses = () => {
     }));
   };
 
-  const handleAddNewAddress = () => {
+  const mapToApiPayload = (address: Address): CreateAddressData => {
+    return {
+      addressType: 'residential',
+      addressTitle: address.title || 'Address',
+      ownership: 'personal',
+      buildingNumber: address.houseNumber,
+      access: address.access || 'none',
+      street: address.street,
+      block: address.block,
+      sector: address.sector,
+      societyTown: address.society,
+      city: address.city,
+      province: address.province,
+      country: address.country,
+      postalCode: address.postalCode,
+      isDefault: false,
+    };
+  };
+
+  const handleAddNewAddress = async () => {
     if (formAddress.city && formAddress.country) {
-      // Build concatenated address
-      const parts = [
-        formAddress.houseNumber,
-        formAddress.street,
-        formAddress.block,
-        formAddress.sector,
-        formAddress.society,
-        formAddress.landmark,
-        formAddress.city,
-        formAddress.province,
-        formAddress.country,
-        formAddress.postalCode,
-      ].filter(Boolean);
+      if (!customerProfileId) {
+        setApiError('Customer profile not initialized. Please try again.');
+        return;
+      }
 
-      const concatenated = parts.join(', ');
+      try {
+        setApiError(null);
+        const apiPayload = mapToApiPayload(formAddress);
+        
+        await createAddressMutation.mutateAsync({
+          customerProfileId,
+          addressData: apiPayload,
+        });
 
-      const newAddress: Address = {
-        ...formAddress,
-        concatenatedAddress: concatenated,
-      };
+        // Build concatenated address
+        const parts = [
+          formAddress.houseNumber,
+          formAddress.street,
+          formAddress.block,
+          formAddress.sector,
+          formAddress.society,
+          formAddress.landmark,
+          formAddress.city,
+          formAddress.province,
+          formAddress.country,
+          formAddress.postalCode,
+        ].filter(Boolean);
 
-      addAddress('delivery', newAddress);
-      setFormAddress(emptyAddress);
-      setNewAddressMode(false);
+        const concatenated = parts.join(', ');
+
+        const newAddress: Address = {
+          ...formAddress,
+          concatenatedAddress: concatenated,
+        };
+
+        addAddress('delivery', newAddress);
+        setFormAddress(emptyAddress);
+        setNewAddressMode(false);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || 'Failed to create address';
+        setApiError(errorMessage);
+      }
     }
   };
 
-  const handleUpdateAddress = (index: number) => {
+  const handleUpdateAddress = async (index: number) => {
     if (formAddress.city && formAddress.country) {
-      const parts = [
-        formAddress.houseNumber,
-        formAddress.street,
-        formAddress.block,
-        formAddress.sector,
-        formAddress.society,
-        formAddress.landmark,
-        formAddress.city,
-        formAddress.province,
-        formAddress.country,
-        formAddress.postalCode,
-      ].filter(Boolean);
+      if (!customerProfileId) {
+        setApiError('Customer profile not initialized. Please try again.');
+        return;
+      }
 
-      const concatenated = parts.join(', ');
+      try {
+        setApiError(null);
+        const addressToUpdate = loadedAddresses[index];
+        
+        if (addressToUpdate?.id) {
+          const apiPayload = mapToApiPayload(formAddress);
+          
+          await updateAddressMutation.mutateAsync({
+            customerProfileId,
+            addressId: addressToUpdate.id,
+            addressData: apiPayload,
+          });
+        }
 
-      const updatedAddress: Address = {
-        ...formAddress,
-        concatenatedAddress: concatenated,
-      };
+        const parts = [
+          formAddress.houseNumber,
+          formAddress.street,
+          formAddress.block,
+          formAddress.sector,
+          formAddress.society,
+          formAddress.landmark,
+          formAddress.city,
+          formAddress.province,
+          formAddress.country,
+          formAddress.postalCode,
+        ].filter(Boolean);
 
-      updateAddress('delivery', index, updatedAddress);
-      setFormAddress(emptyAddress);
-      setEditingAddressIndex(null);
+        const concatenated = parts.join(', ');
+
+        const updatedAddress: Address = {
+          ...formAddress,
+          concatenatedAddress: concatenated,
+        };
+
+        updateAddress('delivery', index, updatedAddress);
+        setFormAddress(emptyAddress);
+        setEditingAddressIndex(null);
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || 'Failed to update address';
+        setApiError(errorMessage);
+      }
     }
   };
 
-  const handleRemoveAddress = (index: number) => {
-    removeAddress('delivery', index);
-    if (expandedAddressIndex === index) {
-      setExpandedAddressIndex(index > 0 ? index - 1 : null);
+  const handleRemoveAddress = async (index: number) => {
+    if (!customerProfileId) {
+      setApiError('Customer profile not initialized. Please try again.');
+      return;
+    }
+
+    try {
+      setApiError(null);
+      const addressToDelete = loadedAddresses[index];
+      
+      if (addressToDelete?.id) {
+        await deleteAddressMutation.mutateAsync({
+          customerProfileId,
+          addressId: addressToDelete.id,
+        });
+      }
+
+      removeAddress('delivery', index);
+      if (expandedAddressIndex === index) {
+        setExpandedAddressIndex(index > 0 ? index - 1 : null);
+      }
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to delete address';
+      setApiError(errorMessage);
     }
   };
 
@@ -104,6 +207,23 @@ export const DomesticStep4Addresses = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* Loading State */}
+      {isLoadingAddresses && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 2, backgroundColor: '#f0f9ff', borderRadius: 1 }}>
+          <CircularProgress size={24} />
+          <Typography variant="body2" sx={{ color: '#0369a1' }}>
+            Loading addresses...
+          </Typography>
+        </Box>
+      )}
+
+      {/* Error Display */}
+      {(apiError || loadError) && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {apiError || (loadError instanceof Error ? loadError.message : 'Failed to load addresses')}
+        </Alert>
+      )}
+
       {/* Delivery Addresses Section */}
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -274,6 +394,23 @@ export const DomesticStep4Addresses = () => {
                       onChange={(e) => handleAddressChange('postalCode', e.target.value)}
                     />
 
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                        Building Access Type
+                      </Typography>
+                      <CustomSelect
+                        label="Access Type *"
+                        value={formAddress.access || 'none'}
+                        onChange={(e) => handleAddressChange('access', e.target.value)}
+                        options={[
+                          { label: 'None', value: 'none' },
+                          { label: 'Stairs', value: 'stairs' },
+                          { label: 'Lift', value: 'lift' },
+                          { label: 'Service Lift', value: 'service_lift' },
+                        ]}
+                      />
+                    </Box>
+
                     <Box sx={{ p: 2, backgroundColor: '#fef2f2', borderRadius: 1, border: '1px solid #fecaca' }}>
                       <Typography variant="caption" sx={{ fontWeight: 600, color: '#991b1b' }}>
                         Concatenated Address:
@@ -420,6 +557,23 @@ export const DomesticStep4Addresses = () => {
                 value={formAddress.postalCode ?? ''}
                 onChange={(e) => handleAddressChange('postalCode', e.target.value)}
               />
+
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                  Building Access Type
+                </Typography>
+                <CustomSelect
+                  label="Access Type *"
+                  value={formAddress.access || 'none'}
+                  onChange={(e) => handleAddressChange('access', e.target.value)}
+                  options={[
+                    { label: 'None', value: 'none' },
+                    { label: 'Stairs', value: 'stairs' },
+                    { label: 'Lift', value: 'lift' },
+                    { label: 'Service Lift', value: 'service_lift' },
+                  ]}
+                />
+              </Box>
 
               <Box sx={{ p: 2, backgroundColor: '#fef2f2', borderRadius: 1, border: '1px solid #fecaca' }}>
                 <Typography variant="caption" sx={{ fontWeight: 600, color: '#991b1b' }}>

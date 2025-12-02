@@ -148,8 +148,8 @@ export const menuConfig: MenuItem[] = [
         icon: Receipt,
       },
       {
-        id: 'catalog-management',
-        label: 'Catalog Management',
+        id: 'catalogue',
+        label: 'Catalogue Management',
         icon: Inventory,
       },
     ],

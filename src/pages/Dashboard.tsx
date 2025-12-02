@@ -13,6 +13,7 @@ import { CustomerProfiles } from "./CustomerManagement/CustomerProfiles";
 import { CreateCustomer } from "./CustomerManagement/CreateCustomer";
 import { SelectCustomerType } from "./CustomerManagement/SelectCustomerType";
 import { CustomerFormProvider } from "../contexts/CustomerFormContext";
+import { CatalogueManagement } from "./CatalogeManagement/CatalogueManagement";
 
 export const Dashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -123,6 +124,7 @@ export const Dashboard = () => {
                   </CustomerFormProvider>
                 }
               />
+              <Route path="catalogue" element={<CatalogueManagement />} />
               <Route
                 path="*"
                 element={
