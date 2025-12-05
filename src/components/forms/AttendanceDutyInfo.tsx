@@ -1,8 +1,8 @@
 import {
   Stack,
 } from "@mui/material";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const AttendanceDutyInfo = () => {

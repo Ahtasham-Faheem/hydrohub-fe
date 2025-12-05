@@ -1,59 +1,91 @@
 // components/forms/FileUploadField.tsx
-import { Box, Typography, IconButton, Dialog, DialogContent } from "@mui/material";
+import { Box, Typography, IconButton, Dialog, DialogContent, CircularProgress } from "@mui/material";
 import { useState } from "react";
 import { MdClose, MdVisibility } from "react-icons/md";
+import { useUploadFile } from "../../hooks/useAssets";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../services/api';
 
 interface FileUploadFieldProps {
   label: string;
   onFileChange?: (files: File | File[] | null) => void;
   multiple?: boolean;
+  staffProfileId?: string;
+  documentId?: string;
+  uploadedLabel?: string;
+  isUploaded?: boolean;
 }
 
-export const FileUploadField = ({ label, onFileChange, multiple = false }: FileUploadFieldProps) => {
+export const FileUploadField = ({ label, onFileChange, multiple = false, staffProfileId, documentId,uploadedLabel, isUploaded = false }: FileUploadFieldProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<{ file: File; url: string }[]>([]);
   const [showPreview, setShowPreview] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  
+  const uploadMutation = useUploadFile();
+  const queryClient = useQueryClient();
+  
+  // Delete document mutation
+  const deleteMutation = useMutation({
+    mutationFn: () => api.delete(`/staff/${staffProfileId}/documents/${documentId}`),
+    onSuccess: () => {
+      setFiles([]);
+      setPreviewUrls([]);
+      if (onFileChange) onFileChange(null);
+      queryClient.invalidateQueries({ queryKey: ['staff', staffProfileId, 'documents'] });
+    }
+  });
+  
+  // Update document mutation
+  const updateMutation = useMutation({
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      return api.patch(`/staff/${staffProfileId}/documents/${documentId}`, formData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['staff', staffProfileId, 'documents'] });
+    }
+  });
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(event.target.files || []);
+    if (selectedFiles.length === 0) return;
     
-    if (multiple) {
-      setFiles(prev => [...prev, ...selectedFiles]);
+    setUploadError(null);
+    
+    selectedFiles.forEach((file) => {
+      // Create preview immediately
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrls(prev => {
+          const updated = [...prev];
+          const existingIndex = updated.findIndex(p => p.file === file);
+          if (existingIndex >= 0) {
+            updated[existingIndex].url = reader.result as string;
+          } else {
+            updated.push({ file, url: reader.result as string });
+          }
+          return updated;
+        });
+      };
+      reader.readAsDataURL(file);
       
-      selectedFiles.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviewUrls(prev => {
-            const updated = [...prev];
-            const existingIndex = updated.findIndex(p => p.file === file);
-            if (existingIndex >= 0) {
-              updated[existingIndex].url = reader.result as string;
-            } else {
-              updated.push({ file, url: reader.result as string });
-            }
-            return updated;
-          });
-        };
-        reader.readAsDataURL(file);
+      // Upload or update file
+      const mutation = isUploaded ? updateMutation : uploadMutation;
+      mutation.mutate(file, {
+        onSuccess: (response) => {
+          setFiles(prev => multiple ? [...prev, file] : [file]);
+          if (onFileChange) {
+            onFileChange(multiple ? [...files, file] : file);
+          }
+        },
+        onError: (error: any) => {
+          setUploadError(error.response?.data?.message || (isUploaded ? 'Update failed' : 'Upload failed'));
+          setPreviewUrls(prev => prev.filter(p => p.file !== file));
+        }
       });
-      
-      if (onFileChange) onFileChange([...files, ...selectedFiles]);
-    } else {
-      const selectedFile = selectedFiles[0] || null;
-      setFiles(selectedFile ? [selectedFile] : []);
-      
-      if (selectedFile) {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setPreviewUrls([{ file: selectedFile, url: reader.result as string }]);
-        };
-        reader.readAsDataURL(selectedFile);
-      } else {
-        setPreviewUrls([]);
-      }
-      
-      if (onFileChange) onFileChange(selectedFile);
-    }
+    });
   };
 
   const handleRemoveFile = (fileToRemove: File) => {
@@ -132,7 +164,7 @@ export const FileUploadField = ({ label, onFileChange, multiple = false }: FileU
               <label
                 htmlFor={`upload-${label}`}
                 style={{
-                  border: "2px dashed #ccc",
+                  border: isUploaded ? "2px solid #4caf50" : "2px dashed #ccc",
                   borderRadius: "8px",
                   padding: "15px",
                   width: "80px",
@@ -140,13 +172,15 @@ export const FileUploadField = ({ label, onFileChange, multiple = false }: FileU
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  cursor: "pointer",
-                  color: "#999",
-                  fontSize: "24px",
+                  cursor: (uploadMutation.isPending || updateMutation.isPending) ? "not-allowed" : "pointer",
+                  color: isUploaded ? "#4caf50" : "#999",
+                  fontSize: "18px",
                   flexShrink: 0,
+                  opacity: (uploadMutation.isPending || updateMutation.isPending) ? 0.6 : 1,
+                  backgroundColor: isUploaded ? "#f1f8e9" : "transparent",
                 }}
               >
-                +
+                {(uploadMutation.isPending || updateMutation.isPending) ? <CircularProgress size={24} /> : isUploaded ? "✏️" : "+"}
               </label>
             )}
 
@@ -156,6 +190,7 @@ export const FileUploadField = ({ label, onFileChange, multiple = false }: FileU
               multiple={false}
               style={{ display: "none" }}
               onChange={handleFileChange}
+              disabled={uploadMutation.isPending || updateMutation.isPending}
             />
 
             {/* File Info */}
@@ -169,9 +204,32 @@ export const FileUploadField = ({ label, onFileChange, multiple = false }: FileU
                 pr: 1,
               }}
             >
-              <Typography variant="body2" color={files.length > 0 ? "textPrimary" : "textSecondary"}>
-                {files.length > 0 ? files[0].name : "No file chosen"}
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <Box>
+                  <Typography variant="body2" color={files.length > 0 ? "textPrimary" : "textSecondary"}>
+                    {uploadMutation.isPending ? "Uploading..." : 
+                     updateMutation.isPending ? "Updating..." :
+                     deleteMutation.isPending ? "Deleting..." :
+                     files.length > 0 ? files[0].name : 
+                     isUploaded ? uploadedLabel : "No file chosen"}
+                  </Typography>
+                  {uploadError && (
+                    <Typography variant="caption" color="error">
+                      {uploadError}
+                    </Typography>
+                  )}
+                </Box>
+                {isUploaded && (
+                  <IconButton 
+                    size="small" 
+                    onClick={() => deleteMutation.mutate()}
+                    disabled={deleteMutation.isPending}
+                    sx={{ color: '#ef4444' }}
+                  >
+                    <MdClose />
+                  </IconButton>
+                )}
+              </Box>
               {files.length > 0 && previewUrls[0]?.file.type.startsWith('image/') && (
                 <IconButton size="small" onClick={() => setShowPreview(0)}>
                   <MdVisibility />

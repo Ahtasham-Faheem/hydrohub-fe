@@ -8,6 +8,7 @@ import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
 import { DataTable } from "../../components/common/DataTable";
 import type { Column } from "../../components/common/DataTable";
+import { staffService } from "../../services/api";
 
 export const UsersPage = () => {
   const [status, setStatus] = useState("");
@@ -23,7 +24,7 @@ export const UsersPage = () => {
   const vendorId = vendorData ? JSON.parse(vendorData).id : null;
   
   // Using TanStack Query to fetch staff members
-  const { data: staffData, isLoading } = useGetStaff(vendorId, currentPage, 10);
+  const { data: staffData, isLoading, refetch } = useGetStaff(vendorId, currentPage, 10);
   
   const staff = staffData?.data || [];
   const totalPages = staffData?.pagination?.totalPages || 1;
@@ -80,45 +81,42 @@ export const UsersPage = () => {
     },
   ];
 
-  // TanStack Query handles the data fetching automatically
-
   // Filter users based on selected filters
   const filteredStaff = staff.filter((staffMember: any) => {
-    // Filter by date range
+    // Filter by date range - fixed date range issue (was off by 1)
     if (startDate && endDate) {
       const userCreatedDate = dayjs(staffMember.createdAt);
       const isInRange =
-        userCreatedDate.isAfter(startDate) && userCreatedDate.isBefore(endDate) ||
-        userCreatedDate.isSame(startDate, "day") ||
-        userCreatedDate.isSame(endDate, "day");
+        (userCreatedDate.isAfter(startDate) || userCreatedDate.isSame(startDate, "day")) &&
+        (userCreatedDate.isBefore(endDate) || userCreatedDate.isSame(endDate, "day"));
       if (!isInRange) {
         return false;
       }
     }
 
-    // Filter by status
-    if (status && staffMember.user?.status !== status.toLowerCase()) {
+    // Filter by status - fixed field name (was "status" not "userStatus")
+    if (status && staffMember?.status !== status.toLowerCase()) {
       return false;
     }
 
-    // Filter by role
-    if (role && staffMember.userRole !== role) {
+    // Filter by role - fixed field name (was "userRole" should be "role")
+    if (role && staffMember?.role !== role) {
       return false;
     }
 
-    // Filter by search
+    // Filter by search - updated to check correct fields
     if (search) {
       const searchLower = search.toLowerCase();
-      const firstName = staffMember.user?.firstName || '';
-      const lastName = staffMember.user?.lastName || '';
-      const email = staffMember.user?.email || '';
-      const username = staffMember.user?.username || '';
+      const firstName = staffMember?.firstName || '';
+      const lastName = staffMember?.lastName || '';
+      const email = staffMember?.email || '';
+      const staffId = staffMember?.staffId || '';
       
       if (
         !firstName.toLowerCase().includes(searchLower) &&
         !lastName.toLowerCase().includes(searchLower) &&
         !email.toLowerCase().includes(searchLower) &&
-        !username.toLowerCase().includes(searchLower)
+        !staffId.toLowerCase().includes(searchLower)
       ) {
         return false;
       }
@@ -140,10 +138,20 @@ export const UsersPage = () => {
     setColumns(newCols);
   };
 
+  // const handleDeleteStaff = async (item: any) => {
+  //   try {
+  //     await staffService.deleteStaff(item.id);
+  //     // Refetch staff list after deletion
+  //     refetch();
+  //   } catch (err: any) {
+  //     alert(err.response?.data?.message || 'Failed to delete staff member');
+  //   }
+  // };
+
   const cards = [
     {
       title: "Active Users",
-      value: staff.filter((u: any) => u.user?.status === "active").length.toString(),
+      value: staff.filter((u: any) => u?.status === "active").length.toString(),
       change: "+0%",
       desc: "All staff currently authorized in the system",
       color: "var(--color-status-success)",
@@ -151,30 +159,26 @@ export const UsersPage = () => {
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "Verified Users",
-      value: staff
-        .filter((u: any) => u.user?.isEmailVerified && u.user?.isPhoneVerified)
-        .length.toString(),
+      title: "Total Staff",
+      value: staff.length.toString(),
       change: "+0%",
-      desc: "Users verified via email and phone",
+      desc: "Total staff members in the system",
       color: "var(--color-primary-600)",
       bgColor: "var(--color-primary-bg-light)",
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "Unverified Users",
-      value: staff
-        .filter((u: any) => !u.user?.isEmailVerified || !u.user?.isPhoneVerified)
-        .length.toString(),
+      title: "Supervisors",
+      value: staff.filter((u: any) => u?.role === "supervisor").length.toString(),
       change: "0%",
-      desc: "Users pending verification",
+      desc: "Supervisory staff members",
       color: "var(--color-status-warning)",
       bgColor: "var(--color-status-warning-light)",
       icon: <LuUserRoundX />,
     },
     {
       title: "Inactive Users",
-      value: staff.filter((u: any) => u.user?.status === "inactive").length.toString(),
+      value: staff.filter((u: any) => u?.status === "inactive").length.toString(),
       change: "0%",
       desc: "Users no longer active in operations",
       color: "var(--color-status-error)",
@@ -186,11 +190,11 @@ export const UsersPage = () => {
   // Define columns for the DataTable
   const tableColumns: Column[] = [
     {
-      key: "user.firstName",
+      key: "firstName",
       label: "User",
       render: (_: any, item: any) => {
-        const firstName = item.user?.firstName || 'N/A';
-        const lastName = item.user?.lastName || 'N/A';
+        const firstName = item?.firstName || 'N/A';
+        const lastName = item?.lastName || 'N/A';
         const initials = (firstName?.[0] || 'U') + (lastName?.[0] || 'S');
         return (
           <Box display="flex" alignItems="center" gap={2}>
@@ -223,56 +227,39 @@ export const UsersPage = () => {
       },
     },
     {
-      key: "user.email",
+      key: "email",
       label: "Email",
+      render: (_: any, item: any) => {
+        return item?.email || 'N/A';
+      }
     },
     {
-      key: "userRole",
+      key: "role",
       label: "Role",
+      render: (_: any, item: any) => {
+        return (item?.role || 'N/A').replace('_', ' ').toUpperCase();
+      }
     },
     {
-      key: "user.status",
+      key: "status",
       label: "Status",
-      render: (value: string) => (
+      render: (_: any, item: any) => (
         <Box
           sx={{
             display: 'inline-block',
             px: 1.5,
             py: 0.5,
             borderRadius: 1,
-            bgcolor: value === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
-            color: value === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
+            bgcolor: item?.status === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
+            color: item?.status === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
             fontSize: '0.75rem',
             fontWeight: 600,
             textTransform: 'capitalize',
           }}
         >
-          {value || 'N/A'}
+          {item?.status || 'N/A'}
         </Box>
       ),
-    },
-    {
-      key: "user.isEmailVerified",
-      label: "Verified",
-      render: (_: boolean, item: any) => {
-        const isVerified = item.user?.isEmailVerified && item.user?.isPhoneVerified;
-        return (
-          <Box
-            sx={{
-              display: 'inline-block',
-              px: 1.5,
-              py: 0.5,
-              borderRadius: 1,
-              bgcolor: isVerified ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
-              color: isVerified ? "var(--color-status-success)" : "var(--color-status-error)",
-              fontSize: '0.75rem',
-              fontWeight: 600,
-            }}
-          >
-            {isVerified ? 'Verified' : 'Unverified'}
-          </Box>
-        );
-      },
     },
   ];
 

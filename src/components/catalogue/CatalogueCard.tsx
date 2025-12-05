@@ -78,7 +78,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
           e.target.src =
             'data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22100%25%22 height=%22100%25%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%23f5f7fa/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2218%22 fill=%23cbd5e1%22 font-family=%22Arial%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22%3ENO IMAGE%3C/text%3E%3C/svg%3E';
         }}
-        sx={{ objectFit: 'cover' }}
+        sx={{ objectFit: 'cover', height: 300 }}
       />
 
       {/* Content */}

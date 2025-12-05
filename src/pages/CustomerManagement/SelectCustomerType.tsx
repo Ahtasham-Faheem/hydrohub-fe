@@ -14,20 +14,20 @@ const SelectCustomerTypeContent = () => {
   const navigate = useNavigate();
   const { setCustomerType } = useCustomerForm();
 
-  const handleSelectType = (type: "domestic" | "business" | "commercial") => {
+  const handleSelectType = (type: 'Domestic Customer' | 'Business Customer' | 'Commercial Customer') => {
     setCustomerType(type);
-    if (type === "domestic") {
+    if (type === "Domestic Customer") {
       navigate("/dashboard/customer-profiles/create/domestic");
-    } else if (type === "business") {
+    } else if (type === "Business Customer") {
       navigate("/dashboard/customer-profiles/create/business");
-    } else if (type === "commercial") {
+    } else if (type === "Commercial Customer") {
       navigate("/dashboard/customer-profiles/create/commercial");
     }
   };
 
   const customerTypes = [
     {
-      type: "domestic",
+      type: "Domestic Customer",
       title: "Domestic Customer",
       description:
         "Individual/Household customer for residential water delivery",
@@ -35,7 +35,7 @@ const SelectCustomerTypeContent = () => {
       color: "var(--color-primary-600)",
     },
     {
-      type: "business",
+      type: "Business Customer",
       title: "Business Customer",
       description:
         "Commercial business or company requiring water delivery services",
@@ -43,7 +43,7 @@ const SelectCustomerTypeContent = () => {
       color: "#10B981",
     },
     {
-      type: "commercial",
+      type: "Commercial Customer",
       title: "Commercial / Other Customer",
       description:
         "Industrial, institutional, or other specialized water delivery",

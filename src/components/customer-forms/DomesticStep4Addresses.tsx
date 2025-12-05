@@ -1,6 +1,6 @@
 import { Box, Typography, Card, Button, Switch, FormControlLabel, Collapse, IconButton, Alert, CircularProgress } from '@mui/material';
-import { CustomInput } from '../CustomInput';
-import { CustomSelect } from '../CustomSelect';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer, Address } from '../../types/customer';
 import { MdAdd, MdDelete, MdEdit } from 'react-icons/md';

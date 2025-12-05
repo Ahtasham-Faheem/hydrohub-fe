@@ -1,4 +1,4 @@
-export type CustomerType = 'domestic' | 'business' | 'commercial';
+export type CustomerType = 'Domestic Customer' | 'Business Customer' | 'Commercial Customer';
 
 export interface Address {
   id?: string;
@@ -88,8 +88,10 @@ export interface DomesticCustomer {
   // Basic Profile
   customerId?: string;
   creationDate: string;
+  customerType?: string;
   profilePhoto?: string;
-  title: 'Mr' | 'Mrs' | 'Ms' | 'Miss' | 'Mx';
+  profilePictureAssetId?: string;
+  title: 'Mr' | 'Mrs' | 'Ms' | 'Miss' | 'Mx' | 'Mr.' | 'Mrs.' | 'Ms.' | 'Miss.' | 'Mx.';
   firstName: string;
   lastName: string;
   email: string;
@@ -103,10 +105,16 @@ export interface DomesticCustomer {
   dateOfBirth: string;
   nationality?: string;
   cnicNumber?: string;
-  gender: 'male' | 'female' | 'other';
-  maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
-  alternateContactNumber?: string;
+  gender: 'male' | 'female' | 'other' | 'Male' | 'Female' | 'Other';
+  maritalStatus: 'single' | 'married' | 'divorced' | 'widowed' | 'Single' | 'Married' | 'Divorced' | 'Widowed';
+  alternateContactNumber: string;
   preferredContactMethod: 'whatsapp' | 'phone' | 'sms' | 'email';
+  presentAddress?: string;
+  permanentAddress?: string;
+  emergencyContactName?: string;
+  emergencyContactRelation?: string;
+  emergencyContactNumber?: string;
+  alternateEmergencyContact?: string;
 
   // Building / Access Information
   buildingAccessInfo: BuildingAccessInfo;
@@ -134,6 +142,7 @@ export interface DomesticCustomer {
   gatePass?: string;
   preferredDeliveryBoy?: string;
   accessInstructions?: string;
+  discount?: number; // Discount percentage or amount
   additionalNotes?: string;
 }
 

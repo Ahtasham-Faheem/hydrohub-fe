@@ -1,8 +1,8 @@
 import { Stack } from "@mui/material";
 import dayjs from "dayjs";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
-import { CustomDateInput } from "../CustomDateInput";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
+import { CustomDateInput } from "../common/CustomDateInput";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const AssetsAndEquipmentAssigned = () => {
@@ -10,31 +10,27 @@ export const AssetsAndEquipmentAssigned = () => {
 
   return (
     <Stack spacing={3}>
-      {/* Equipment Type + Serial/Asset ID + Assigned Date */}
+      {/* Equipment Type + Asset ID + Assigned Date */}
       <Stack direction="row" spacing={2}>
         <CustomSelect
           label="Equipment Type"
           value={formData.equipmentType || ""}
           onChange={(e) => updateFormData("equipmentType", e.target.value)}
           options={[
-            { value: "vehicle", label: "Vehicle" },
-            { value: "mobile", label: "Mobile" },
-            { value: "delivery_bag", label: "Delivery Bag" },
-            { value: "laptop", label: "Laptop" },
-            { value: "tablet", label: "Tablet" },
-            { value: "uniform", label: "Uniform" },
+            { value: "Laptop", label: "Laptop" },
+            { value: "Vehicle", label: "Vehicle" },
+            { value: "Mobile", label: "Mobile" },
+            { value: "Delivery Bag", label: "Delivery Bag" },
+            { value: "Tablet", label: "Tablet" },
+            { value: "Uniform", label: "Uniform" },
           ]}
         />
         <CustomInput
-          label="Serial / Asset ID"
-          placeholder="Enter Asset ID"
+          label="Asset ID"
+          placeholder="550e8400-e29b-41d4-a716-446655440000"
           value={formData.assetId || ""}
           onChange={(e) => updateFormData("assetId", e.target.value)}
         />
-      </Stack>
-
-      {/* Return Date + Remarks + Issued By */}
-      <Stack direction="row" spacing={2}>
         <CustomDateInput
           label="Assigned Date"
           value={formData.assignedDate ? dayjs(formData.assignedDate) : null}
@@ -45,33 +41,40 @@ export const AssetsAndEquipmentAssigned = () => {
             )
           }
         />
-        <CustomDateInput
-          label="Return Date"
-          value={formData.returnDate ? dayjs(formData.returnDate) : null}
-          onChange={(date) =>
-            updateFormData("returnDate", date ? date.format("YYYY-MM-DD") : "")
-          }
-        />
       </Stack>
+
+      {/* Quantity + Unit of Measure + Issue By */}
       <Stack direction="row" spacing={2}>
         <CustomInput
-          label="Remarks"
-          placeholder="Condition / Notes"
-          value={formData.remarks || ""}
-          onChange={(e) => updateFormData("remarks", e.target.value)}
+          label="Quantity"
+          type="number"
+          placeholder="1"
+          value={formData.quantity?.toString() || ""}
+          onChange={(e) => updateFormData("quantity", e.target.value)}
         />
-        <CustomSelect
-          label="Issued By"
-          value={formData.issuedBy || ""}
-          onChange={(e) => updateFormData("issuedBy", e.target.value)}
-          options={[
-            { value: "manager_1", label: "Manager 1" },
-            { value: "manager_2", label: "Manager 2" },
-            { value: "admin", label: "Admin" },
-            { value: "hr_officer", label: "HR Officer" },
-          ]}
+        <CustomInput
+          label="Unit of Measure"
+          placeholder="piece"
+          value={formData.unitOfMeasure || ""}
+          onChange={(e) => updateFormData("unitOfMeasure", e.target.value)}
+        />
+        <CustomInput
+          label="Issue By"
+          placeholder="HR Manager"
+          value={formData.issueBy || ""}
+          onChange={(e) => updateFormData("issueBy", e.target.value)}
         />
       </Stack>
+
+      {/* Remarks */}
+      <CustomInput
+        label="Remarks"
+        placeholder="Dell Inspiron 15 for field operations"
+        multiline
+        rows={4}
+        value={formData.remarks || ""}
+        onChange={(e) => updateFormData("remarks", e.target.value)}
+      />
     </Stack>
   );
 };

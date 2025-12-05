@@ -1,8 +1,8 @@
 import { Stack } from "@mui/material";
 import dayjs from "dayjs";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
-import { CustomDateInput } from "../CustomDateInput";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
+import { CustomDateInput } from "../common/CustomDateInput";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const AdditionalPersonalInfo = () => {
@@ -10,6 +10,7 @@ export const AdditionalPersonalInfo = () => {
 
   return (
     <Stack spacing={3}>
+
       {/* Father's Name + Mother's Name + Date of Birth */}
       <Stack direction="row" spacing={2}>
         <CustomInput
@@ -82,8 +83,8 @@ export const AdditionalPersonalInfo = () => {
           label="Secondary Email Address"
           type="email"
           placeholder="john@gmail.com"
-          value={formData.secondaryEmail || ''}
-          onChange={(e) => updateFormData('secondaryEmail', e.target.value)}
+          value={formData.secondaryEmailAddress || ''}
+          onChange={(e) => updateFormData('secondaryEmailAddress', e.target.value)}
         />
       </Stack>
 

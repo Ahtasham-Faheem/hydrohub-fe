@@ -1,5 +1,5 @@
 import { Box, Typography, Card, Button, IconButton, Collapse } from '@mui/material';
-import { CustomInput } from '../CustomInput';
+import { CustomInput } from '../common/CustomInput';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer, Referral } from '../../types/customer';
 import { MdAdd, MdDelete, MdEdit } from 'react-icons/md';

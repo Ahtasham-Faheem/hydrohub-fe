@@ -14,9 +14,9 @@ import {
 import { TbSortAscendingSmallBig } from "react-icons/tb";
 import { IoIosArrowDown } from "react-icons/io";
 import { BsLayoutThreeColumns } from "react-icons/bs";
-import { CustomInput } from "../CustomInput";
+import { CustomInput } from "../common/CustomInput";
 import { LuSearch } from "react-icons/lu";
-import { PrimaryButton } from "../PrimaryButton";
+import { PrimaryButton } from "../common/PrimaryButton";
 import { useNavigate } from "react-router-dom";
 
 interface Column {

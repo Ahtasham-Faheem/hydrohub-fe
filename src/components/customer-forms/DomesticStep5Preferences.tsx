@@ -1,6 +1,6 @@
 import { Box, Typography, Card, Alert } from '@mui/material';
-import { CustomSelect } from '../CustomSelect';
-import { CustomInput } from '../CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
+import { CustomInput } from '../common/CustomInput';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer } from '../../types/customer';
 import { useUpdatePreferences } from '../../hooks/useUpdatePreferences';
@@ -45,7 +45,6 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
             billingOption: preferences.billingOption,
             paymentMode: preferences.paymentMode,
             expectedConsumption: preferences.monthlyConsumption,
-            customerRating: preferences.customerRating,
             securitySummary: preferences.securitySummary,
             additionalRequests: preferences.additionalRequests,
           },
@@ -163,6 +162,20 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
           />
         </Box>
 
+        {/* Discount */}
+        <Box>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+            Discount
+          </Typography>
+          <CustomInput
+            label="Discount (% or Amount)"
+            placeholder="Enter discount amount or percentage"
+            type="number"
+            value={String(data.discount || '')}
+            onChange={(e) => updateFormData('discount', e.target.value ? Number(e.target.value) : undefined)}
+          />
+        </Box>
+
         {/* Expected Monthly Consumption */}
         <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
@@ -177,23 +190,6 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
               { label: '20-50 bottles', value: '20-50' },
               { label: '51-100 bottles', value: '51-100' },
               { label: '100+ bottles', value: '100+' },
-            ]}
-          />
-        </Box>
-
-        {/* Customer Rating */}
-        <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-            Customer Rating
-          </Typography>
-          <CustomSelect
-            label="Customer Rating"
-            value={preferences.customerRating || ''}
-            onChange={(e) => updateFormData('preferences.customerRating', e.target.value)}
-            options={[
-              { label: 'Standard', value: 'standard' },
-              { label: 'Premium', value: 'premium' },
-              { label: 'VIP', value: 'vip' },
             ]}
           />
         </Box>

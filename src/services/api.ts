@@ -115,23 +115,127 @@ export interface CreateUserData {
 }
 
 export interface CreateStaffData {
-  userId: string;
-  accessLevel: string;
-  accessExpiry: string;
-  branchAssignment: string;
-  userRole: string;
-  twoFactorAuth: boolean;
+  email: string;
+  phone: string;
+  username: string;
+  password: string;
+  title: string;
+  firstName: string;
+  lastName: string;
+  profilePictureAssetId?: string;
+  role: string;
+}
+
+export interface CreateStaffResponse {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface AdditionalPersonalInfoData {
+  fathersName?: string;
+  mothersName?: string;
+  dateOfBirth?: string;
+  nationality?: string;
+  nationalId?: string;
+  gender?: string;
+  maritalStatus?: string;
+  alternateContactNumber?: string;
+  secondaryEmailAddress?: string;
+  presentAddress?: string;
+  permanentAddress?: string;
+  emergencyContactName?: string;
+  emergencyContactRelation?: string;
+  emergencyContactNumber?: string;
+  alternateEmergencyContact?: string;
+}
+
+export interface EmploymentDetailsData {
+  jobTitle?: string;
+  department?: string;
+  employmentType?: string;
+  supervisorId?: string;
+  workLocation?: string;
+  shiftType?: string;
+  status?: string;
+}
+
+export interface SalaryBenefitsData {
+  basicSalary?: number;
+  allowances?: string;
+  providentFund?: string;
+  salaryPaymentMode?: string;
+  bankName?: string;
+  bankAccountTitle?: string;
+  bankAccountNumber?: string;
+  taxStatus?: string;
+}
+
+export interface IdentificationVerificationData {
+  identityDocumentName?: string;
+  idCardNumber?: string;
+  idCardIssuanceDate?: string;
+  idCardExpiryDate?: string;
+  referralPersonName?: string;
+  referralRelation?: string;
+  referralContact?: string;
+  policeVerification?: string;
+  remarks?: string;
+}
+
+export interface AssetsAndEquipmentData {
+  equipmentType?: string;
+  assetId?: string;
+  assignedDate?: string;
+  quantity?: number;
+  unitOfMeasure?: string;
+  issueBy?: string;
+  remarks?: string;
+}
+
+export interface DocumentData {
+  documentType?: string;
+  assetId?: string;
+  documentName?: string;
+}
+
+export interface DocumentUploadResponse {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
 }
 
 export interface CreateCustomerData {
-  userId: string;
-  customerType: 'domestic' | 'business' | 'commercial';
-  motherName?: string;
+  email: string;
+  phone: string;
+  username: string;
+  password: string;
+  customerType: 'Domestic Customer' | 'Business Customer' | 'Commercial Customer';
+  title?: string;
+  firstName: string;
+  lastName: string;
+  profilePictureAssetId?: string;
+}
+
+export interface UpdateAdditionalPersonalInfoData {
+  fathersName?: string;
+  mothersName?: string;
+  dateOfBirth?: string;
   nationality?: string;
-  alternateContact?: string;
-  preferredContactMethod?: string;
-  category?: string;
-  accountType?: string;
+  nationalId?: string;
+  gender?: string;
+  maritalStatus?: string;
+  alternateContactNumber?: string;
+  secondaryEmailAddress?: string;
+  presentAddress?: string;
+  permanentAddress?: string;
+  emergencyContactName?: string;
+  emergencyContactRelation?: string;
+  emergencyContactNumber?: string;
+  alternateEmergencyContact?: string;
 }
 
 export interface UpdateBuildingInfoData {
@@ -152,7 +256,6 @@ export interface UpdatePreferencesData {
   billingOption?: string;
   paymentMode?: string;
   expectedConsumption?: string;
-  customerRating?: string;
   securitySummary?: string;
   additionalRequests?: string;
 }
@@ -279,9 +382,72 @@ export const usersService = {
 };
 
 export const staffService = {
-  createStaff: async (staffData: CreateStaffData): Promise<any> => {
+  createStaff: async (staffData: CreateStaffData): Promise<CreateStaffResponse> => {
     const response = await api.post('/staff', staffData);
     return response.data;
+  },
+
+  updateAdditionalPersonalInfo: async (staffProfileId: string, data: AdditionalPersonalInfoData): Promise<any> => {
+    const response = await api.patch(`/staff/${staffProfileId}/additional-personal-info`, data);
+    return response.data;
+  },
+
+  updateEmploymentDetails: async (staffProfileId: string, data: EmploymentDetailsData): Promise<any> => {
+    const response = await api.patch(`/staff/${staffProfileId}/employment-details`, data);
+    return response.data;
+  },
+
+  updateSalaryBenefits: async (staffProfileId: string, data: SalaryBenefitsData): Promise<any> => {
+    const response = await api.patch(`/staff/${staffProfileId}/salary-benefits`, data);
+    return response.data;
+  },
+
+  updateIdentificationVerification: async (staffProfileId: string, data: IdentificationVerificationData): Promise<any> => {
+    const response = await api.patch(`/staff/${staffProfileId}/referral-information`, data);
+    return response.data;
+  },
+
+  updateAssetsAndEquipment: async (staffProfileId: string, data: AssetsAndEquipmentData): Promise<any> => {
+    const response = await api.post(`/staff/${staffProfileId}/equipment`, data);
+    return response.data;
+  },
+
+  uploadDocument: async (file: File, fileType: string): Promise<DocumentUploadResponse> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", 'image');
+    const response = await api.post("/assets/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
+
+  createDocument: async (staffProfileId: string, data: DocumentData): Promise<any> => {
+    const response = await api.post(`/staff/${staffProfileId}/documents`, data);
+    return response.data;
+  },
+
+  deleteDocument: async (staffProfileId: string, documentId: string): Promise<any> => {
+    const response = await api.delete(`/staff/${staffProfileId}/documents/${documentId}`);
+    return response.data;
+  },
+
+  getDocuments: async (staffProfileId: string): Promise<any[]> => {
+    const response = await api.get(`/staff/${staffProfileId}/documents`);
+    return response.data;
+  },
+
+  getSupervisors: async (vendorId: string): Promise<any[]> => {
+    const response = await api.get(`/staff`, {
+      params: {
+        vendorId,
+        role: 'supervisor',
+        limit: 100,
+      },
+    });
+    return response.data?.data || response.data || [];
   },
 
   getStaff: async (vendorId: string, page = 1, limit = 10): Promise<StaffResponse> => {
@@ -294,11 +460,21 @@ export const staffService = {
     });
     return response.data;
   },
+
+  deleteStaff: async (staffId: string): Promise<any> => {
+    const response = await api.delete(`/staff/${staffId}`);
+    return response.data;
+  },
 };
 
 export const customerService = {
   createCustomer: async (customerData: CreateCustomerData): Promise<any> => {
     const response = await api.post('/customers', customerData);
+    return response.data;
+  },
+
+  updateAdditionalPersonalInfo: async (customerProfileId: string, personalData: UpdateAdditionalPersonalInfoData): Promise<any> => {
+    const response = await api.patch(`/customers/${customerProfileId}/additional-personal-info`, personalData);
     return response.data;
   },
 
@@ -362,6 +538,11 @@ export const customerService = {
 
   deleteLinkedAccount: async (customerProfileId: string, accountId: string): Promise<any> => {
     const response = await api.delete(`/customer-linked-accounts/${customerProfileId}/${accountId}`);
+    return response.data;
+  },
+
+  deleteCustomer: async (customerId: string): Promise<any> => {
+    const response = await api.delete(`/customers/${customerId}`);
     return response.data;
   },
 };

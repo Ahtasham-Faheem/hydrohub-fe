@@ -11,21 +11,31 @@ export interface FormData {
   confirmPassword?: string;
   phone: string;
 
+  // Staff Profile ID (set after first step submission)
+  staffProfileId?: string;
+
   // New / requested personal fields
   employeeId?: string;
   employeeCreationDate?: string;
   title?: string;
   nationality?: string;
   mothersName?: string;
+  fathersName?: string;
+  dateOfBirth?: string;
+  gender?: string;
+  nationalId?: string;
+  maritalStatus?: string;
 
   // Contact Information fields
   secondaryEmail?: string;
+  secondaryEmailAddress?: string;
   presentAddress?: string;
   permanentAddress?: string;
   emergencyContactName?: string;
   emergencyContactRelation?: string;
   emergencyContactNumber?: string;
   alternateContactNumber?: string;
+  alternateEmergencyContact?: string;
 
   // Employment Details fields
   joiningDate?: string;
@@ -33,6 +43,7 @@ export interface FormData {
   department?: string;
   employmentType?: string;
   supervisor?: string;
+  supervisorId?: string;
   workLocation?: string;
   shiftType?: string;
   employmentStatus?: string;
@@ -48,12 +59,15 @@ export interface FormData {
   taxStatus?: string;
 
   // Identification & Verification fields
-  idCardIssued?: string;
+  identityDocumentName?: string;
   idCardNumber?: string;
+  idCardIssuanceDate?: string;
+  idCardExpiryDate?: string;
   policeVerification?: string;
-  referralPerson?: string;
-  referralPersonRelation?: string;
+  referralPersonName?: string;
+  referralRelation?: string;
   referralContact?: string;
+  remarks?: string;
 
   // Attendance & Duty Info fields
   attendanceCode?: string;
@@ -65,19 +79,14 @@ export interface FormData {
   equipmentType?: string;
   assetId?: string;
   assignedDate?: string;
-  returnDate?: string;
-  remarks?: string;
-  issuedBy?: string;
+  quantity?: number;
+  unitOfMeasure?: string;
+  issueBy?: string;
 
   // Documents Upload fields
   documentRemarks?: string;
 
   // Optional fields
-  fathersName: string;
-  dateOfBirth: string;
-  gender: string;
-  nationalId: string;
-  maritalStatus: string;
   profilePictureAssetId: string;
   status: string;
 
@@ -110,40 +119,52 @@ const initialFormData: FormData = {
   password: "",
   confirmPassword: "",
   phone: "",
+  staffProfileId: "",
   employeeId: "",
   employeeCreationDate: "",
   title: "",
   nationality: "",
   mothersName: "",
+  fathersName: "",
+  dateOfBirth: "",
+  gender: "Male",
+  nationalId: "",
+  maritalStatus: "Single",
   secondaryEmail: "",
+  secondaryEmailAddress: "",
   presentAddress: "",
   permanentAddress: "",
   emergencyContactName: "",
   emergencyContactRelation: "",
   emergencyContactNumber: "",
   alternateContactNumber: "",
+  alternateEmergencyContact: "",
   joiningDate: "",
   jobTitle: "",
   department: "",
   employmentType: "",
   supervisor: "",
+  supervisorId: "",
   workLocation: "",
   shiftType: "",
   employmentStatus: "",
   basicSalary: "",
   allowances: "",
   providentFund: "",
-  salaryPaymentMode: "",
+  salaryPaymentMode: "cash",
   bankName: "",
   bankAccountTitle: "",
   bankAccountNumber: "",
   taxStatus: "",
-  idCardIssued: "",
+  identityDocumentName: "",
   idCardNumber: "",
+  idCardIssuanceDate: "",
+  idCardExpiryDate: "",
   policeVerification: "",
-  referralPerson: "",
-  referralPersonRelation: "",
+  referralPersonName: "",
+  referralRelation: "",
   referralContact: "",
+  remarks: "",
   attendanceCode: "",
   dutyArea: "",
   weeklyOffDay: "",
@@ -151,15 +172,10 @@ const initialFormData: FormData = {
   equipmentType: "",
   assetId: "",
   assignedDate: "",
-  returnDate: "",
-  remarks: "",
-  issuedBy: "",
+  quantity: 0,
+  unitOfMeasure: "",
+  issueBy: "",
   documentRemarks: "",
-  fathersName: "",
-  dateOfBirth: "",
-  gender: "Male",
-  nationalId: "",
-  maritalStatus: "Single",
   profilePictureAssetId: "",
   status: "active",
   userRole: "vendor_admin",

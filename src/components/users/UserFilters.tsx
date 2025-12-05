@@ -17,7 +17,7 @@ import { GrRefresh } from "react-icons/gr";
 import type { Dayjs } from "dayjs";
 import dayjs from "dayjs";
 import { useState, useRef, useEffect } from "react";
-import { PrimaryButton } from "../PrimaryButton";
+import { PrimaryButton } from "../common/PrimaryButton";
 
 interface DateRangeOption {
   label: string;
@@ -41,7 +41,10 @@ const DateCalendarGrid = ({
   const firstDay = month.startOf("month");
   const lastDay = month.endOf("month");
   const daysInMonth = lastDay.date();
-  const startDayOfWeek = firstDay.day();
+  // dayjs().day() returns 0=Sunday, 1=Monday... 6=Saturday
+  // Calendar starts with Monday, so we need to offset:
+  // Sunday (0) -> 6 blanks, Monday (1) -> 0 blanks, etc.
+  const startDayOfWeek = firstDay.day() === 0 ? 6 : firstDay.day() - 1;
 
   const days = [];
   for (let i = 0; i < startDayOfWeek; i++) {
@@ -135,8 +138,8 @@ const DateCalendarGrid = ({
 interface UserFiltersProps {
   status: string;
   setStatus: (status: string) => void;
-  role: string;
-  setRole: (role: string) => void;
+  customerType?: string;
+  setCustomerType?: (customerType: string) => void;
   startDate: Dayjs | null;
   setStartDate: (date: Dayjs | null) => void;
   endDate: Dayjs | null;
@@ -149,8 +152,8 @@ interface UserFiltersProps {
 export const UserFilters = ({
   status,
   setStatus,
-  role,
-  setRole,
+  customerType,
+  setCustomerType,
   startDate,
   setStartDate,
   endDate,
@@ -216,7 +219,7 @@ export const UserFilters = ({
 
   const resetAllFilters = () => {
     setStatus("");
-    setRole("");
+    if (setCustomerType) setCustomerType("");
     setStartDate(null);
     setEndDate(null);
     setLeftMonth(dayjs());
@@ -469,7 +472,19 @@ export const UserFilters = ({
           </Box>
         </LocalizationProvider>
 
-        {/* Dropdowns */}
+        <FormControl size="small">
+          <InputLabel>Select Customer Type</InputLabel>
+          <Select
+            value={customerType || ""}
+            onChange={(e) => setCustomerType && setCustomerType(e.target.value)}
+            label="Select Customer Type"
+          >
+            <MenuItem value="Domestic Customer">Domestic Customer</MenuItem>
+            <MenuItem value="Business Customer">Business Customer</MenuItem>
+            <MenuItem value="Commercial Customer">Commercial Customer</MenuItem>
+          </Select>
+        </FormControl>
+
         <FormControl size="small">
           <InputLabel>Select Status</InputLabel>
           <Select
@@ -477,28 +492,10 @@ export const UserFilters = ({
             onChange={(e) => setStatus(e.target.value)}
             label="Select Status"
           >
-            <MenuItem value="Active">Active</MenuItem>
-            <MenuItem value="Inactive">Inactive</MenuItem>
-            <MenuItem value="Pending">Pending</MenuItem>
-            <MenuItem value="Suspended">Suspended</MenuItem>
-          </Select>
-        </FormControl>
-
-        <FormControl size="small">
-          <InputLabel>Select Role</InputLabel>
-          <Select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            label="Select Role"
-          >
-            <MenuItem value="super_admin">Super Admin</MenuItem>
-            <MenuItem value="vendor_admin">Vendor Admin</MenuItem>
-            <MenuItem value="supervisor">Supervisor</MenuItem>
-            <MenuItem value="delivery_staff">Delivery Staff</MenuItem>
-            <MenuItem value="billing_operator">Billing Operator</MenuItem>
-            <MenuItem value="customer_support">Customer Support</MenuItem>
-            <MenuItem value="data_entry">Data Entry</MenuItem>
-            <MenuItem value="customer">Customer</MenuItem>
+            <MenuItem value="active">Active</MenuItem>
+            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="pending">Pending</MenuItem>
+            <MenuItem value="suspended">Suspended</MenuItem>
           </Select>
         </FormControl>
 

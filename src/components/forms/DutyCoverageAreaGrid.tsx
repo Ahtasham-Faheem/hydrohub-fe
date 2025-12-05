@@ -4,7 +4,7 @@ import {
 } from "@mui/material";
 import { useState } from "react";
 import type { SelectChangeEvent } from "@mui/material";
-import { CustomSelect } from "../CustomSelect";
+import { CustomSelect } from "../common/CustomSelect";
 
 const dayTypeOptions = [
   { value: "Weekday", label: "Weekday" },

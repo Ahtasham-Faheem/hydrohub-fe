@@ -9,12 +9,11 @@ import {
   Card,
   Alert,
 } from "@mui/material";
-import { PrimaryButton } from "../../components/PrimaryButton";
+import { PrimaryButton } from "../../components/common/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaCircle } from "react-icons/fa";
 import { FormProvider, useFormContext } from "../../contexts/FormContext";
-import { useCreateUser } from "../../hooks/useUsers";
-import { useCreateStaff } from "../../hooks/useStaff";
+import { staffService } from "../../services/api";
 
 // React Icons
 import { FaRegCalendarCheck } from "react-icons/fa";
@@ -71,10 +70,10 @@ const steps = [
     label: "Identification & Verification",
     icon: <AiOutlineIdcard size={22} />,
   },
-  { label: "Attendance & Duty Info", icon: <FaRegCalendarCheck size={22} /> },
-  { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
   { label: "Documents Upload", icon: <HiOutlineDocumentDuplicate size={22} /> },
-  { label: "Additional Notes", icon: <IoMdClipboard size={22} /> },
+  // { label: "Attendance & Duty Info", icon: <FaRegCalendarCheck size={22} /> },
+  // { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
+  // { label: "Additional Notes", icon: <IoMdClipboard size={22} /> },
 ];
 
 const CreateUserForm = () => {
@@ -84,80 +83,196 @@ const CreateUserForm = () => {
     formData,
     currentStep,
     setCurrentStep,
-    updateFormData,
     validateRequiredFields,
   } = useFormContext();
 
-  // TanStack Query mutations
-  const createUserMutation = useCreateUser();
-  const createStaffMutation = useCreateStaff();
   const [image, setImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleNext = async () => {
     setError(null);
+    setIsLoading(true);
 
-    if (currentStep === 0) {
-      const validation = validateRequiredFields();
-      if (!validation.isValid) {
-        setError(validation.errors.join(", "));
-        return;
-      }
+    try {
+      // Step 0: Create staff member via /staff API
+      if (currentStep === 0) {
+        const validation = validateRequiredFields();
+        if (!validation.isValid) {
+          setError(validation.errors.join(", "));
+          setIsLoading(false);
+          return;
+        }
 
-      createUserMutation.mutate(
-        {
+        const response = await staffService.createStaff({
           username: formData.username,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
-          status: formData.status,
+          title: formData.title || "Mr.",
           firstName: formData.firstName,
           lastName: formData.lastName,
-          fathersName: formData.fathersName,
-          dateOfBirth: formData.dateOfBirth,
-          gender: formData.gender,
-          nationalId: formData.nationalId,
-          maritalStatus: formData.maritalStatus,
           profilePictureAssetId: formData.profilePictureAssetId,
-        },
-        {
-          onSuccess: (userResponse) => {
-            updateFormData("userId", userResponse.id);
-            
-            // After user creation, immediately create staff
-            createStaffMutation.mutate(
-              {
-                userId: userResponse.id,
-                accessLevel: formData.accessLevel,
-                accessExpiry: formData.accessExpiry,
-                userRole: formData.userRole,
-                branchAssignment: formData.branchAssignment,
-                twoFactorAuth: formData.twoFactorAuth,
-              },
-              {
-                onSuccess: () => {
-                  setSuccess(true);
-                  setCurrentStep(1);
-                  setTimeout(() => {
-                    setSuccess(false);
-                  }, 2000);
-                },
-                onError: (error: any) => {
-                  setError(
-                    error.response?.data?.message || "Failed to assign staff role"
-                  );
-                },
-              }
-            );
-          },
-          onError: (error: any) => {
-            setError(error.response?.data?.message || "Failed to create user");
-          },
-        }
-      );
-      return;
-    }
+          role: formData.userRole || "delivery_staff",
+        });
 
-    setCurrentStep(Math.min(currentStep + 1, steps.length - 1));
+        // Save staffProfileId for next steps
+        if (response.id) {
+          formData.staffProfileId = response.id;
+        }
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(1);
+      }
+      // Step 1: Submit additional personal info via PATCH API
+      else if (currentStep === 1) {
+        if (!formData.staffProfileId) {
+          setError("Staff profile not found. Please complete step 1 first.");
+          setIsLoading(false);
+          return;
+        }
+
+        await staffService.updateAdditionalPersonalInfo(
+          formData.staffProfileId,
+          {
+            fathersName: formData.fathersName,
+            mothersName: formData.mothersName,
+            dateOfBirth: formData.dateOfBirth,
+            nationality: formData.nationality,
+            nationalId: formData.nationalId,
+            gender: formData.gender,
+            maritalStatus: formData.maritalStatus,
+            alternateContactNumber: formData.alternateContactNumber,
+            secondaryEmailAddress: formData.secondaryEmailAddress,
+            presentAddress: formData.presentAddress,
+            permanentAddress: formData.permanentAddress,
+            emergencyContactName: formData.emergencyContactName,
+            emergencyContactRelation: formData.emergencyContactRelation,
+            emergencyContactNumber: formData.emergencyContactNumber,
+            alternateEmergencyContact: formData.alternateEmergencyContact,
+          }
+        );
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(2);
+      }
+      // Step 2: Submit employment details via PATCH API
+      else if (currentStep === 2) {
+        if (!formData.staffProfileId) {
+          setError("Staff profile not found. Please complete step 1 first.");
+          setIsLoading(false);
+          return;
+        }
+
+        await staffService.updateEmploymentDetails(
+          formData.staffProfileId,
+          {
+            jobTitle: formData.jobTitle,
+            department: formData.department,
+            employmentType: formData.employmentType,
+            supervisorId: formData.supervisorId,
+            workLocation: formData.workLocation,
+            shiftType: formData.shiftType,
+            status: formData.employmentStatus,
+          }
+        );
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(3);
+      }
+      // Step 3: Submit salary & benefits via PATCH API
+      else if (currentStep === 3) {
+        if (!formData.staffProfileId) {
+          setError("Staff profile not found. Please complete step 1 first.");
+          setIsLoading(false);
+          return;
+        }
+
+        await staffService.updateSalaryBenefits(
+          formData.staffProfileId,
+          {
+            basicSalary: formData.basicSalary ? Number(formData.basicSalary) : undefined,
+            allowances: formData.allowances,
+            providentFund: formData.providentFund,
+            salaryPaymentMode: formData.salaryPaymentMode,
+            bankName: formData.bankName,
+            bankAccountTitle: formData.bankAccountTitle,
+            bankAccountNumber: formData.bankAccountNumber,
+            taxStatus: formData.taxStatus,
+          }
+        );
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(4);
+      }
+      // Step 4: Submit identification & verification via PATCH API
+      else if (currentStep === 4) {
+        if (!formData.staffProfileId) {
+          setError("Staff profile not found. Please complete step 1 first.");
+          setIsLoading(false);
+          return;
+        }
+
+        await staffService.updateIdentificationVerification(
+          formData.staffProfileId,
+          {
+            identityDocumentName: formData.identityDocumentName,
+            idCardNumber: formData.idCardNumber,
+            idCardIssuanceDate: formData.idCardIssuanceDate,
+            idCardExpiryDate: formData.idCardExpiryDate,
+            referralPersonName: formData.referralPersonName,
+            referralRelation: formData.referralRelation,
+            referralContact: formData.referralContact,
+            policeVerification: formData.policeVerification,
+            remarks: formData.remarks,
+          }
+        );
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(5);
+      }
+      // Step 6: Submit assets & equipment via PATCH API
+      else if (currentStep === 6) {
+        if (!formData.staffProfileId) {
+          setError("Staff profile not found. Please complete step 1 first.");
+          setIsLoading(false);
+          return;
+        }
+
+        await staffService.updateAssetsAndEquipment(
+          formData.staffProfileId,
+          {
+            equipmentType: formData.equipmentType,
+            assetId: formData.assetId,
+            assignedDate: formData.assignedDate,
+            quantity: formData.quantity ? Number(formData.quantity) : undefined,
+            unitOfMeasure: formData.unitOfMeasure,
+            issueBy: formData.issueBy,
+            remarks: formData.remarks,
+          }
+        );
+
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(7);
+      }
+      // Step 7: Documents Upload - just move forward (documents are uploaded via CRUD in component)
+      else if (currentStep === 7) {
+        setCurrentStep(8);
+      }
+      // Other steps: just move forward
+      else {
+        setCurrentStep(Math.min(currentStep + 1, steps.length - 1));
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBack = () => {
@@ -177,7 +292,7 @@ const CreateUserForm = () => {
 
   const renderStepContent = (step: number) => {
     switch (step) {
-      case 2:
+      case 0:
         return (
           <PersonalInformation
             image={image}
@@ -187,20 +302,20 @@ const CreateUserForm = () => {
         );
       case 1:
         return <AdditionalPersonalInfo />;
-      case 0:
+      case 2:
         return <EmploymentDetails />;
       case 3:
         return <SalaryBenefits />;
       case 4:
         return <IdentificationVerification />;
+      // case 5:
+      //   return <AttendanceDutyInfo />;
+      // case 6:
+      //   return <AssetsAndEquipmentAssigned />;
       case 5:
-        return <AttendanceDutyInfo />;
-      case 6:
-        return <AssetsAndEquipmentAssigned />;
-      case 7:
         return <DocumentsUpload />;
-      case 8:
-        return <AdditionalNotes />;
+      // case 8:
+      //   return <AdditionalNotes />;
       default:
         return (
           <PersonalInformation
@@ -327,15 +442,9 @@ const CreateUserForm = () => {
             <PrimaryButton
               endIcon={<BsArrowRight />}
               onClick={handleNext}
-              disabled={
-                createUserMutation.isPending || createStaffMutation.isPending
-              }
+              disabled={isLoading}
             >
-              {createUserMutation.isPending || createStaffMutation.isPending
-                ? "Processing..."
-                : currentStep === 0
-                ? "Create User"
-                : "Next"}
+              {isLoading ? "Processing..." : "Next"}
             </PrimaryButton>
           </Box>
         </Card>

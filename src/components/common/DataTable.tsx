@@ -8,8 +8,10 @@ import {
   TableBody,
   IconButton,
   Button,
+  CircularProgress,
 } from "@mui/material";
 import { Visibility, Edit, Delete } from "@mui/icons-material";
+import { useState } from "react";
 
 export interface Column {
   key: string;
@@ -44,6 +46,8 @@ export const DataTable = ({
   onEdit,
   onDelete,
 }: DataTableProps) => {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   // Safely get nested value from object using dot notation
   const getNestedValue = (obj: any, path: string) => {
     return path.split('.').reduce((acc, part) => acc?.[part], obj);
@@ -55,6 +59,15 @@ export const DataTable = ({
       return column.render(getNestedValue(item, column.key), item);
     }
     return getNestedValue(item, column.key) || 'N/A';
+  };
+
+  const handleDelete = async (item: any) => {
+    setDeletingId(getNestedValue(item, keyField));
+    try {
+      await onDelete?.(item);
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -119,9 +132,14 @@ export const DataTable = ({
                         <IconButton
                           size="small"
                           sx={{ color: "#ef4444" }}
-                          onClick={() => onDelete(item)}
+                          onClick={() => handleDelete(item)}
+                          disabled={deletingId === getNestedValue(item, keyField)}
                         >
-                          <Delete fontSize="small" />
+                          {deletingId === getNestedValue(item, keyField) ? (
+                            <CircularProgress size={20} sx={{ color: "#ef4444" }} />
+                          ) : (
+                            <Delete fontSize="small" />
+                          )}
                         </IconButton>
                       )}
                     </TableCell>

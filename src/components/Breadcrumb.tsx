@@ -4,11 +4,14 @@ import { NavigateNext } from '@mui/icons-material';
 
 const routeLabels: Record<string, string> = {
   dashboard: 'Dashboard',
-  users: 'Users',
+  users: 'System Users',
   'create-user': 'Create User',
   'business-control-center': 'Business Control Center',
   login: 'Login',
   'reset-password': 'Reset Password',
+  catalogue: 'Catalogue Management',
+  'customer-profiles': 'Customer Profiles',
+  orders: 'Create Order',
 };
 
 export const Breadcrumb = () => {
@@ -21,8 +24,8 @@ export const Breadcrumb = () => {
     pathnames[pathnames.length - 1].charAt(0).toUpperCase() + pathnames[pathnames.length - 1].slice(1);
 
   return (
-    <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center' }}>
-      <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+    <Box sx={{ mb: 3, display: 'flex',flexDirection: 'column', gap: 0.5, justifyContent: 'start' }}>
+      <Typography variant="h5" sx={{ fontWeight: 600}}>
         {currentPageLabel}
       </Typography>
       <Breadcrumbs

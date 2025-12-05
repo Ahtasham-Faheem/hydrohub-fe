@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -9,17 +9,13 @@ import {
   Button,
   Card,
   Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Stack,
   CircularProgress,
 } from "@mui/material";
-import { PrimaryButton } from "../../components/PrimaryButton";
+import { PrimaryButton } from "../../components/common/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaCircle } from "react-icons/fa";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
-import { MdExpandMore } from "react-icons/md";
 import {
   LuUserRoundPen,
   LuUserCheck,
@@ -29,7 +25,7 @@ import {
   LuShield,
   LuFileText,
 } from "react-icons/lu";
-import { useCreateUser } from "../../hooks";
+import { customerService } from "../../services/api";
 
 // Import form components
 import { DomesticStep1BasicProfile } from "../../components/customer-forms/DomesticStep1BasicProfile";
@@ -70,9 +66,9 @@ const domesticSteps = [
   { label: "Addresses", icon: <LuMapPin size={22} /> },
   { label: "Preferences", icon: <LuUserRoundPen size={22} /> },
   { label: "Linked Accounts", icon: <LuLink size={22} /> },
-  { label: "Referral", icon: <LuUserPlus size={22} /> },
-  { label: "Security", icon: <LuShield size={22} /> },
-  { label: "Additional Notes", icon: <LuFileText size={22} /> },
+  // { label: "Referral", icon: <LuUserPlus size={22} /> },
+  // { label: "Security", icon: <LuShield size={22} /> },
+  // { label: "Additional Notes", icon: <LuFileText size={22} /> },
 ];
 
 const businessSteps = [
@@ -82,54 +78,40 @@ const businessSteps = [
   { label: "Addresses", icon: <LuMapPin size={22} /> },
   { label: "Preferences", icon: <LuUserRoundPen size={22} /> },
   { label: "Linked Accounts", icon: <LuLink size={22} /> },
-  { label: "Referral", icon: <LuUserPlus size={22} /> },
-  { label: "Security", icon: <LuShield size={22} /> },
-  { label: "Additional Notes", icon: <LuFileText size={22} /> },
+  // { label: "Referral", icon: <LuUserPlus size={22} /> },
+  // { label: "Security", icon: <LuShield size={22} /> },
+  // { label: "Additional Notes", icon: <LuFileText size={22} /> },
 ];
 
 const CreateCustomerFormContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [customerProfileId, setCustomerProfileId] = useState<string | null>(null);
-  const [createdUserId, setCreatedUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { state, setCurrentStep, validateRequiredFields, setCustomerType } =
     useCustomerForm();
-  const location = useLocation();
   const navigate = useNavigate();
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Refs for manual form submission
   const buildingAccessRef = useRef<DomesticStep3BuildingAccessHandle>(null);
   const preferencesRef = useRef<DomesticStep5PreferencesHandle>(null);
 
-  const createUserMutation = useCreateUser();
   const createCustomerMutation = useCreateCustomer();
 
-  // Initialize customer type based on route
+  // Initialize customer type on mount
   useEffect(() => {
-    if (!isInitialized && !state.customerType) {
-      const pathname = location.pathname;
-      if (pathname.includes("/domestic")) {
-        setCustomerType("domestic");
-        setIsInitialized(true);
-      } else if (pathname.includes("/business")) {
-        setCustomerType("business");
-        setIsInitialized(true);
-      } else if (pathname.includes("/commercial")) {
-        setCustomerType("commercial");
-        setIsInitialized(true);
-      }
+    if (!state.data) {
+      setCustomerType('Domestic Customer');
     }
   }, []);
 
   const steps =
-    state.customerType === "business" ? businessSteps : domesticSteps;
+    state.customerType === "Business Customer" ? businessSteps : domesticSteps;
 
   const handleNext = async () => {
     setError(null);
 
-    // Step 1 (Basic Profile): Create user
-    if (state.currentStep === 0 && !createdUserId) {
+    // Step 0 (Basic Profile): Create customer with /customers API
+    if (state.currentStep === 0 && !customerProfileId) {
       const validation = validateRequiredFields();
       if (!validation.isValid) {
         setError(validation.errors.join(", "));
@@ -140,54 +122,57 @@ const CreateCustomerFormContent = () => {
 
       try {
         setIsLoading(true);
-        const newUser = await createUserMutation.mutateAsync({
-          username: data.username,
+        const newCustomer = await createCustomerMutation.mutateAsync({
           email: data.email,
           phone: data.mobileNumber,
+          username: data.username,
           password: data.password,
-          status: 'active',
+          customerType: (data.customerType || "Domestic Customer") as 'Domestic Customer' | 'Business Customer' | 'Commercial Customer',
+          title: data.title,
           firstName: data.firstName,
           lastName: data.lastName,
-          gender: data.gender || 'male',
+          profilePictureAssetId: data.profilePictureAssetId || "",
         });
 
-        setCreatedUserId(newUser.id);
+        setCustomerProfileId(newCustomer.id);
         setCurrentStep(1);
         return;
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to create user');
+        setError(err.response?.data?.message || 'Failed to create customer');
         return;
       } finally {
         setIsLoading(false);
       }
     }
 
-    // Final submission: Create customer profile
-    if (state.currentStep === 1) {
-      if (!createdUserId) {
-        setError('User not created. Please go back to step 1.');
-        return;
-      }
+    // Step 1 (Additional Personal Info): Update customer additional info
+    if (state.currentStep === 1 && customerProfileId) {
+      const data = state.data as any;
 
       try {
         setIsLoading(true);
-        const newCustomer = await createCustomerMutation.mutateAsync({
-          userId: createdUserId,
-          customerType: state.customerType as 'domestic' | 'business' | 'commercial',
-          motherName: (state.data as any).motherName,
-          nationality: (state.data as any).nationality,
-          alternateContact: (state.data as any).alternateContact,
-          preferredContactMethod: (state.data as any).preferredContactMethod,
-          category: 'standard',
-          accountType: 'retail',
+        await customerService.updateAdditionalPersonalInfo(customerProfileId, {
+          fathersName: data.fatherHusbandName || "",
+          mothersName: data.motherName || "",
+          dateOfBirth: data.dateOfBirth || "",
+          nationality: data.nationality || "",
+          nationalId: data.cnicNumber || "",
+          gender: data.gender || "",
+          maritalStatus: data.maritalStatus || "",
+          alternateContactNumber: data.alternateContactNumber || "",
+          secondaryEmailAddress: data.email || "",
+          presentAddress: data.presentAddress || "",
+          permanentAddress: data.permanentAddress || "",
+          emergencyContactName: data.emergencyContactName || "",
+          emergencyContactRelation: data.emergencyContactRelation || "",
+          emergencyContactNumber: data.emergencyContactNumber || "",
+          alternateEmergencyContact: data.alternateEmergencyContact || "",
         });
 
-        // Store customerProfileId for future steps
-        setCustomerProfileId(newCustomer.id);
         setCurrentStep(2);
         return;
       } catch (err: any) {
-        setError(err.response?.data?.message || 'Failed to create customer');
+        setError(err.response?.data?.message || 'Failed to save personal information');
         return;
       } finally {
         setIsLoading(false);
@@ -240,7 +225,6 @@ const CreateCustomerFormContent = () => {
   };
 
   const renderStepContent = (step: number) => {
-    if (state.customerType === "domestic") {
       switch (step) {
         case 0:
           return <DomesticStep1BasicProfile />;
@@ -254,12 +238,12 @@ const CreateCustomerFormContent = () => {
           return <DomesticStep5Preferences ref={preferencesRef} customerProfileId={customerProfileId || undefined} />;
         case 5:
           return <DomesticStep6LinkedAccounts customerProfileId={customerProfileId || undefined} />;
-        case 6:
-          return <DomesticStep7Referral />;
-        case 7:
-          return <DomesticStep8Security />;
-        case 8:
-          return <DomesticStep9AdditionalNotes />;
+        // case 6:
+        //   return <DomesticStep7Referral />;
+        // case 7:
+        //   return <DomesticStep8Security />;
+        // case 8:
+        //   return <DomesticStep9AdditionalNotes />;
         default:
           return (
             <Box sx={{ py: 2 }}>
@@ -267,41 +251,7 @@ const CreateCustomerFormContent = () => {
             </Box>
           );
       }
-    } else if (state.customerType === "business") {
-      return (
-        <Box sx={{ py: 2 }}>
-          <Accordion defaultExpanded>
-            <AccordionSummary expandIcon={<MdExpandMore />}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                {steps[step]?.label || "Form Section"}
-              </Typography>
-            </AccordionSummary>
-            <AccordionDetails sx={{ pt: 3 }}>
-              <Typography>Business customer form coming soon...</Typography>
-            </AccordionDetails>
-          </Accordion>
-        </Box>
-      );
-    }
-    return null;
   };
-
-  if (!state.customerType) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          minHeight: "calc(100vh - 100px)",
-        }}
-      >
-        <Typography variant="h6" sx={{ color: "#999" }}>
-          Initializing form...
-        </Typography>
-      </Box>
-    );
-  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
@@ -316,8 +266,8 @@ const CreateCustomerFormContent = () => {
           overflowY: "auto",
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, textTransform: "capitalize" }}>
-          {state.customerType} Customer
+        <Typography variant="h6" sx={{ mb: 3 }}>
+          Create Customer
         </Typography>
         <Stepper
           activeStep={state.currentStep}

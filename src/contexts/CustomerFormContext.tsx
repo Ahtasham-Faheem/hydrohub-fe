@@ -35,6 +35,8 @@ const defaultDomesticCustomer: DomesticCustomer = {
   dateOfBirth: '',
   gender: 'male',
   maritalStatus: 'single',
+  customerType: 'Domestic Customer',
+  alternateContactNumber: '',
   creationDate: new Date().toISOString(),
   preferredContactMethod: 'whatsapp',
   buildingAccessInfo: {
@@ -77,7 +79,7 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
   const setCustomerType = (type: CustomerType) => {
     let initialData: DomesticCustomer | BusinessCustomer;
 
-    if (type === 'business') {
+    if (type === 'Business Customer') {
       initialData = {
         ...defaultDomesticCustomer,
         businessName: '',

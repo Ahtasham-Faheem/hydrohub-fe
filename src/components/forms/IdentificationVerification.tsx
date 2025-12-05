@@ -1,6 +1,6 @@
 import { Stack } from "@mui/material";
-import { CustomInput } from "../CustomInput";
-import { CustomCheckbox } from "../CustomCheckbox";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const IdentificationVerification = () => {
@@ -8,53 +8,79 @@ export const IdentificationVerification = () => {
 
   return (
     <Stack spacing={3}>
-      {/* ID Card Issued + ID Card Number + Police Verification */}
+      {/* Identity Document Name + ID Card Number + ID Card Issuance Date */}
       <Stack direction="row" spacing={2}>
-        <CustomCheckbox
-          label="ID Card Issued"
-          checked={formData.idCardIssued ? true : false}
-          onChange={(checked) =>
-            updateFormData("idCardIssued", checked ? "true" : "")
-          }
+        <CustomInput
+          label="Identity Document Name"
+          placeholder="National ID Card"
+          value={formData.identityDocumentName || ""}
+          onChange={(e) => updateFormData("identityDocumentName", e.target.value)}
         />
         <CustomInput
           label="ID Card Number"
-          placeholder="35101-9889455-3"
+          placeholder="12345-6789012-3"
           value={formData.idCardNumber || ""}
           onChange={(e) => updateFormData("idCardNumber", e.target.value)}
         />
-        <CustomCheckbox
-          label="Police Verification"
-          checked={formData.policeVerification ? true : false}
-          onChange={(checked) =>
-            updateFormData("policeVerification", checked ? "true" : "")
-          }
+        <CustomInput
+          label="ID Card Issuance Date"
+          type="date"
+          value={formData.idCardIssuanceDate || ""}
+          onChange={(e) => updateFormData("idCardIssuanceDate", e.target.value)}
         />
       </Stack>
 
-      {/* Referral Person + Referral Person Relation + Referral Contact */}
+      {/* ID Card Expiry Date + Police Verification */}
       <Stack direction="row" spacing={2}>
         <CustomInput
-          label="Referral Person"
-          placeholder="Who refers the staff"
-          value={formData.referralPerson || ""}
-          onChange={(e) => updateFormData("referralPerson", e.target.value)}
+          label="ID Card Expiry Date"
+          type="date"
+          value={formData.idCardExpiryDate || ""}
+          onChange={(e) => updateFormData("idCardExpiryDate", e.target.value)}
+        />
+        <CustomSelect
+          label="Police Verification"
+          value={formData.policeVerification || ""}
+          onChange={(e) => updateFormData("policeVerification", e.target.value)}
+          options={[
+            { value: "Verified", label: "Verified" },
+            { value: "Pending", label: "Pending" },
+            { value: "Not Verified", label: "Not Verified" },
+          ]}
+        />
+      </Stack>
+
+      {/* Referral Person Name + Referral Relation + Referral Contact */}
+      <Stack direction="row" spacing={2}>
+        <CustomInput
+          label="Referral Person Name"
+          placeholder="Ahmad Ali"
+          value={formData.referralPersonName || ""}
+          onChange={(e) => updateFormData("referralPersonName", e.target.value)}
         />
         <CustomInput
-          label="Referral Person Relation"
-          placeholder="Enter relation"
-          value={formData.referralPersonRelation || ""}
-          onChange={(e) =>
-            updateFormData("referralPersonRelation", e.target.value)
-          }
+          label="Referral Relation"
+          placeholder="Friend"
+          value={formData.referralRelation || ""}
+          onChange={(e) => updateFormData("referralRelation", e.target.value)}
         />
         <CustomInput
           label="Referral Contact"
-          placeholder="+92 345 5679786"
+          placeholder="+923001111111"
           value={formData.referralContact || ""}
           onChange={(e) => updateFormData("referralContact", e.target.value)}
         />
       </Stack>
+
+      {/* Remarks */}
+      <CustomInput
+        label="Remarks"
+        placeholder="All documents verified and approved"
+        multiline
+        rows={4}
+        value={formData.remarks || ""}
+        onChange={(e) => updateFormData("remarks", e.target.value)}
+      />
     </Stack>
   );
 };

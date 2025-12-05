@@ -1,8 +1,8 @@
 import {
   Stack,
 } from "@mui/material";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const SalaryBenefits = () => {
@@ -21,8 +21,7 @@ export const SalaryBenefits = () => {
         />
         <CustomInput
           label="Allowances"
-          type="number"
-          placeholder="e.g., Fuel, Meal, Bonus"
+          placeholder="Transport: 5000, Medical: 3000, Food: 2000"
           value={formData.allowances || ''}
           onChange={(e) => updateFormData('allowances', e.target.value)}
         />
@@ -42,9 +41,8 @@ export const SalaryBenefits = () => {
           value={formData.salaryPaymentMode || ''}
           onChange={(e) => updateFormData('salaryPaymentMode', e.target.value)}
           options={[
-            { value: "cash", label: "Cash" },
             { value: "bank_transfer", label: "Bank Transfer" },
-            { value: "cheque", label: "Cheque" },
+            { value: "cash", label: "Cash" },
             { value: "other", label: "Other" },
           ]}
         />
@@ -75,8 +73,8 @@ export const SalaryBenefits = () => {
           value={formData.taxStatus || ''}
           onChange={(e) => updateFormData('taxStatus', e.target.value)}
           options={[
-            { value: "taxable", label: "Taxable" },
-            { value: "non_taxable", label: "Non-Taxable" },
+            { value: "Taxable", label: "Taxable" },
+            { value: "Non-Taxable", label: "Non-Taxable" },
           ]}
         />
       </Stack>

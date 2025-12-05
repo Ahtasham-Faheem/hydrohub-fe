@@ -11,12 +11,12 @@ import {
   IconButton,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
-import { useAuth } from "../../contexts/AuthContext";
+import { DEMO_MODE, useAuth } from "../../contexts/AuthContext";
 import WaterLogo from "../../assets/WATER-INN-logo.svg";
 import { LuMail } from "react-icons/lu";
 import { Footer } from "../../components/auth/Footer";
-import { PrimaryButton } from "../../components/PrimaryButton";
-import { CustomInput } from "../../components/CustomInput";
+import { PrimaryButton } from "../../components/common/PrimaryButton";
+import { CustomInput } from "../../components/common/CustomInput";
 
 export const Login = () => {
   const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
@@ -39,6 +39,12 @@ export const Login = () => {
   }, [isAuthenticated, navigate]);
 
   const validate = () => {
+    // In demo mode, skip validation
+    if (true) {
+      // DEMO_MODE equivalent
+      return true;
+    }
+
     let valid = true;
     const newErrors = { email: "", password: "", phone: "" };
 
@@ -82,10 +88,14 @@ export const Login = () => {
     setErrors({ email: "", password: "", phone: "" });
 
     try {
-      const loginPayload = loginMode === "email" 
-        ? { email, password: useCodeLogin ? otp : password }
-        : { phone: `${countryCode}${phone}`, password: useCodeLogin ? otp : password };
-      
+      const loginPayload =
+        loginMode === "email"
+          ? { email, password: useCodeLogin ? otp : password }
+          : {
+              phone: `${countryCode}${phone}`,
+              password: useCodeLogin ? otp : password,
+            };
+
       await login(loginPayload);
       navigate("/dashboard");
     } catch (error: any) {
@@ -353,6 +363,39 @@ export const Login = () => {
             >
               {isLoading ? "Logging in..." : "Log In"}
             </PrimaryButton>
+
+            {/* Demo Login Button for Testing */}
+            {DEMO_MODE && (
+              <Button
+                variant="outlined"
+                fullWidth
+                onClick={async () => {
+                  setIsLoading(true);
+                  try {
+                    await login({
+                      email: "demo@hydrohub.pk",
+                      password: "demo123",
+                    });
+                    navigate("/dashboard");
+                  } finally {
+                    setIsLoading(false);
+                  }
+                }}
+                disabled={isLoading}
+                sx={{
+                  mt: 2,
+                  textTransform: "none",
+                  color: "#2092ec",
+                  borderColor: "#2092ec",
+                  "&:hover": {
+                    borderColor: "#187bcd",
+                    color: "#187bcd",
+                  },
+                }}
+              >
+                Demo Login (Testing)
+              </Button>
+            )}
             <Box textAlign="center" mt={3}>
               <Link
                 to="/"

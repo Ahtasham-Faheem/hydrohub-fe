@@ -152,6 +152,11 @@ export const menuConfig: MenuItem[] = [
         label: 'Catalogue Management',
         icon: Inventory,
       },
+      {
+        id: 'orders',
+        label: 'Create Order',
+        icon: ShoppingCart,
+      },
     ],
   },
   {

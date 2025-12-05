@@ -1,5 +1,5 @@
 import { Box, Typography, Card } from '@mui/material';
-import { CustomInput } from '../CustomInput';
+import { CustomInput } from '../common/CustomInput';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer } from '../../types/customer';
 

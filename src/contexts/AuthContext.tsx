@@ -5,7 +5,7 @@ import type { LoginCredentials } from '../services/api';
 import { useProfile } from '../hooks/useAuth';
 
 // TODO: Change this to false when backend is ready
-const DEMO_MODE = false;
+export const DEMO_MODE = false;
 
 interface User {
   id: string;
@@ -69,7 +69,7 @@ const AuthProviderInner = ({ children }: { children: ReactNode }) => {
         id: '1',
         email: credentials.email || 'demo@example.com',
         role: 'admin',
-        name: 'Demo User'
+        name: credentials.email ? credentials.email.split('@')[0] : 'Demo User'
       };
       
       localStorage.setItem('authToken', 'demo-token');

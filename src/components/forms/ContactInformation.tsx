@@ -1,8 +1,8 @@
 import { Stack } from "@mui/material";
 import dayjs from "dayjs";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
-import { CustomDateInput } from "../CustomDateInput";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
+import { CustomDateInput } from "../common/CustomDateInput";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const AdditionalPersonalInfo = () => {

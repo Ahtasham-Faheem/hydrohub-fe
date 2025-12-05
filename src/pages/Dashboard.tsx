@@ -14,6 +14,7 @@ import { CreateCustomer } from "./CustomerManagement/CreateCustomer";
 import { SelectCustomerType } from "./CustomerManagement/SelectCustomerType";
 import { CustomerFormProvider } from "../contexts/CustomerFormContext";
 import { CatalogueManagement } from "./CatalogeManagement/CatalogueManagement";
+import { OrderFlow } from "./Orders/OrderFlow";
 
 export const Dashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -42,11 +43,20 @@ export const Dashboard = () => {
       />
 
       {/* Right Panel */}
-      <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-        <Header
-          onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
-          isVisible={headerVisible}
-        />
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+          position: "relative",
+        }}
+      >
+        <div className="absolute top-0 w-full">
+          <Header
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+            isVisible={headerVisible}
+          />
+        </div>
         {/* Add toggle button in top-right when header is hidden */}
         {!headerVisible && (
           <Box
@@ -76,8 +86,8 @@ export const Dashboard = () => {
         )}
 
         {/* Content Area */}
-        <div className="relative h-full">
-          <Box sx={{ p: 2, pr: 3 }}>
+        <div className="h-screen flex flex-col justify-between">
+          <Box sx={{ p: 2, pr: 3, pt: 10 }}>
             <Breadcrumb />
             <Routes>
               <Route
@@ -99,25 +109,8 @@ export const Dashboard = () => {
               <Route path="users" element={<UsersPage />} />
               <Route path="users/create" element={<CreateUser />} />
               <Route path="customer-profiles" element={<CustomerProfiles />} />
-              <Route path="customer-profiles/create" element={<SelectCustomerType />} />
               <Route
-                path="customer-profiles/create/domestic"
-                element={
-                  <CustomerFormProvider>
-                    <CreateCustomer />
-                  </CustomerFormProvider>
-                }
-              />
-              <Route
-                path="customer-profiles/create/business"
-                element={
-                  <CustomerFormProvider>
-                    <CreateCustomer />
-                  </CustomerFormProvider>
-                }
-              />
-              <Route
-                path="customer-profiles/create/commercial"
+                path="customer-profiles/create"
                 element={
                   <CustomerFormProvider>
                     <CreateCustomer />
@@ -125,10 +118,11 @@ export const Dashboard = () => {
                 }
               />
               <Route path="catalogue" element={<CatalogueManagement />} />
+              <Route path="orders" element={<OrderFlow />} />
               <Route
                 path="*"
                 element={
-                  <div className="h-[75vh] flex items-center justify-center">
+                  <div className="flex items-center justify-center h-full">
                     <Box
                       sx={{
                         display: "flex",

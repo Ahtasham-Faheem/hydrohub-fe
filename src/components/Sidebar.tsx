@@ -201,7 +201,7 @@ export const Sidebar = ({
             </Link>
           </Box>
 
-          <List component="nav" disablePadding>
+          <List className="clas" component="nav" disablePadding>
             {menuConfig.map((item) => renderMenuItem(item))}
           </List>
         </Box>

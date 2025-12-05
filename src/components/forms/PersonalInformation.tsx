@@ -1,8 +1,8 @@
 import { Box, Typography, Button, Stack, IconButton } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
-import { PrimaryButton } from "../PrimaryButton";
-import { CustomInput } from "../CustomInput";
-import { CustomSelect } from "../CustomSelect";
+import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
+import { PrimaryButton } from "../common/PrimaryButton";
+import { CustomInput } from "../common/CustomInput";
+import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 import { useUploadFile } from "../../hooks/useAssets";
 import { useState } from "react";
@@ -22,6 +22,7 @@ export const PersonalInformation = ({
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [countryCode, setCountryCode] = useState("+92");
 
   // TanStack Query mutation
   const uploadMutation = useUploadFile();
@@ -55,6 +56,12 @@ export const PersonalInformation = ({
     updateFormData("profilePictureAssetId", "");
     onImageReset();
     setUploadError(null);
+  };
+
+  const handlePhoneChange = (value: string) => {
+    // Store phone without country code
+    const phoneWithoutCode = value.replace(/^\+\d+/, "");
+    updateFormData("phone", phoneWithoutCode);
   };
 
   return (
@@ -163,10 +170,25 @@ export const PersonalInformation = ({
           onChange={(e) => updateFormData("email", e.target.value)}
         />
         <CustomInput
-          label="Primary Mobile Number *"
-          placeholder="+923001234567"
+          label="Phone Number"
+          placeholder="1234567890"
           value={formData.phone}
-          onChange={(e) => updateFormData("phone", e.target.value)}
+          onChange={(e) => handlePhoneChange(e.target.value)}
+          startAdornment={
+            <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
+              <select
+                value={countryCode}
+                onChange={(e) => setCountryCode(e.target.value)}
+                className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
+              >
+                <option value="+92">PK +92</option>
+                <option value="+91">IN +91</option>
+                <option value="+1">US +1</option>
+              </select>
+              <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
+            </Box>
+          }
+          endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
         />
         <CustomInput
           label="Login Username *"

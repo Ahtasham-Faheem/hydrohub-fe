@@ -8,10 +8,11 @@ import { SortAndManageColumns } from "../../components/users/SortAndManageColumn
 import { DataTable } from "../../components/common/DataTable";
 import type { Column } from "../../components/common/DataTable";
 import { useGetCustomers } from "../../hooks/useCustomer";
+import { customerService } from "../../services/api";
 
 export const CustomerProfiles = () => {
   const [status, setStatus] = useState("");
-  const [role, setRole] = useState("");
+  const [customerType, setCustomerType] = useState("");
   const [search, setSearch] = useState("");
   const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
   const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
@@ -27,7 +28,7 @@ export const CustomerProfiles = () => {
   const vendorId = vendorData ? JSON.parse(vendorData).id : null;
 
   // Fetch customers using the API
-  const { data: customerData, isLoading } = useGetCustomers(
+  const { data: customerData, isLoading, refetch } = useGetCustomers(
     vendorId,
     currentPage,
     10
@@ -35,6 +36,17 @@ export const CustomerProfiles = () => {
 
   const customers = customerData?.data || [];
   const totalPages = customerData?.pagination?.totalPages || 1;
+  console.log('Customers Data:', customers);
+
+  const handleDeleteCustomer = async (item: any) => {
+    try {
+      await customerService.deleteCustomer(item.id);
+      // Refetch customers list after deletion
+      refetch();
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to delete customer');
+    }
+  };
 
   const [columns, setColumns] = useState([
     { id: 1, label: "User", enabled: true },
@@ -91,31 +103,36 @@ export const CustomerProfiles = () => {
       if (startDate && endDate) {
         const customerCreatedDate = dayjs(customer.createdAt);
         const isInRange =
-          (customerCreatedDate.isAfter(startDate) &&
-            customerCreatedDate.isBefore(endDate)) ||
-          customerCreatedDate.isSame(startDate, "day") ||
-          customerCreatedDate.isSame(endDate, "day");
+          (customerCreatedDate.isAfter(startDate) || customerCreatedDate.isSame(startDate, "day")) &&
+          (customerCreatedDate.isBefore(endDate) || customerCreatedDate.isSame(endDate, "day"));
         if (!isInRange) {
           return false;
         }
       }
 
-      // Filter by status - check customerStatus field
-      if (status && customer.customerStatus !== status.toLowerCase()) {
+      // Filter by status - check status field directly
+      if (status && customer.status !== status.toLowerCase()) {
+        return false;
+      }
+
+      // Filter by customer type
+      if (customerType && customer.customerType !== customerType) {
         return false;
       }
 
       // Filter by search
       if (search) {
         const searchLower = search.toLowerCase();
-        const firstName = customer.user?.firstName || "";
-        const lastName = customer.user?.lastName || "";
-        const email = customer.user?.email || "";
+        const firstName = customer.firstName || "";
+        const lastName = customer.lastName || "";
+        const email = customer.email || "";
+        const customerId = customer.customerId || "";
 
         if (
           !firstName.toLowerCase().includes(searchLower) &&
           !lastName.toLowerCase().includes(searchLower) &&
-          !email.toLowerCase().includes(searchLower)
+          !email.toLowerCase().includes(searchLower) &&
+          !customerId.toLowerCase().includes(searchLower)
         ) {
           return false;
         }
@@ -123,7 +140,7 @@ export const CustomerProfiles = () => {
 
       return true;
     });
-  }, [customers, status, startDate, endDate, search]);
+  }, [customers, status, customerType, startDate, endDate, search]);
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -140,32 +157,32 @@ export const CustomerProfiles = () => {
 
   const cards = [
     {
-      title: "Active Customers",
-      value: customers
-        .filter((c: any) => c.customerStatus === "active")
-        .length.toString(),
-      change: "+0%",
-      desc: "All customers currently active in the system",
+      title: "Total Customers",
+      value: customers.length.toString(),
+      change: "0%",
+      desc: "Total customers in the system",
       color: "var(--color-status-success)",
       bgColor: "var(--color-status-success-light)",
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "Verified Customers",
+      title: "Active Customers",
       value: customers
-        .filter((c: any) => c.user?.status === "active")
+        .filter((c: any) => c.status === "active")
         .length.toString(),
       change: "+0%",
-      desc: "Customers with verified email and phone",
+      desc: "All customers currently active in the system",
       color: "var(--color-primary-600)",
       bgColor: "var(--color-primary-bg-light)",
       icon: <LuUserRoundCheck />,
     },
     {
-      title: "Total Customers",
-      value: customers.length.toString(),
-      change: "0%",
-      desc: "Total customers in the system",
+      title: "Verified Customers",
+      value: customers
+        .filter((c: any) => c.personalInfo !== null)
+        .length.toString(),
+      change: "+0%",
+      desc: "Customers with complete profile information",
       color: "var(--color-status-warning)",
       bgColor: "var(--color-status-warning-light)",
       icon: <LuUserRoundX />,
@@ -173,7 +190,7 @@ export const CustomerProfiles = () => {
     {
       title: "Inactive Customers",
       value: customers
-        .filter((c: any) => c.customerStatus === "inactive")
+        .filter((c: any) => c.status === "inactive")
         .length.toString(),
       change: "0%",
       desc: "Customers no longer active",
@@ -185,11 +202,11 @@ export const CustomerProfiles = () => {
 
   const tableColumns: Column[] = [
     {
-      key: "user.firstName",
+      key: "firstName",
       label: "Customer Name",
       render: (_: any, item: any) => {
-        const firstName = item.user?.firstName || "N/A";
-        const lastName = item.user?.lastName || "N/A";
+        const firstName = item?.firstName || "N/A";
+        const lastName = item?.lastName || "N/A";
         const initials = (firstName?.[0] || "C") + (lastName?.[0] || "U");
         return (
           <Box display="flex" alignItems="center" gap={2}>
@@ -222,69 +239,47 @@ export const CustomerProfiles = () => {
       },
     },
     {
-      key: "user.email",
+      key: "email",
       label: "Email",
+      render: (_: any, item: any) => {
+        return item?.email || "N/A";
+      },
     },
     {
       key: "customerType",
       label: "Type",
-      render: (value: string) => {
-        return value ? value.charAt(0).toUpperCase() + value.slice(1) : "N/A";
+      render: (_: any, item: any) => {
+        return item?.customerType || "N/A";
       },
     },
     {
       key: "customerStatus",
       label: "Status",
-      render: (value: string) => (
-        <Box
-          sx={{
-            display: "inline-block",
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1,
-            bgcolor:
-              value === "active"
-                ? "var(--color-status-success-light)"
-                : "var(--color-status-error-light)",
-            color:
-              value === "active"
-                ? "var(--color-status-success)"
-                : "var(--color-status-error)",
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            textTransform: "capitalize",
-          }}
-        >
-          {value || "N/A"}
-        </Box>
-      ),
-    },
-    {
-      key: "user.status",
-      label: "User Status",
-      render: (value: string) => (
-        <Box
-          sx={{
-            display: "inline-block",
-            px: 1.5,
-            py: 0.5,
-            borderRadius: 1,
-            bgcolor:
-              value === "active"
-                ? "var(--color-status-success-light)"
-                : "var(--color-status-error-light)",
-            color:
-              value === "active"
-                ? "var(--color-status-success)"
-                : "var(--color-status-error)",
-            fontSize: "0.75rem",
-            fontWeight: 600,
-            textTransform: "capitalize",
-          }}
-        >
-          {value || "N/A"}
-        </Box>
-      ),
+      render: (_: any, item: any) => {
+        return (
+          <Box
+            sx={{
+              display: "inline-block",
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 1,
+              bgcolor:
+                item?.status === "active"
+                  ? "var(--color-status-success-light)"
+                  : "var(--color-status-error-light)",
+              color:
+                item?.status === "active"
+                  ? "var(--color-status-success)"
+                  : "var(--color-status-error)",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              textTransform: "capitalize",
+            }}
+          >
+            {item?.status || "N/A"}
+          </Box>
+        );
+      },
     },
   ];
 
@@ -316,8 +311,8 @@ export const CustomerProfiles = () => {
           {...{
             status,
             setStatus,
-            role,
-            setRole,
+            customerType,
+            setCustomerType,
             startDate,
             setStartDate,
             endDate,
@@ -356,7 +351,7 @@ export const CustomerProfiles = () => {
         showActions={true}
         onView={(item) => console.log("View customer", item)}
         onEdit={(item) => console.log("Edit customer", item)}
-        onDelete={(item) => console.log("Delete customer", item)}
+        onDelete={(item) => handleDeleteCustomer(item)}
       />
     </Box>
   );

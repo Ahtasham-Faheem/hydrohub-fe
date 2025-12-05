@@ -1,7 +1,7 @@
 import { Box, Typography, Card, Button, IconButton, Collapse, Alert, CircularProgress } from '@mui/material';
-import { CustomInput } from '../CustomInput';
-import { CustomSelect } from '../CustomSelect';
-import { FileUploadField } from '../FileUploadField';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
+import { FileUploadField } from '../common/FileUploadField';
 import { useCustomerForm } from '../../contexts/CustomerFormContext';
 import type { DomesticCustomer, LinkedAccount } from '../../types/customer';
 import { MdAdd, MdDelete, MdEdit } from 'react-icons/md';
