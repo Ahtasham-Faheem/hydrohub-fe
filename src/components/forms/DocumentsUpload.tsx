@@ -13,33 +13,6 @@ interface UploadedDocument {
   assetId: string;
 }
 
-// Helper function to determine file type from MIME type
-const getFileTypeFromMime = (file: File): "image" | "document" | "video" => {
-  const mimeType = file.type.toLowerCase();
-  
-  if (mimeType.startsWith("image/")) {
-    return "image";
-  }
-  if (mimeType.startsWith("video/")) {
-    return "video";
-  }
-  // Default to document for PDFs, Word docs, Excel, etc.
-  if (
-    mimeType.includes("pdf") ||
-    mimeType.includes("word") ||
-    mimeType.includes("spreadsheet") ||
-    mimeType.includes("text") ||
-    mimeType === "application/msword" ||
-    mimeType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-    mimeType === "application/vnd.ms-excel" ||
-    mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  ) {
-    return "document";
-  }
-  // Default to document for unknown types
-  return "document";
-};
-
 export const DocumentsUpload = () => {
   const { formData, updateFormData } = useFormContext();
   const [error, setError] = useState<string | null>(null);
@@ -100,10 +73,9 @@ export const DocumentsUpload = () => {
       setUploadingDocumentType(documentTypeKey);
       
       const documentName = `${documentType} - ${file.name}`;
-      const fileType = getFileTypeFromMime(file);
 
       // Step 1: Upload file to assets/upload endpoint
-      const uploadResponse = await staffService.uploadDocument(file, fileType);
+      const uploadResponse = await staffService.uploadDocument(file);
       const assetId = uploadResponse.id;
       
       // Step 2: Create document record with assetId

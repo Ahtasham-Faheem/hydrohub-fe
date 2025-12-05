@@ -412,7 +412,7 @@ export const staffService = {
     return response.data;
   },
 
-  uploadDocument: async (file: File, fileType: string): Promise<DocumentUploadResponse> => {
+  uploadDocument: async (file: File): Promise<DocumentUploadResponse> => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("fileType", 'image');

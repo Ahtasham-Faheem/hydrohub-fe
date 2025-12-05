@@ -1,4 +1,4 @@
-import { Box, Typography, Button, CircularProgress } from "@mui/material";
+import { Box, Typography, Button } from "@mui/material";
 import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
 import { PrimaryButton } from "../common/PrimaryButton";
@@ -33,7 +33,7 @@ export const DomesticStep1BasicProfile = () => {
       reader.readAsDataURL(file);
 
       // Upload the file to assets/upload
-      const uploadResponse = await staffService.uploadDocument(file, "image");
+      const uploadResponse = await staffService.uploadDocument(file);
       const profilePictureAssetId = uploadResponse.id;
 
       // Store the asset ID

@@ -11,7 +11,6 @@ import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { FaAngleDown } from "react-icons/fa";
 import { CustomerProfiles } from "./CustomerManagement/CustomerProfiles";
 import { CreateCustomer } from "./CustomerManagement/CreateCustomer";
-import { SelectCustomerType } from "./CustomerManagement/SelectCustomerType";
 import { CustomerFormProvider } from "../contexts/CustomerFormContext";
 import { CatalogueManagement } from "./CatalogeManagement/CatalogueManagement";
 import { OrderFlow } from "./Orders/OrderFlow";

@@ -15,17 +15,13 @@ import { FaCircle } from "react-icons/fa";
 import { FormProvider, useFormContext } from "../../contexts/FormContext";
 import { staffService } from "../../services/api";
 
-// React Icons
-import { FaRegCalendarCheck } from "react-icons/fa";
 import {
   MdContactMail,
   MdOutlineAttachMoney,
   MdOutlineWork,
 } from "react-icons/md";
 import { AiOutlineIdcard } from "react-icons/ai";
-import { GiLaptop } from "react-icons/gi";
 import { HiOutlineDocumentDuplicate } from "react-icons/hi";
-import { IoMdClipboard } from "react-icons/io";
 import { LuUserRoundPen } from "react-icons/lu";
 
 // Components
@@ -34,9 +30,6 @@ import { AdditionalPersonalInfo } from "../../components/forms/AdditionalPersona
 import { EmploymentDetails } from "../../components/forms/EmploymentDetails";
 import { DocumentsUpload } from "../../components/forms/DocumentsUpload";
 import { SalaryBenefits } from "../../components/forms/SalaryBenefits";
-import { AttendanceDutyInfo } from "../../components/forms/AttendanceDutyInfo";
-import { AdditionalNotes } from "../../components/forms/AdditionalNotes";
-import { AssetsAndEquipmentAssigned } from "../../components/forms/AssetsAndEquipmentAssigned";
 import { IdentificationVerification } from "../../components/forms/IdentificationVerification";
 
 // Custom Step Icon Component

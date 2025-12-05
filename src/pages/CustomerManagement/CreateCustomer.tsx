@@ -21,9 +21,6 @@ import {
   LuUserCheck,
   LuMapPin,
   LuLink,
-  LuUserPlus,
-  LuShield,
-  LuFileText,
 } from "react-icons/lu";
 import { customerService } from "../../services/api";
 
@@ -36,9 +33,6 @@ import { DomesticStep4Addresses } from "../../components/customer-forms/Domestic
 import type { DomesticStep5PreferencesHandle } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep5Preferences } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
-import { DomesticStep7Referral } from "../../components/customer-forms/DomesticStep7Referral";
-import { DomesticStep8Security } from "../../components/customer-forms/DomesticStep8Security";
-import { DomesticStep9AdditionalNotes } from "../../components/customer-forms/DomesticStep9AdditionalNotes";
 import { useCreateCustomer } from "../../hooks/useCreateCustomer";
 
 // Custom Step Icon Component

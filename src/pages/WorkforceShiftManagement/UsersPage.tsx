@@ -8,7 +8,6 @@ import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
 import { DataTable } from "../../components/common/DataTable";
 import type { Column } from "../../components/common/DataTable";
-import { staffService } from "../../services/api";
 
 export const UsersPage = () => {
   const [status, setStatus] = useState("");
@@ -24,7 +23,7 @@ export const UsersPage = () => {
   const vendorId = vendorData ? JSON.parse(vendorData).id : null;
   
   // Using TanStack Query to fetch staff members
-  const { data: staffData, isLoading, refetch } = useGetStaff(vendorId, currentPage, 10);
+  const { data: staffData, isLoading } = useGetStaff(vendorId, currentPage, 10);
   
   const staff = staffData?.data || [];
   const totalPages = staffData?.pagination?.totalPages || 1;

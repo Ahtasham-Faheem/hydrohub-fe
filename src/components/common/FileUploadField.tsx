@@ -74,7 +74,7 @@ export const FileUploadField = ({ label, onFileChange, multiple = false, staffPr
       // Upload or update file
       const mutation = isUploaded ? updateMutation : uploadMutation;
       mutation.mutate(file, {
-        onSuccess: (response) => {
+        onSuccess: () => {
           setFiles(prev => multiple ? [...prev, file] : [file]);
           if (onFileChange) {
             onFileChange(multiple ? [...files, file] : file);
