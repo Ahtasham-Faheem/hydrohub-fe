@@ -498,14 +498,12 @@ export const UserFilters = ({
               onChange={(e) => setRole && setRole(e.target.value)}
               label="Select Role"
             >
-              <MenuItem value="super_admin">Super Admin</MenuItem>
               <MenuItem value="vendor_admin">Vendor Admin</MenuItem>
               <MenuItem value="supervisor">Supervisor</MenuItem>
               <MenuItem value="delivery_staff">Delivery Staff</MenuItem>
               <MenuItem value="billing_operator">Billing Operator</MenuItem>
               <MenuItem value="customer_support">Customer Support</MenuItem>
               <MenuItem value="data_entry">Data Entry</MenuItem>
-              <MenuItem value="customer">Customer</MenuItem>
             </Select>
           </FormControl>
         )}
