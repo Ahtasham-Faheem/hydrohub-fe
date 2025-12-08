@@ -140,6 +140,8 @@ interface UserFiltersProps {
   setStatus: (status: string) => void;
   customerType?: string;
   setCustomerType?: (customerType: string) => void;
+  role?: string;
+  setRole?: (role: string) => void;
   startDate: Dayjs | null;
   setStartDate: (date: Dayjs | null) => void;
   endDate: Dayjs | null;
@@ -154,6 +156,8 @@ export const UserFilters = ({
   setStatus,
   customerType,
   setCustomerType,
+  role,
+  setRole,
   startDate,
   setStartDate,
   endDate,
@@ -220,6 +224,7 @@ export const UserFilters = ({
   const resetAllFilters = () => {
     setStatus("");
     if (setCustomerType) setCustomerType("");
+    if (setRole) setRole("");
     setStartDate(null);
     setEndDate(null);
     setLeftMonth(dayjs());
@@ -472,18 +477,38 @@ export const UserFilters = ({
           </Box>
         </LocalizationProvider>
 
-        <FormControl size="small">
-          <InputLabel>Select Customer Type</InputLabel>
-          <Select
-            value={customerType || ""}
-            onChange={(e) => setCustomerType && setCustomerType(e.target.value)}
-            label="Select Customer Type"
-          >
-            <MenuItem value="Domestic Customer">Domestic Customer</MenuItem>
-            <MenuItem value="Business Customer">Business Customer</MenuItem>
-            <MenuItem value="Commercial Customer">Commercial Customer</MenuItem>
-          </Select>
-        </FormControl>
+        {setCustomerType ? (
+          <FormControl size="small">
+            <InputLabel>Select Customer Type</InputLabel>
+            <Select
+              value={customerType || ""}
+              onChange={(e) => setCustomerType && setCustomerType(e.target.value)}
+              label="Select Customer Type"
+            >
+              <MenuItem value="Domestic Customer">Domestic Customer</MenuItem>
+              <MenuItem value="Business Customer">Business Customer</MenuItem>
+              <MenuItem value="Commercial Customer">Commercial Customer</MenuItem>
+            </Select>
+          </FormControl>
+        ) : (
+          <FormControl size="small">
+            <InputLabel>Select Role</InputLabel>
+            <Select
+              value={role || ""}
+              onChange={(e) => setRole && setRole(e.target.value)}
+              label="Select Role"
+            >
+              <MenuItem value="super_admin">Super Admin</MenuItem>
+              <MenuItem value="vendor_admin">Vendor Admin</MenuItem>
+              <MenuItem value="supervisor">Supervisor</MenuItem>
+              <MenuItem value="delivery_staff">Delivery Staff</MenuItem>
+              <MenuItem value="billing_operator">Billing Operator</MenuItem>
+              <MenuItem value="customer_support">Customer Support</MenuItem>
+              <MenuItem value="data_entry">Data Entry</MenuItem>
+              <MenuItem value="customer">Customer</MenuItem>
+            </Select>
+          </FormControl>
+        )}
 
         <FormControl size="small">
           <InputLabel>Select Status</InputLabel>
