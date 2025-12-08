@@ -81,7 +81,7 @@ const CreateCustomerFormContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [customerProfileId, setCustomerProfileId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { state, setCurrentStep, validateRequiredFields, setCustomerType } =
+  const { state, setCurrentStep, validateRequiredFields, setCustomerType, resetForm } =
     useCustomerForm();
   const navigate = useNavigate();
 
@@ -205,7 +205,7 @@ const CreateCustomerFormContent = () => {
 
     // Check if on last step (Linked Accounts - step 5) and redirect after completion
     if (state.currentStep === 5) {
-      setIsLoading(false);
+      resetForm();
       navigate('/dashboard/customer-profiles');
       return;
     }
@@ -370,7 +370,7 @@ const CreateCustomerFormContent = () => {
               disabled={isLoading}
             >
               {state.currentStep === steps.length - 1
-                ? "Create Customer"
+                ? "Complete & Create Customer"
                 : "Next"}
             </PrimaryButton>
           </Stack>

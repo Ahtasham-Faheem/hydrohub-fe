@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -77,7 +78,9 @@ const CreateUserForm = () => {
     currentStep,
     setCurrentStep,
     validateRequiredFields,
+    resetForm,
   } = useFormContext();
+  const navigate = useNavigate();
 
   const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -253,9 +256,12 @@ const CreateUserForm = () => {
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(7);
       }
-      // Step 7: Documents Upload - just move forward (documents are uploaded via CRUD in component)
-      else if (currentStep === 7) {
-        setCurrentStep(8);
+      // Step 5: Documents Upload - just move forward (documents are uploaded via CRUD in component)
+      else if (currentStep === 5) {
+        // Complete the form - reset context and navigate back
+        resetForm();
+        navigate('/dashboard/workforce/users');
+        return;
       }
       // Other steps: just move forward
       else {
@@ -437,7 +443,11 @@ const CreateUserForm = () => {
               onClick={handleNext}
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : "Next"}
+              {currentStep === steps.length - 1
+                ? "Complete & Create User"
+                : isLoading
+                ? "Processing..."
+                : "Next"}
             </PrimaryButton>
           </Box>
         </Card>

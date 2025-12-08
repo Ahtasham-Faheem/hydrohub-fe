@@ -54,6 +54,8 @@ export const DataTable = ({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<any>(null);
 
   // Safely get nested value from object using dot notation
   const getNestedValue = (obj: any, path: string) => {
@@ -68,13 +70,27 @@ export const DataTable = ({
     return getNestedValue(item, column.key) || "N/A";
   };
 
-  const handleDelete = async (item: any) => {
-    setDeletingId(getNestedValue(item, keyField));
+  const handleDeleteClick = (item: any) => {
+    setItemToDelete(item);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!itemToDelete) return;
+    
+    setDeletingId(getNestedValue(itemToDelete, keyField));
+    setDeleteConfirmOpen(false);
     try {
-      await onDelete?.(item);
+      await onDelete?.(itemToDelete);
     } finally {
       setDeletingId(null);
+      setItemToDelete(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmOpen(false);
+    setItemToDelete(null);
   };
 
   const handleOpenModal = (item: any) => {
@@ -150,7 +166,7 @@ export const DataTable = ({
                         <IconButton
                           size="small"
                           sx={{ color: "#ef4444" }}
-                          onClick={() => handleDelete(item)}
+                          onClick={() => handleDeleteClick(item)}
                           disabled={
                             deletingId === getNestedValue(item, keyField)
                           }
@@ -383,6 +399,83 @@ export const DataTable = ({
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={handleCancelDelete}
+        maxWidth="sm"
+        fullWidth
+        sx={{
+          "& .MuiDialog-paper": {
+            borderRadius: 2,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#1f2937",
+            p: 3,
+            pb: 2,
+          }}
+        >
+          Confirm Delete
+        </DialogTitle>
+        <DialogContent sx={{ p: 3, pt: 2 }}>
+          <Box sx={{ color: "#4b5563", fontSize: 15, lineHeight: 1.6 }}>
+            Are you sure you want to delete this item? This action cannot be undone.
+          </Box>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            p: 3,
+            pt: 2,
+            gap: 1,
+          }}
+        >
+          <Button
+            onClick={handleCancelDelete}
+            sx={{
+              color: "#64748b",
+              textTransform: "none",
+              fontSize: 14,
+              fontWeight: 600,
+              padding: "8px 20px",
+              borderRadius: "6px",
+              border: "1px solid #cbd5e1",
+              backgroundColor: "#ffffff",
+              "&:hover": {
+                backgroundColor: "#f1f5f9",
+                borderColor: "#94a3b8",
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            sx={{
+              color: "#ffffff",
+              textTransform: "none",
+              fontSize: 14,
+              fontWeight: 600,
+              padding: "8px 20px",
+              borderRadius: "6px",
+              backgroundColor: "#ef4444",
+              "&:hover": {
+                backgroundColor: "#dc2626",
+              },
+              transition: "all 0.2s ease",
+            }}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>
