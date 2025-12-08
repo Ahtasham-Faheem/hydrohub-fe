@@ -9,7 +9,6 @@ import {
   IconButton,
   Button,
   CircularProgress,
-  Modal,
   Dialog,
   DialogTitle,
   DialogContent,
