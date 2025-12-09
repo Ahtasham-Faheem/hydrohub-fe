@@ -59,7 +59,7 @@ export const Step1SelectItems = ({ onNext }: { onNext: () => void }) => {
   }
 
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 3 }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 420px', gap: 3 }}>
       {/* Items Grid */}
       <Box>
         <Typography variant="h5" sx={{ mb: 3, fontWeight: 600, color: theme.colors.text600 }}>

@@ -15,7 +15,8 @@ import {
 import { PrimaryButton } from "../../components/common/PrimaryButton";
 import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaCircle } from "react-icons/fa";
-import { useCustomerForm } from "../../contexts/CustomerFormContext";
+import { useCustomerForm, CustomerFormProvider } from "../../contexts/CustomerFormContext";
+import { validatePasswordMatch } from "../../utils/validationUtils";
 import {
   LuUserRoundPen,
   LuUserCheck,
@@ -113,6 +114,13 @@ const CreateCustomerFormContent = () => {
       }
 
       const data = state.data as any;
+
+      // Validate password confirmation
+      const passwordValidation = validatePasswordMatch(data.password, data.confirmPassword || '');
+      if (!passwordValidation.isValid) {
+        setError(passwordValidation.error || 'Password validation failed');
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -381,5 +389,9 @@ const CreateCustomerFormContent = () => {
 };
 
 export const CreateCustomer = () => {
-  return <CreateCustomerFormContent />;
+  return (
+    <CustomerFormProvider>
+      <CreateCustomerFormContent />
+    </CustomerFormProvider>
+  );
 };

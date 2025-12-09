@@ -32,6 +32,7 @@ const defaultDomesticCustomer: DomesticCustomer = {
   mobileNumber: '',
   username: '',
   password: '',
+  confirmPassword: '',
   dateOfBirth: '',
   gender: 'male',
   maritalStatus: 'single',

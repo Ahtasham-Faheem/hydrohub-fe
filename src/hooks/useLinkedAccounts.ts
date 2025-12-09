@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '../services/api';
+import { queryKeys } from '../services/queryKeys';
 import type { CreateLinkedAccountData, UpdateLinkedAccountData } from '../services/api';
 
 export const useGetLinkedAccounts = (customerProfileId: string | null | undefined) => {
   return useQuery({
-    queryKey: ['linkedAccounts', customerProfileId],
+    queryKey: queryKeys.linkedAccounts.byCustomer(customerProfileId || ''),
     queryFn: () => customerService.getLinkedAccounts(customerProfileId!),
     enabled: !!customerProfileId,
   });
@@ -18,7 +19,7 @@ export const useCreateLinkedAccount = () => {
       return await customerService.createLinkedAccount(customerProfileId, accountData);
     },
     onSuccess: (_, { customerProfileId }) => {
-      queryClient.invalidateQueries({ queryKey: ['linkedAccounts', customerProfileId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts.byCustomer(customerProfileId) });
     },
   });
 };
@@ -31,7 +32,7 @@ export const useUpdateLinkedAccount = () => {
       return await customerService.updateLinkedAccount(customerProfileId, accountId, accountData);
     },
     onSuccess: (_, { customerProfileId }) => {
-      queryClient.invalidateQueries({ queryKey: ['linkedAccounts', customerProfileId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts.byCustomer(customerProfileId) });
     },
   });
 };
@@ -44,7 +45,7 @@ export const useDeleteLinkedAccount = () => {
       return await customerService.deleteLinkedAccount(customerProfileId, accountId);
     },
     onSuccess: (_, { customerProfileId }) => {
-      queryClient.invalidateQueries({ queryKey: ['linkedAccounts', customerProfileId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.linkedAccounts.byCustomer(customerProfileId) });
     },
   });
 };

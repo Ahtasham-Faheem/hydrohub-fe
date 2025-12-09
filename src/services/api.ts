@@ -13,6 +13,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'x-vendor-portal': VENDOR_PORTAL,
+    'ngrok-skip-browser-warning': 'true',
   },
 });
 
@@ -39,10 +40,14 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear auth data and redirect to login
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('userData');
-      window.location.href = '/#/login-access';
+      // Only redirect if NOT on login page - let login page handle the error
+      const currentPath = window.location.hash;
+      if (!currentPath.includes('/login')) {
+        // Clear auth data and redirect to login
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        window.location.href = '/#/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -383,7 +388,14 @@ export const usersService = {
 
 export const staffService = {
   createStaff: async (staffData: CreateStaffData): Promise<CreateStaffResponse> => {
-    const response = await api.post('/staff', staffData);
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.post('/staff', staffData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
     return response.data;
   },
 
@@ -469,7 +481,14 @@ export const staffService = {
 
 export const customerService = {
   createCustomer: async (customerData: CreateCustomerData): Promise<any> => {
-    const response = await api.post('/customers', customerData);
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.post('/customers', customerData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
     return response.data;
   },
 

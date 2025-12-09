@@ -97,7 +97,7 @@ export const Login = () => {
             };
 
       await login(loginPayload);
-      navigate("/dashboard");
+      // navigate("/dashboard");
     } catch (error: any) {
       console.error("Login error:", error);
       const errorMessage =

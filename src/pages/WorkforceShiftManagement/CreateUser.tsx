@@ -15,6 +15,7 @@ import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaCircle } from "react-icons/fa";
 import { FormProvider, useFormContext } from "../../contexts/FormContext";
 import { staffService } from "../../services/api";
+import { validatePasswordMatch } from "../../utils/validationUtils";
 
 import {
   MdContactMail,
@@ -95,6 +96,14 @@ const CreateUserForm = () => {
         const validation = validateRequiredFields();
         if (!validation.isValid) {
           setError(validation.errors.join(", "));
+          setIsLoading(false);
+          return;
+        }
+
+        // Validate password confirmation
+        const passwordValidation = validatePasswordMatch(formData.password, formData.confirmPassword || '');
+        if (!passwordValidation.isValid) {
+          setError(passwordValidation.error || 'Password validation failed');
           setIsLoading(false);
           return;
         }
@@ -260,7 +269,7 @@ const CreateUserForm = () => {
       else if (currentStep === 5) {
         // Complete the form - reset context and navigate back
         resetForm();
-        navigate('/dashboard/workforce/users');
+        navigate('/dashboard/users');
         return;
       }
       // Other steps: just move forward

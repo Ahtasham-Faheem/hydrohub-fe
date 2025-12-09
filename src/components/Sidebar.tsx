@@ -172,6 +172,7 @@ export const Sidebar = ({
         sx={{
           width: drawerWidth,
           flexShrink: 0,
+          className: "noScrollbar",
           transition: "width 0.3s ease",
           [`& .MuiDrawer-paper`]: {
             width: drawerWidth,

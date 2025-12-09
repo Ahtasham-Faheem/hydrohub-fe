@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 import { ThemeProvider } from "@mui/material/styles";
 import { AuthProvider } from "./contexts/AuthContext";
+import { UnifiedFormProvider } from "./contexts/UnifiedFormContext";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { Login } from "./pages/auth/Login";
 import { Dashboard } from "./pages/Dashboard";
@@ -17,28 +18,30 @@ export default function App() {
   return (
     <ThemeProvider theme={muiTheme}>
       <AuthProvider>
-        <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Navigate to="/login-access" replace />} />
-            <Route path="/login-access" element={<LoginAccess />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ResetPassword />} />
+        <UnifiedFormProvider>
+          <Router>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Navigate to="/login-access" replace />} />
+              <Route path="/login-access" element={<LoginAccess />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ResetPassword />} />
 
-            {/* Protected Routes */}
-            <Route
-              path="/dashboard/*"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              }
-            />
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard/*"
+                element={
+                  <PrivateRoute>
+                    <Dashboard />
+                  </PrivateRoute>
+                }
+              />
 
-            {/* 404 Route */}
-            <Route path="*" element={<Navigate to="/login-access" replace />} />
-          </Routes>
-        </Router>
+              {/* 404 Route */}
+              <Route path="*" element={<Navigate to="/login-access" replace />} />
+            </Routes>
+          </Router>
+        </UnifiedFormProvider>
       </AuthProvider>
     </ThemeProvider>
   );

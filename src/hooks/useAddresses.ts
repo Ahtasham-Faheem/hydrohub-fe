@@ -1,10 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { customerService } from '../services/api';
+import { queryKeys } from '../services/queryKeys';
 import type { CreateAddressData, UpdateAddressData } from '../services/api';
 
 export const useGetAddresses = (customerProfileId: string | null | undefined) => {
   return useQuery({
-    queryKey: ['addresses', customerProfileId],
+    queryKey: queryKeys.addresses.byCustomer(customerProfileId || ''),
     queryFn: () => customerService.getAddresses(customerProfileId!),
     enabled: !!customerProfileId,
   });
@@ -18,7 +19,7 @@ export const useCreateAddress = () => {
       return await customerService.createAddress(customerProfileId, addressData);
     },
     onSuccess: (_, { customerProfileId }) => {
-      queryClient.invalidateQueries({ queryKey: ['addresses', customerProfileId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.addresses.byCustomer(customerProfileId) });
     },
   });
 };
@@ -31,7 +32,7 @@ export const useUpdateAddress = () => {
       return await customerService.updateAddress(customerProfileId, addressId, addressData);
     },
     onSuccess: (_, { customerProfileId }) => {
-      queryClient.invalidateQueries({ queryKey: ['addresses', customerProfileId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.addresses.byCustomer(customerProfileId) });
     },
   });
 };
@@ -44,7 +45,7 @@ export const useDeleteAddress = () => {
       return await customerService.deleteAddress(customerProfileId, addressId);
     },
     onSuccess: (_, { customerProfileId }) => {
-      queryClient.invalidateQueries({ queryKey: ['addresses', customerProfileId] });
+      queryClient.invalidateQueries({ queryKey: queryKeys.addresses.byCustomer(customerProfileId) });
     },
   });
 };

@@ -43,11 +43,14 @@ body {
   margin-left: 3px !important;
 }
 
-.sidebar .MuiListItemButton-root {
+.sidebar .MuiListItemButton-root::-webkit-scrollbar {
   border-top-right-radius: 50px;
   border-bottom-right-radius: 50px;
 }
+.sidebar .MuiPaper-elevation::-webkit-scrollbar {
+  display: none !important;
+}
 
 .noScrollbar::-webkit-scrollbar {
-  display: none;
+  display: none !important;
 }

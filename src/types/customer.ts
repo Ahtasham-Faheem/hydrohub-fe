@@ -98,6 +98,7 @@ export interface DomesticCustomer {
   mobileNumber: string;
   username: string;
   password: string;
+  confirmPassword?: string;
 
   // Additional Personal Information
   fatherHusbandName?: string;

@@ -1,19 +1,36 @@
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Typography, Button, IconButton } from "@mui/material";
 import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
 import type { DomesticCustomer } from "../../types/customer";
 import { useState } from "react";
-import { Phone } from "@mui/icons-material";
+import { Phone, Visibility, VisibilityOff } from "@mui/icons-material";
 import { staffService } from "../../services/api";
+import { handleImageUpload as processImage } from "../../utils/imageCompression";
 
 export const DomesticStep1BasicProfile = () => {
-  const { state, updateFormData } = useCustomerForm();
-  const data = (state?.data || {}) as DomesticCustomer;
+  const { state } = useCustomerForm();
+  const { updateFormData } = useCustomerForm();
+  
+  // Handle null state.data with default empty values
+  const data = (state.data as unknown as DomesticCustomer) || {
+    customerType: 'Domestic Customer',
+    firstName: '',
+    lastName: '',
+    email: '',
+    mobileNumber: '',
+    username: '',
+    password: '',
+    title: 'Mr.',
+  };
+  
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [countryCode, setCountryCode] = useState("+92");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -23,23 +40,32 @@ export const DomesticStep1BasicProfile = () => {
 
     try {
       setUploadingImage(true);
+      setUploadError(null);
+
+      // Compress image client-side
+      const result = await processImage(file);
+      if (!result.success || !result.file) {
+        setUploadError(result.error || 'Failed to process image');
+        return;
+      }
 
       // Preview the image
       const reader = new FileReader();
       reader.onloadend = () => {
-        const result = reader.result as string;
-        setProfileImage(result);
+        const resultData = reader.result as string;
+        setProfileImage(resultData);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(result.file);
 
-      // Upload the file to assets/upload
-      const uploadResponse = await staffService.uploadDocument(file);
+      // Upload the compressed file to assets/upload
+      const uploadResponse = await staffService.uploadDocument(result.file);
       const profilePictureAssetId = uploadResponse.id;
 
       // Store the asset ID
       updateFormData("profilePictureAssetId", profilePictureAssetId);
     } catch (err: any) {
       console.error("Failed to upload profile picture:", err);
+      setUploadError(err.message || 'Failed to upload image');
       setProfileImage(null);
       updateFormData("profilePictureAssetId", "");
     } finally {
@@ -49,6 +75,7 @@ export const DomesticStep1BasicProfile = () => {
 
   const handleImageReset = () => {
     setProfileImage(null);
+    setUploadError(null);
     updateFormData("profilePictureAssetId", "");
   };
 
@@ -111,8 +138,13 @@ export const DomesticStep1BasicProfile = () => {
                 </Button>
               )}
             </Box>
+            {uploadError && (
+              <Typography variant="caption" color="error" display="block">
+                {uploadError}
+              </Typography>
+            )}
             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-              Allowed JPG, GIF or PNG. Max size 800KB.
+              Allowed JPG, GIF or PNG. Max size 10MB (will be auto-compressed).
             </Typography>
           </Box>
         </Box>
@@ -232,9 +264,45 @@ export const DomesticStep1BasicProfile = () => {
             <CustomInput
               label="Password *"
               placeholder="Enter password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={data.password}
               onChange={(e) => updateFormData("password", e.target.value)}
+              endAdornment={
+                <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  edge="end"
+                  sx={{ mr: -1 }}
+                  size="small"
+                >
+                  {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                </IconButton>
+              }
+            />
+          </Box>
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              gap: 2,
+            }}
+          >
+            <CustomInput
+              label="Confirm Password *"
+              placeholder="Re-enter password"
+              type={showConfirmPassword ? "text" : "password"}
+              value={data.confirmPassword || ""}
+              onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+              endAdornment={
+                <IconButton
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  edge="end"
+                  sx={{ mr: -1 }}
+                  size="small"
+                >
+                  {showConfirmPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                </IconButton>
+              }
             />
           </Box>
         </Box>
