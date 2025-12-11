@@ -357,7 +357,7 @@ const CreateCustomerFormContent = () => {
             billingOption: data.preferences?.billingOption || "",
             paymentMode: data.preferences?.paymentMode || "",
             expectedConsumption: data.preferences?.monthlyConsumption || "",
-            securitySummary: data.preferences?.securitySummary || "",
+            // securitySummary: data.preferences?.securitySummary || "",
             additionalRequests: data.preferences?.additionalRequests || "",
           }
         );

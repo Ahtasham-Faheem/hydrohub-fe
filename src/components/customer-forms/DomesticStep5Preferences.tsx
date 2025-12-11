@@ -200,7 +200,7 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
         </Box>
 
         {/* Security Summary */}
-        <Box>
+        {/* <Box>
           <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
             Security Summary
           </Typography>
@@ -210,7 +210,7 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
             value={preferences.securitySummary || ''}
             onChange={(e) => updateFormData('preferences.securitySummary', e.target.value)}
           />
-        </Box>
+        </Box> */}
 
         {/* Additional Requests */}
         <Box>

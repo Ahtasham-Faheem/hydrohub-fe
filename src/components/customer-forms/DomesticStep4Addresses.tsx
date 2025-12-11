@@ -839,7 +839,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
       {deliveryAddresses.length === 0 && (
         <Box sx={{ p: 2, backgroundColor: '#fef3c7', borderRadius: 1, border: '1px solid #fde68a' }}>
           <Typography variant="caption" sx={{ color: '#92400e' }}>
-            Please add at least one delivery address to continue.
+            Click " + Add More Address" to add your delivery address.
           </Typography>
         </Box>
       )}
