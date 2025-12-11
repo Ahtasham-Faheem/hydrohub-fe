@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Phone } from "@mui/icons-material";
 
 export const AdditionalPersonalInfo = () => {
-  const { formData, updateFormData, fieldErrors } = useFormContext();
+  const { formData, updateFormData, fieldErrors, setFieldErrors } = useFormContext();
   const [countryCode, setCountryCode] = useState("+92");
 
   return (
@@ -32,9 +32,13 @@ export const AdditionalPersonalInfo = () => {
         <CustomDateInput
           label="Date of Birth"
           value={formData.dateOfBirth ? dayjs(formData.dateOfBirth) : null}
-          onChange={(date) =>
-            updateFormData("dateOfBirth", date ? date.format("YYYY-MM-DD") : "")
-          }
+          onChange={(date) => {
+            updateFormData("dateOfBirth", date ? date.format("YYYY-MM-DD") : "");
+            // Clear error when user selects a date
+            if (fieldErrors['dateOfBirth']) {
+              setFieldErrors({ ...fieldErrors, dateOfBirth: "" });
+            }
+          }}
           error={fieldErrors['dateOfBirth']}
         />
       </Stack>
@@ -61,7 +65,13 @@ export const AdditionalPersonalInfo = () => {
         <CustomSelect
           label="Gender"
           value={formData.gender || ""}
-          onChange={(e) => updateFormData("gender", e.target.value)}
+          onChange={(e) => {
+            updateFormData("gender", e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['gender']) {
+              setFieldErrors({ ...fieldErrors, gender: "" });
+            }
+          }}
           error={fieldErrors['gender']}
           options={[
             { value: "Male", label: "Male" },
@@ -75,7 +85,13 @@ export const AdditionalPersonalInfo = () => {
         <CustomSelect
           label="Marital Status"
           value={formData.maritalStatus || ""}
-          onChange={(e) => updateFormData("maritalStatus", e.target.value)}
+          onChange={(e) => {
+            updateFormData("maritalStatus", e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['maritalStatus']) {
+              setFieldErrors({ ...fieldErrors, maritalStatus: "" });
+            }
+          }}
           error={fieldErrors['maritalStatus']}
           options={[
             { value: "Single", label: "Single" },
@@ -111,9 +127,13 @@ export const AdditionalPersonalInfo = () => {
           type="email"
           placeholder="john@gmail.com"
           value={formData.secondaryEmailAddress || ""}
-          onChange={(e) =>
-            updateFormData("secondaryEmailAddress", e.target.value)
-          }
+          onChange={(e) => {
+            updateFormData("secondaryEmailAddress", e.target.value);
+            // Clear error when user starts typing
+            if (fieldErrors['secondaryEmailAddress']) {
+              setFieldErrors({ ...fieldErrors, secondaryEmailAddress: "" });
+            }
+          }}
           error={fieldErrors['secondaryEmailAddress']}
         />
       </Stack>

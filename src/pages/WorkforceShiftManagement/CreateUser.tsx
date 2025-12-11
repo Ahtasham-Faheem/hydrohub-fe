@@ -81,6 +81,10 @@ const CreateUserForm = () => {
     setCurrentStep,
     setFieldErrors,
     validateRequiredFields,
+    validateStep1,
+    validateStep2,
+    validateStep3,
+    validateStep4,
     resetForm,
   } = useFormContext();
   const navigate = useNavigate();
@@ -139,29 +143,10 @@ const CreateUserForm = () => {
           return;
         }
 
-        // Validate dateOfBirth and secondaryEmailAddress on the frontend
-        const validation = validateRequiredFields();
-        
-        // Check for dateOfBirth specifically
-        if (!formData.dateOfBirth || !formData.dateOfBirth.trim()) {
-          validation.fieldErrors['dateOfBirth'] = 'Date of Birth is required';
-        } else {
-          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-          if (!dateRegex.test(formData.dateOfBirth)) {
-            validation.fieldErrors['dateOfBirth'] = 'Date of Birth must be in YYYY-MM-DD format';
-          }
-        }
-
-        // Check for secondaryEmailAddress specifically
-        if (!formData.secondaryEmailAddress || !formData.secondaryEmailAddress.trim()) {
-          validation.fieldErrors['secondaryEmailAddress'] = 'Secondary Email Address is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
-          validation.fieldErrors['secondaryEmailAddress'] = 'Secondary Email Address must be a valid email';
-        }
-
-        // If there are any field errors, show them and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
-          setError(null); // Don't show alert, errors will show below fields
+        const validation = validateStep1();
+        if (!validation.isValid) {
+          setFieldErrors(validation.fieldErrors);
+          setError(null);
           setIsLoading(false);
           return;
         }
@@ -199,28 +184,10 @@ const CreateUserForm = () => {
           return;
         }
 
-        // Validate employment details fields
-        const validation = validateRequiredFields();
-        
-        if (!formData.employmentType || !formData.employmentType.trim()) {
-          validation.fieldErrors['employmentType'] = 'Please select Employment Type';
-        }
-
-        if (!formData.supervisorId || !formData.supervisorId.trim()) {
-          validation.fieldErrors['supervisorId'] = 'Please select a Supervisor';
-        }
-
-        if (!formData.shiftType || !formData.shiftType.trim()) {
-          validation.fieldErrors['shiftType'] = 'Please select Shift Type';
-        }
-
-        if (!formData.employmentStatus || !formData.employmentStatus.trim()) {
-          validation.fieldErrors['employmentStatus'] = 'Please select Status';
-        }
-
-        // If there are any field errors, update context and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
+        const validation = validateStep2();
+        if (!validation.isValid) {
           setFieldErrors(validation.fieldErrors);
+          setError(null);
           setIsLoading(false);
           return;
         }
@@ -250,35 +217,10 @@ const CreateUserForm = () => {
           return;
         }
 
-        // Validate salary & benefits fields
-        const validation = validateRequiredFields();
-        
-        if (!formData.taxStatus || !formData.taxStatus.trim()) {
-          validation.fieldErrors['taxStatus'] = 'Please select Tax Status';
-        }
-
-        // Bank Account Number validation - numeric only, max 16 digits
-        if (formData.bankAccountNumber && formData.bankAccountNumber.trim()) {
-          if (!/^\d+$/.test(formData.bankAccountNumber)) {
-            validation.fieldErrors['bankAccountNumber'] = 'Bank Account Number must contain only numbers';
-          } else if (formData.bankAccountNumber.length > 16) {
-            validation.fieldErrors['bankAccountNumber'] = 'Bank Account Number must be maximum 16 digits';
-          }
-        }
-
-        // Provident Fund validation - 0-99 range
-        if (formData.providentFund && formData.providentFund.trim()) {
-          const pfValue = parseInt(formData.providentFund);
-          if (isNaN(pfValue)) {
-            validation.fieldErrors['providentFund'] = 'Provident Fund must be a number';
-          } else if (pfValue < 0 || pfValue > 99) {
-            validation.fieldErrors['providentFund'] = 'Provident Fund must be between 0 and 99';
-          }
-        }
-
-        // If there are any field errors, update context and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
+        const validation = validateStep3();
+        if (!validation.isValid) {
           setFieldErrors(validation.fieldErrors);
+          setError(null);
           setIsLoading(false);
           return;
         }
@@ -309,30 +251,10 @@ const CreateUserForm = () => {
           return;
         }
 
-        // Validate identification & verification fields
-        const validation = validateRequiredFields();
-        
-        if (!formData.idCardIssuanceDate || !formData.idCardIssuanceDate.trim()) {
-          validation.fieldErrors['idCardIssuanceDate'] = 'ID Card Issuance Date is required';
-        } else {
-          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-          if (!dateRegex.test(formData.idCardIssuanceDate)) {
-            validation.fieldErrors['idCardIssuanceDate'] = 'ID Card Issuance Date must be in YYYY-MM-DD format';
-          }
-        }
-
-        if (!formData.idCardExpiryDate || !formData.idCardExpiryDate.trim()) {
-          validation.fieldErrors['idCardExpiryDate'] = 'ID Card Expiry Date is required';
-        } else {
-          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-          if (!dateRegex.test(formData.idCardExpiryDate)) {
-            validation.fieldErrors['idCardExpiryDate'] = 'ID Card Expiry Date must be in YYYY-MM-DD format';
-          }
-        }
-
-        // If there are any field errors, update context and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
+        const validation = validateStep4();
+        if (!validation.isValid) {
           setFieldErrors(validation.fieldErrors);
+          setError(null);
           setIsLoading(false);
           return;
         }

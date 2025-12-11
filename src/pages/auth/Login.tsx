@@ -10,6 +10,8 @@ import {
   Checkbox,
   IconButton,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
 import { DEMO_MODE, useAuth } from "../../contexts/AuthContext";
@@ -35,6 +37,10 @@ export const Login = () => {
   const [codeLoading, setCodeLoading] = useState(false);
   const [codeError, setCodeError] = useState<string | null>(null);
   const [codeSuccess, setCodeSuccess] = useState<string | null>(null);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastSeverity, setToastSeverity] = useState<"success" | "error">("error");
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
   const { login, isAuthenticated, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -44,70 +50,75 @@ export const Login = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const validate = () => {
+  const validate = (): boolean => {
     // In demo mode, skip validation
-    if (true) {
-      // DEMO_MODE equivalent
+    if (DEMO_MODE) {
       return true;
     }
 
     let valid = true;
-    const newErrors = { email: "", password: "", phone: "" };
+    let errorMessage = "";
 
+    // Validate email or phone
     if (loginMode === "email") {
       if (!email) {
-        newErrors.email = "Email is required";
+        errorMessage = "Please enter your email address";
         valid = false;
       } else if (!/\S+@\S+\.\S+/.test(email)) {
-        newErrors.email = "Enter a valid email address";
+        errorMessage = "Please enter a valid email address";
         valid = false;
       }
     } else {
       if (!phone) {
-        newErrors.phone = "Phone number is required";
+        errorMessage = "Please enter your phone number";
         valid = false;
       } else if (!/^\d{7,15}$/.test(phone)) {
-        newErrors.phone = "Enter a valid phone number";
+        errorMessage = "Please enter a valid phone number";
         valid = false;
       }
     }
 
-    if (useCodeLogin) {
-      if (!otp) {
-        setCodeError("Please enter the verification code");
-        valid = false;
-      } else if (!/^\d{6}$/.test(otp)) {
-        setCodeError("Verification code must be exactly 6 digits");
-        valid = false;
-      }
-    } else {
-      if (!password) {
-        newErrors.password = "Password is required";
-        valid = false;
-      } else if (password.length < 6) {
-        newErrors.password = "Password must be at least 6 characters";
-        valid = false;
+    // Validate password or OTP
+    if (valid) {
+      if (useCodeLogin) {
+        if (!otp) {
+          errorMessage = "Please enter the verification code";
+          valid = false;
+        } else if (!/^\d{6}$/.test(otp)) {
+          errorMessage = "Verification code must be exactly 6 digits";
+          valid = false;
+        }
+      } else {
+        if (!password) {
+          errorMessage = "Please enter your password";
+          valid = false;
+        } else if (password.length < 6) {
+          errorMessage = "Password must be at least 6 characters";
+          valid = false;
+        }
       }
     }
 
-    setErrors(newErrors);
+    if (!valid) {
+      setToastMessage(errorMessage);
+      setToastSeverity("error");
+      setToastOpen(true);
+      // Mark fields in error
+      if (loginMode === "email" && !email) setFieldErrors(prev => ({ ...prev, email: true }));
+      if (loginMode === "email" && !/\S+@\S+\.\S+/.test(email)) setFieldErrors(prev => ({ ...prev, email: true }));
+      if (loginMode === "phone" && !phone) setFieldErrors(prev => ({ ...prev, phone: true }));
+      if (loginMode === "phone" && !/^\d{7,15}$/.test(phone)) setFieldErrors(prev => ({ ...prev, phone: true }));
+      if (useCodeLogin && !otp) setFieldErrors(prev => ({ ...prev, otp: true }));
+      if (useCodeLogin && !/^\d{6}$/.test(otp)) setFieldErrors(prev => ({ ...prev, otp: true }));
+      if (!useCodeLogin && !password) setFieldErrors(prev => ({ ...prev, password: true }));
+      if (!useCodeLogin && password.length < 6) setFieldErrors(prev => ({ ...prev, password: true }));
+    }
+
     return valid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Additional validation for code login
-    if (useCodeLogin) {
-      if (!otp) {
-        setCodeError("Please enter the verification code");
-        return;
-      }
-      if (!/^\d{6}$/.test(otp)) {
-        setCodeError("Verification code must be exactly 6 digits");
-        return;
-      }
-    }
     
     if (!validate()) return;
 
@@ -153,11 +164,9 @@ export const Login = () => {
         error.response?.data?.message ||
         "Login failed. Please check your credentials.";
       
-      if (useCodeLogin) {
-        setCodeError(errorMessage);
-      } else {
-        setErrors({ email: errorMessage, password: "", phone: "" });
-      }
+      setToastMessage(errorMessage);
+      setToastSeverity("error");
+      setToastOpen(true);
     } finally {
       setIsLoading(false);
     }
@@ -166,12 +175,16 @@ export const Login = () => {
   const handleSendCode = async () => {
     // Validate email or phone
     if (loginMode === "email" && !email) {
-      setCodeError("Please enter your email address");
+      setToastMessage("Please enter your email address");
+      setToastSeverity("error");
+      setToastOpen(true);
       return;
     }
     
     if (loginMode === "phone" && !phone) {
-      setCodeError("Please enter your phone number");
+      setToastMessage("Please enter your phone number");
+      setToastSeverity("error");
+      setToastOpen(true);
       return;
     }
 
@@ -186,13 +199,17 @@ export const Login = () => {
       
       const response = await authService.sendLoginCode(sendPayload);
       
-      setCodeSuccess(response.message || `Code sent successfully!`);
+      setToastMessage(response.message || "Code sent successfully!");
+      setToastSeverity("success");
+      setToastOpen(true);
       setOtp("");
     } catch (error: any) {
       const errorMessage = 
         error.response?.data?.message || 
         "Failed to send code. Please try again.";
-      setCodeError(errorMessage);
+      setToastMessage(errorMessage);
+      setToastSeverity("error");
+      setToastOpen(true);
     } finally {
       setCodeLoading(false);
     }
@@ -303,8 +320,15 @@ export const Login = () => {
                 <CustomInput
                   label="Email or Username"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    // Clear error styling when user types
+                    if (fieldErrors.email) {
+                      setFieldErrors(prev => ({ ...prev, email: false }));
+                    }
+                  }}
                   error={errors.email}
+                  sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
                   endAdornment={
                     <LuMail style={{ color: "#9ca3af", fontSize: 22 }} />
                   }
@@ -315,8 +339,15 @@ export const Login = () => {
                 <CustomInput
                   label="Phone Number"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    // Clear error styling when user types
+                    if (fieldErrors.phone) {
+                      setFieldErrors(prev => ({ ...prev, phone: false }));
+                    }
+                  }}
                   error={errors.phone}
+                  sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
                   startAdornment={
                     <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
                       <select
@@ -378,9 +409,13 @@ export const Login = () => {
                       if (codeError) {
                         setCodeError(null);
                       }
+                      // Clear field error styling when user types
+                      if (fieldErrors.otp) {
+                        setFieldErrors(prev => ({ ...prev, otp: false }));
+                      }
                     }}
                     placeholder="Enter 6-digit code"
-                    // error={codeError || undefined}
+                    sx={fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
                     endAdornment={
                       <Button
                         variant="outlined"
@@ -418,8 +453,15 @@ export const Login = () => {
                   label="Password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  error={errors.password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    // Clear error styling when user types
+                    if (fieldErrors.password) {
+                      setFieldErrors(prev => ({ ...prev, password: false }));
+                    }
+                  }}
+                  error={errors.email || errors.password}
+                  sx={fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
                   endAdornment={
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
@@ -587,6 +629,22 @@ export const Login = () => {
       <div className="w-full">
         <Footer />
       </div>
+
+      {/* Snackbar for Toast Notifications */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={6000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setToastOpen(false)}
+          severity={toastSeverity}
+          sx={{ width: "100%" }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

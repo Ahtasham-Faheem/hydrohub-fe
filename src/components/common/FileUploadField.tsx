@@ -33,6 +33,7 @@ export const FileUploadField = ({ label, onFileChange, multiple = false, staffPr
       setPreviewUrls([]);
       if (onFileChange) onFileChange(null);
       queryClient.invalidateQueries({ queryKey: ['staff', staffProfileId, 'documents'] });
+      
     }
   });
   

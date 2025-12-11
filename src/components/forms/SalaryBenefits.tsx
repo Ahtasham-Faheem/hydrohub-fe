@@ -6,7 +6,7 @@ import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const SalaryBenefits = () => {
-  const { formData, updateFormData, fieldErrors } = useFormContext();
+  const { formData, updateFormData, fieldErrors, setFieldErrors } = useFormContext();
 
   return (
     <Stack spacing={3}>
@@ -51,7 +51,13 @@ export const SalaryBenefits = () => {
         <CustomSelect
           label="Salary Payment Mode"
           value={formData.salaryPaymentMode || ''}
-          onChange={(e) => updateFormData('salaryPaymentMode', e.target.value)}
+          onChange={(e) => {
+            updateFormData('salaryPaymentMode', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['salaryPaymentMode']) {
+              setFieldErrors({ ...fieldErrors, salaryPaymentMode: "" });
+            }
+          }}
           error={fieldErrors['salaryPaymentMode']}
           options={[
             { value: "bank_transfer", label: "Bank Transfer" },

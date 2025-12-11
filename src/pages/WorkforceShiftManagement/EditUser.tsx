@@ -110,49 +110,50 @@ const EditUserForm = () => {
           lastName: staffData.lastName || "",
           userRole: staffData.role || "delivery_staff",
           profilePictureAssetId: staffData.profilePictureAssetId || "",
-          // Additional personal info
-          fathersName: staffData.fathersName || "",
-          mothersName: staffData.mothersName || "",
-          dateOfBirth: staffData.dateOfBirth || "",
-          nationality: staffData.nationality || "",
-          nationalId: staffData.nationalId || "",
-          gender: staffData.gender || "",
-          maritalStatus: staffData.maritalStatus || "",
-          alternateContactNumber: staffData.alternateContactNumber || "",
-          secondaryEmailAddress: staffData.secondaryEmailAddress || "",
-          presentAddress: staffData.presentAddress || "",
-          permanentAddress: staffData.permanentAddress || "",
-          emergencyContactName: staffData.emergencyContactName || "",
-          emergencyContactRelation: staffData.emergencyContactRelation || "",
-          emergencyContactNumber: staffData.emergencyContactNumber || "",
-          alternateEmergencyContact: staffData.alternateEmergencyContact || "",
-          // Employment details
-          jobTitle: staffData.jobTitle || "",
-          department: staffData.department || "",
-          employmentType: staffData.employmentType || "",
-          supervisorId: staffData.supervisorId || "",
-          workLocation: staffData.workLocation || "",
-          shiftType: staffData.shiftType || "",
-          employmentStatus: staffData.status || "",
-          // Salary & benefits
-          basicSalary: staffData.basicSalary || "",
-          allowances: staffData.allowances || "",
-          providentFund: staffData.providentFund || "",
-          salaryPaymentMode: staffData.salaryPaymentMode || "",
-          bankName: staffData.bankName || "",
-          bankAccountTitle: staffData.bankAccountTitle || "",
-          bankAccountNumber: staffData.bankAccountNumber || "",
-          taxStatus: staffData.taxStatus || "",
-          // Identification & verification
-          identityDocumentName: staffData.identityDocumentName || "",
-          idCardNumber: staffData.idCardNumber || "",
-          idCardIssuanceDate: staffData.idCardIssuanceDate || "",
-          idCardExpiryDate: staffData.idCardExpiryDate || "",
-          referralPersonName: staffData.referralPersonName || "",
-          referralRelation: staffData.referralRelation || "",
-          referralContact: staffData.referralContact || "",
-          policeVerification: staffData.policeVerification || "",
-          remarks: staffData.remarks || "",
+          // Additional personal info (from nested object)
+          fathersName: staffData.additionalPersonalInfo?.fathersName || "",
+          mothersName: staffData.additionalPersonalInfo?.mothersName || "",
+          dateOfBirth: staffData.additionalPersonalInfo?.dateOfBirth ? new Date(staffData.additionalPersonalInfo.dateOfBirth).toISOString().split('T')[0] : "",
+          nationality: staffData.additionalPersonalInfo?.nationality || "",
+          nationalId: staffData.additionalPersonalInfo?.nationalId || "",
+          gender: staffData.additionalPersonalInfo?.gender || "",
+          maritalStatus: staffData.additionalPersonalInfo?.maritalStatus || "",
+          alternateContactNumber: staffData.additionalPersonalInfo?.alternateContactNumber || "",
+          secondaryEmailAddress: staffData.additionalPersonalInfo?.secondaryEmailAddress || "",
+          presentAddress: staffData.additionalPersonalInfo?.presentAddress || "",
+          permanentAddress: staffData.additionalPersonalInfo?.permanentAddress || "",
+          emergencyContactName: staffData.additionalPersonalInfo?.emergencyContactName || "",
+          emergencyContactRelation: staffData.additionalPersonalInfo?.emergencyContactRelation || "",
+          emergencyContactNumber: staffData.additionalPersonalInfo?.emergencyContactNumber || "",
+          alternateEmergencyContact: staffData.additionalPersonalInfo?.alternateEmergencyContact || "",
+          // Employment details (from nested object)
+          jobTitle: staffData.employmentDetails?.jobTitle || "",
+          department: staffData.employmentDetails?.department || "",
+          employmentType: staffData.employmentDetails?.employmentType || "",
+          supervisorId: staffData.employmentDetails?.supervisorId || "",
+          workLocation: staffData.employmentDetails?.workLocation || "",
+          shiftType: staffData.employmentDetails?.shiftType || "",
+          employmentStatus: staffData.employmentDetails?.status || "",
+          joiningDate: staffData.employmentDetails?.joiningDate || "",
+          // Salary & benefits (from nested object)
+          basicSalary: staffData.salaryBenefits?.basicSalary || "",
+          allowances: staffData.salaryBenefits?.allowances || "",
+          providentFund: staffData.salaryBenefits?.providentFund || "",
+          salaryPaymentMode: staffData.salaryBenefits?.salaryPaymentMode || "",
+          bankName: staffData.salaryBenefits?.bankName || "",
+          bankAccountTitle: staffData.salaryBenefits?.bankAccountTitle || "",
+          bankAccountNumber: staffData.salaryBenefits?.bankAccountNumber || "",
+          taxStatus: staffData.salaryBenefits?.taxStatus || "",
+          // Identification & verification (from referralInfo nested object)
+          identityDocumentName: staffData.referralInfo?.identityDocumentName || "",
+          idCardNumber: staffData.referralInfo?.idCardNumber || "",
+          idCardIssuanceDate: staffData.referralInfo?.idCardIssuanceDate ? new Date(staffData.referralInfo.idCardIssuanceDate).toISOString().split('T')[0] : "",
+          idCardExpiryDate: staffData.referralInfo?.idCardExpiryDate ? new Date(staffData.referralInfo.idCardExpiryDate).toISOString().split('T')[0] : "",
+          referralPersonName: staffData.referralInfo?.referralPersonName || "",
+          referralRelation: staffData.referralInfo?.referralRelation || "",
+          referralContact: staffData.referralInfo?.referralContact || "",
+          policeVerification: staffData.referralInfo?.policeVerification || "",
+          remarks: staffData.referralInfo?.remarks || "",
         });
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load user data");
@@ -324,6 +325,7 @@ const EditUserForm = () => {
         setCurrentStep(3);
       }
       // Step 3: Update salary & benefits
+
       else if (currentStep === 3) {
         const fieldErrorsMap: Record<string, string> = {};
         

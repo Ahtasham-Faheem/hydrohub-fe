@@ -6,6 +6,8 @@ import {
   Typography,
   IconButton,
   Button,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Phone, Email } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
@@ -26,6 +28,10 @@ export const ResetPassword = () => {
   const [errors, setErrors] = useState({ email: "", phone: "", otp: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
+  const [toastOpen, setToastOpen] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastSeverity, setToastSeverity] = useState<"success" | "error">("error");
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
   const navigate = useNavigate();
 
   const handleSendCode = async () => {
@@ -33,12 +39,16 @@ export const ResetPassword = () => {
     setIsLoading(true);
     
     if (resetMode === "email" && !email) {
-      setErrors(prev => ({ ...prev, email: "Please enter your email first" }));
+      setToastMessage("Please enter your email address");
+      setToastSeverity("error");
+      setToastOpen(true);
       setIsLoading(false);
       return;
     }
     if (resetMode === "phone" && !phone) {
-      setErrors(prev => ({ ...prev, phone: "Please enter your phone number first" }));
+      setToastMessage("Please enter your phone number");
+      setToastSeverity("error");
+      setToastOpen(true);
       setIsLoading(false);
       return;
     }
@@ -50,18 +60,16 @@ export const ResetPassword = () => {
       
       await authService.requestResetPassword(requestData);
       setCodeSent(true);
-      alert(
-        `Verification code sent to ${
-          resetMode === "email" ? email : countryCode + phone
-        }`
-      );
+      setToastMessage(`Verification code sent to ${
+        resetMode === "email" ? email : countryCode + phone
+      }`);
+      setToastSeverity("success");
+      setToastOpen(true);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || "Failed to send code";
-      if (resetMode === "email") {
-        setErrors(prev => ({ ...prev, email: errorMessage }));
-      } else {
-        setErrors(prev => ({ ...prev, phone: errorMessage }));
-      }
+      setToastMessage(errorMessage);
+      setToastSeverity("error");
+      setToastOpen(true);
     } finally {
       setIsLoading(false);
     }
@@ -73,30 +81,37 @@ export const ResetPassword = () => {
     setIsLoading(true);
     
     let hasErrors = false;
-    const newErrors = { email: "", phone: "", otp: "", password: "" };
+    let errorMessage = "";
     
     if (resetMode === "email" && !email) {
-      newErrors.email = "Email is required";
+      errorMessage = "Please enter your email address";
       hasErrors = true;
     }
-    if (resetMode === "phone" && !phone) {
-      newErrors.phone = "Phone number is required";
+    if (!hasErrors && resetMode === "phone" && !phone) {
+      errorMessage = "Please enter your phone number";
       hasErrors = true;
     }
-    if (!otp) {
-      newErrors.otp = "Verification code is required";
+    if (!hasErrors && !otp) {
+      errorMessage = "Please enter the verification code";
       hasErrors = true;
     }
-    if (!password) {
-      newErrors.password = "New password is required";
+    if (!hasErrors && !password) {
+      errorMessage = "Please enter your new password";
       hasErrors = true;
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (!hasErrors && password.length < 6) {
+      errorMessage = "Password must be at least 6 characters";
       hasErrors = true;
     }
     
     if (hasErrors) {
-      setErrors(newErrors);
+      setToastMessage(errorMessage);
+      setToastSeverity("error");
+      setToastOpen(true);
+      // Mark fields in error
+      if (resetMode === "email" && !email) setFieldErrors(prev => ({ ...prev, email: true }));
+      if (resetMode === "phone" && !phone) setFieldErrors(prev => ({ ...prev, phone: true }));
+      if (!otp) setFieldErrors(prev => ({ ...prev, otp: true }));
+      if (!password || password.length < 6) setFieldErrors(prev => ({ ...prev, password: true }));
       setIsLoading(false);
       return;
     }
@@ -109,10 +124,15 @@ export const ResetPassword = () => {
       };
       
       await authService.resetPassword(resetData);
-      navigate("/login");
+      setToastMessage("Password reset successfully!");
+      setToastSeverity("success");
+      setToastOpen(true);
+      setTimeout(() => navigate("/login"), 2000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Failed to reset password";
-      setErrors(prev => ({ ...prev, otp: errorMessage }));
+      const errorMsg = error.response?.data?.message || "Failed to reset password";
+      setToastMessage(errorMsg);
+      setToastSeverity("error");
+      setToastOpen(true);
     } finally {
       setIsLoading(false);
     }
@@ -230,16 +250,30 @@ export const ResetPassword = () => {
               <CustomInput
                 label="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  // Clear error styling when user types
+                  if (fieldErrors.email) {
+                    setFieldErrors(prev => ({ ...prev, email: false }));
+                  }
+                }}
                 error={errors.email}
+                sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
                 endAdornment={<Email sx={{ color: "#9ca3af", fontSize: 22 }} />}
               />
             ) : (
               <CustomInput
                 label="Phone Number"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  // Clear error styling when user types
+                  if (fieldErrors.phone) {
+                    setFieldErrors(prev => ({ ...prev, phone: false }));
+                  }
+                }}
                 error={errors.phone}
+                sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
                 startAdornment={
                   <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
                     <select
@@ -261,8 +295,15 @@ export const ResetPassword = () => {
               <CustomInput
                 label="Enter 6-digit code"
                 value={otp}
-                onChange={(e) => setOtp(e.target.value)}
+                onChange={(e) => {
+                  setOtp(e.target.value);
+                  // Clear error styling when user types
+                  if (fieldErrors.otp) {
+                    setFieldErrors(prev => ({ ...prev, otp: false }));
+                  }
+                }}
                 error={errors.otp}
+                sx={fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
                 endAdornment={
                   <Button
                     variant="outlined"
@@ -291,9 +332,16 @@ export const ResetPassword = () => {
               label="New Password"
               type={showPassword ? "text" : "password"}
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                // Clear error styling when user types
+                if (fieldErrors.password) {
+                  setFieldErrors(prev => ({ ...prev, password: false }));
+                }
+              }}
               error={errors.password}
               disabled={!codeSent}
+              sx={fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
               endAdornment={
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
@@ -366,6 +414,22 @@ export const ResetPassword = () => {
       <div className="w-full">
         <Footer />
       </div>
+
+      {/* Snackbar for Toast Notifications */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={6000}
+        onClose={() => setToastOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setToastOpen(false)}
+          severity={toastSeverity}
+          sx={{ width: "100%" }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };

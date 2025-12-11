@@ -1,6 +1,7 @@
 // components/CustomInput.tsx
 import { TextField, InputAdornment } from "@mui/material";
 import React from "react";
+import type { SxProps, Theme } from "@mui/material/styles";
 
 interface CustomInputProps {
   label: string;
@@ -17,6 +18,7 @@ interface CustomInputProps {
   multiline?: boolean;
   rows?: number;
   required?: boolean;
+  sx?: SxProps<Theme>;
 }
 
 export const CustomInput = ({
@@ -34,6 +36,7 @@ export const CustomInput = ({
   multiline = false,
   rows = 1,
   required,
+  sx,
 }: CustomInputProps) => {
   return (
     <TextField
@@ -45,7 +48,7 @@ export const CustomInput = ({
       fullWidth={fullWidth}
       error={!!error}
       helperText={error}
-      sx={{ fontSize: 12 }}
+      sx={{ fontSize: 12, ...sx }}
       placeholder={placeholder}
       variant="outlined"
       disabled={disabled}

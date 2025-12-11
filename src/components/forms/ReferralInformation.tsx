@@ -93,7 +93,6 @@ export const ReferralInformation = () => {
         />
       </Stack>
 
-      {/* Referral Contact + Police Verification */}
       <Stack direction="row" spacing={2}>
         <TextField
           fullWidth

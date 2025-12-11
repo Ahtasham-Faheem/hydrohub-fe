@@ -111,6 +111,10 @@ interface FormContextType {
   setFieldErrors: (errors: Record<string, string>) => void;
   resetForm: () => void;
   validateRequiredFields: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
+  validateStep1: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
+  validateStep2: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
+  validateStep3: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
+  validateStep4: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
 }
 
 const initialFormData: FormData = {
@@ -275,8 +279,20 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       fieldErrorsMap["password"] = passwordError;
     }
 
+    setFieldErrors(fieldErrorsMap);
+    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+  };
+
+  const validateStep1 = () => {
+    const errors: string[] = [];
+    const fieldErrorsMap: Record<string, string> = {};
+
     // Date of Birth validation - must be ISO 8601 format
-    if (formData.dateOfBirth) {
+    if (!formData.dateOfBirth || !formData.dateOfBirth.trim()) {
+      const dateError = "Date of Birth is required";
+      errors.push(dateError);
+      fieldErrorsMap["dateOfBirth"] = dateError;
+    } else {
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
       if (!dateRegex.test(formData.dateOfBirth)) {
         const dateError = "Date of Birth must be in YYYY-MM-DD format";
@@ -285,27 +301,38 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       }
     }
 
-    // Secondary Email validation - if provided, must be valid email
-    if (formData.secondaryEmailAddress && formData.secondaryEmailAddress.trim()) {
-      if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
-        const secondaryEmailError = "Secondary Email must be a valid email address";
-        errors.push(secondaryEmailError);
-        fieldErrorsMap["secondaryEmailAddress"] = secondaryEmailError;
-      }
+    // Gender validation - required
+    if (!formData.gender || !formData.gender.trim()) {
+      const genderError = "Please select a Gender";
+      errors.push(genderError);
+      fieldErrorsMap["gender"] = genderError;
     }
 
-    // National ID validation - must be 13 digits if provided
-    if (formData.nationalId && formData.nationalId.trim()) {
-      if (!/^\d+$/.test(formData.nationalId)) {
-        const nationalIdError = "National ID must contain only numbers";
-        errors.push(nationalIdError);
-        fieldErrorsMap["nationalId"] = nationalIdError;
-      } else if (formData.nationalId.length !== 13) {
-        const nationalIdError = "National ID must be exactly 13 digits";
-        errors.push(nationalIdError);
-        fieldErrorsMap["nationalId"] = nationalIdError;
-      }
+    // Marital Status validation - required
+    if (!formData.maritalStatus || !formData.maritalStatus.trim()) {
+      const maritalStatusError = "Please select Marital Status";
+      errors.push(maritalStatusError);
+      fieldErrorsMap["maritalStatus"] = maritalStatusError;
     }
+
+    // Secondary Email validation - if provided, must be valid email
+    if (!formData.secondaryEmailAddress || !formData.secondaryEmailAddress.trim()) {
+      const secondaryEmailError = "Secondary Email Address is required";
+      errors.push(secondaryEmailError);
+      fieldErrorsMap["secondaryEmailAddress"] = secondaryEmailError;
+    } else if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
+      const secondaryEmailError = "Secondary Email must be a valid email address";
+      errors.push(secondaryEmailError);
+      fieldErrorsMap["secondaryEmailAddress"] = secondaryEmailError;
+    }
+
+    setFieldErrors(fieldErrorsMap);
+    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+  };
+
+  const validateStep2 = () => {
+    const errors: string[] = [];
+    const fieldErrorsMap: Record<string, string> = {};
 
     // Employment Details validation
     if (!formData.employmentType || !formData.employmentType.trim()) {
@@ -330,6 +357,21 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       const employmentStatusError = "Please select Status";
       errors.push(employmentStatusError);
       fieldErrorsMap["employmentStatus"] = employmentStatusError;
+    }
+
+    setFieldErrors(fieldErrorsMap);
+    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+  };
+
+  const validateStep3 = () => {
+    const errors: string[] = [];
+    const fieldErrorsMap: Record<string, string> = {};
+
+    // Salary Payment Mode validation
+    if (!formData.salaryPaymentMode || !formData.salaryPaymentMode.trim()) {
+      const salaryPaymentModeError = "Please select Salary Payment Mode";
+      errors.push(salaryPaymentModeError);
+      fieldErrorsMap["salaryPaymentMode"] = salaryPaymentModeError;
     }
 
     // Salary & Benefits validation
@@ -365,6 +407,14 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
         fieldErrorsMap["providentFund"] = pfError;
       }
     }
+
+    setFieldErrors(fieldErrorsMap);
+    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+  };
+
+  const validateStep4 = () => {
+    const errors: string[] = [];
+    const fieldErrorsMap: Record<string, string> = {};
 
     // Identification & Verification validation
     if (!formData.idCardIssuanceDate || !formData.idCardIssuanceDate.trim()) {
@@ -409,6 +459,10 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
         setFieldErrors,
         resetForm,
         validateRequiredFields,
+        validateStep1,
+        validateStep2,
+        validateStep3,
+        validateStep4,
       }}
     >
       {children}

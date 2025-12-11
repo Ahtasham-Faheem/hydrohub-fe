@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { staffService } from "../../services/api";
 
 export const EmploymentDetails = () => {
-  const { formData, updateFormData, fieldErrors } = useFormContext();
+  const { formData, updateFormData, fieldErrors, setFieldErrors } = useFormContext();
   const [supervisors, setSupervisors] = useState<Array<{ id: string; firstName?: string; lastName?: string; email?: string; username?: string }>>([]);
   const [loadingSupervisors, setLoadingSupervisors] = useState(false);
   
@@ -137,7 +137,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Status"
           value={formData.employmentStatus || ''}
-          onChange={(e) => updateFormData('employmentStatus', e.target.value)}
+          onChange={(e) => {
+            updateFormData('employmentStatus', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['employmentStatus']) {
+              setFieldErrors({ ...fieldErrors, employmentStatus: "" });
+            }
+          }}
           error={fieldErrors['employmentStatus']}
           options={[
             { value: "Active", label: "Active" },

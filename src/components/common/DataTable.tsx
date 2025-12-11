@@ -19,6 +19,16 @@ import {
 import { Visibility, Edit, Delete, FolderOpen } from "@mui/icons-material";
 import { IoMdClose } from "react-icons/io";
 import { useState } from "react";
+import { useFormContext } from "../../contexts/FormContext";
+
+// Custom hook to safely use FormContext only when available
+const useFormContextSafe = () => {
+  try {
+    return useFormContext();
+  } catch {
+    return null;
+  }
+};
 
 export interface Column {
   key: string;
@@ -53,6 +63,7 @@ export const DataTable = ({
   onEdit,
   onDelete,
 }: DataTableProps) => {
+  const formContext = useFormContextSafe();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
@@ -203,7 +214,13 @@ export const DataTable = ({
                         <IconButton
                           size="small"
                           sx={{ color: "#f59e0b" }}
-                          onClick={() => onEdit(item)}
+                          onClick={() => {
+                            // Reset form context if available (when editing within a form)
+                            if (formContext?.resetForm) {
+                              formContext.resetForm();
+                            }
+                            onEdit(item);
+                          }}
                         >
                           <Edit fontSize="small" />
                         </IconButton>
