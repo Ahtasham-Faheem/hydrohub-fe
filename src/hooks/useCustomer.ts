@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import api from '../services/api';
 import { customerService } from '../services/api';
 import { queryKeys } from '../services/queryKeys';
 import type { CustomersResponse } from '../types/customer';
