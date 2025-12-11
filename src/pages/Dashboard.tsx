@@ -7,10 +7,12 @@ import { DashboardFooter } from "../components/DashboardFooter";
 import { UsersPage } from "./WorkforceShiftManagement/UsersPage";
 import BusinessControlCenter from "./BusinessControlCenter";
 import { CreateUser } from "./WorkforceShiftManagement/CreateUser";
+import { EditUser } from "./WorkforceShiftManagement/EditUser";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { FaAngleDown } from "react-icons/fa";
 import { CustomerProfiles } from "./CustomerManagement/CustomerProfiles";
 import { CreateCustomer } from "./CustomerManagement/CreateCustomer";
+import { EditCustomer } from "./CustomerManagement/EditCustomer";
 import { CustomerFormProvider } from "../contexts/CustomerFormContext";
 import { CatalogueManagement } from "./CatalogeManagement/CatalogueManagement";
 import { OrderFlow } from "./Orders/OrderFlow";
@@ -107,12 +109,21 @@ export const Dashboard = () => {
               />
               <Route path="users" element={<UsersPage />} />
               <Route path="users/create" element={<CreateUser />} />
+              <Route path="users/edit/:id" element={<EditUser />} />
               <Route path="customer-profiles" element={<CustomerProfiles />} />
               <Route
                 path="customer-profiles/create"
                 element={
                   <CustomerFormProvider>
                     <CreateCustomer />
+                  </CustomerFormProvider>
+                }
+              />
+              <Route
+                path="customer-profiles/edit/:id"
+                element={
+                  <CustomerFormProvider>
+                    <EditCustomer />
                   </CustomerFormProvider>
                 }
               />

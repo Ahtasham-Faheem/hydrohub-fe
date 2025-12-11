@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Box, Card, Divider } from "@mui/material";
-import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 import { useGetStaff } from "../../hooks/useStaff";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
 import { UserStatsCards } from "../../components/users/UserStatsCards";
@@ -10,20 +10,29 @@ import { DataTable } from "../../components/common/DataTable";
 import type { Column } from "../../components/common/DataTable";
 
 export const UsersPage = () => {
+  const navigate = useNavigate();
   const [status, setStatus] = useState("");
   const [role, setRole] = useState("");
+  const [dateRange, setDateRange] = useState("");
   const [search, setSearch] = useState("");
-  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   
   // Get vendorId from localStorage
   const vendorData = localStorage.getItem('userData');
   const vendorId = vendorData ? JSON.parse(vendorData).id : null;
   
-  // Using TanStack Query to fetch staff members
-  const { data: staffData, isLoading } = useGetStaff(vendorId, currentPage, 10);
+  // Build filters object for API
+  const buildFilters = () => {
+    const filters: any = {};
+    if (status) filters.status = status;
+    if (role) filters.role = role;
+    if (dateRange) filters.dateRange = dateRange;
+    if (search) filters.search = search;
+    return Object.keys(filters).length > 0 ? filters : undefined;
+  };
+  
+  // Using TanStack Query to fetch staff members with filters
+  const { data: staffData, isLoading } = useGetStaff(vendorId, currentPage, 10, buildFilters());
   
   const staff = staffData?.data || [];
   const totalPages = staffData?.pagination?.totalPages || 1;
@@ -40,89 +49,6 @@ export const UsersPage = () => {
     { id: 5, label: "Verified", enabled: true },
     { id: 6, label: "Actions", enabled: true },
   ]);
-
-  const dateRangeOptions = [
-    {
-      label: "Today",
-      value: "today",
-      startDate: dayjs().startOf("day"),
-      endDate: dayjs().endOf("day"),
-    },
-    {
-      label: "Yesterday",
-      value: "yesterday",
-      startDate: dayjs().subtract(1, "day").startOf("day"),
-      endDate: dayjs().subtract(1, "day").endOf("day"),
-    },
-    {
-      label: "Last 7 Days",
-      value: "last7",
-      startDate: dayjs().subtract(7, "day").startOf("day"),
-      endDate: dayjs().endOf("day"),
-    },
-    {
-      label: "Last 30 Days",
-      value: "last30",
-      startDate: dayjs().subtract(30, "day").startOf("day"),
-      endDate: dayjs().endOf("day"),
-    },
-    {
-      label: "This Month",
-      value: "thisMonth",
-      startDate: dayjs().startOf("month"),
-      endDate: dayjs().endOf("month"),
-    },
-    {
-      label: "Last Month",
-      value: "lastMonth",
-      startDate: dayjs().subtract(1, "month").startOf("month"),
-      endDate: dayjs().subtract(1, "month").endOf("month"),
-    },
-  ];
-
-  // Filter users based on selected filters
-  const filteredStaff = staff.filter((staffMember: any) => {
-    // Filter by date range - fixed date range issue (was off by 1)
-    if (startDate && endDate) {
-      const userCreatedDate = dayjs(staffMember.createdAt);
-      const isInRange =
-        (userCreatedDate.isAfter(startDate) || userCreatedDate.isSame(startDate, "day")) &&
-        (userCreatedDate.isBefore(endDate) || userCreatedDate.isSame(endDate, "day"));
-      if (!isInRange) {
-        return false;
-      }
-    }
-
-    // Filter by status - fixed field name (was "status" not "userStatus")
-    if (status && staffMember?.status !== status.toLowerCase()) {
-      return false;
-    }
-
-    // Filter by role - fixed field name (was "userRole" should be "role")
-    if (role && staffMember?.role !== role) {
-      return false;
-    }
-
-    // Filter by search - updated to check correct fields
-    if (search) {
-      const searchLower = search.toLowerCase();
-      const firstName = staffMember?.firstName || '';
-      const lastName = staffMember?.lastName || '';
-      const email = staffMember?.email || '';
-      const staffId = staffMember?.staffId || '';
-      
-      if (
-        !firstName.toLowerCase().includes(searchLower) &&
-        !lastName.toLowerCase().includes(searchLower) &&
-        !email.toLowerCase().includes(searchLower) &&
-        !staffId.toLowerCase().includes(searchLower)
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  });
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -278,19 +204,13 @@ export const UsersPage = () => {
         <h2 className="mb-4 text-lg">Filters</h2>
 
         <UserFilters
-          {...{
-            status,
-            setStatus,
-            role,
-            setRole,
-            startDate,
-            setStartDate,
-            endDate,
-            setEndDate,
-            isCalendarOpen,
-            setIsCalendarOpen,
-            dateRangeOptions,
-          }}
+          status={status}
+          setStatus={setStatus}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          role={role}
+          setRole={setRole}
+          onFiltersChange={() => setCurrentPage(1)}
         />
         <Divider sx={{ my: 2 }} />
         <SortAndManageColumns
@@ -310,7 +230,7 @@ export const UsersPage = () => {
       </Card>
       <DataTable
         columns={tableColumns}
-        data={filteredStaff}
+        data={staff}
         isLoading={isLoading}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
@@ -318,7 +238,7 @@ export const UsersPage = () => {
         keyField="id"
         showActions={true}
         onView={(item) => console.log("View", item)}
-        onEdit={(item) => console.log("Edit", item)}
+        onEdit={(item) => navigate(`/dashboard/users/edit/${item.id}`)}
         onDelete={(item) => console.log("Delete", item)}
       />
     </Box>

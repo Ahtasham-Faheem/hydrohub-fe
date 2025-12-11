@@ -103,7 +103,7 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
         </Typography>
         <CustomSelect
           label="Ownership Status *"
-          value={buildingAccess.ownershipStatus || 'personal'}
+          value={buildingAccess.ownershipStatus || ''}
           onChange={(e) => updateFormData('buildingAccessInfo.ownershipStatus', e.target.value)}
           options={[
             { label: 'Personal', value: 'personal' },
@@ -121,7 +121,7 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
         </Typography>
         <CustomSelect
           label="Delivery Access Level *"
-          value={buildingAccess.deliveryAccessLevel || 'ground'}
+          value={buildingAccess.deliveryAccessLevel || ''}
           onChange={(e) => updateFormData('buildingAccessInfo.deliveryAccessLevel', e.target.value)}
           options={[
             { label: 'Basement', value: 'basement' },

@@ -11,6 +11,8 @@ import type {
 
 interface CustomerFormContextType {
   state: CustomerFormState;
+  fieldErrors: Record<string, string>;
+  setFieldErrors: (errors: Record<string, string>) => void;
   setCustomerType: (type: CustomerType) => void;
   setCurrentStep: (step: number) => void;
   updateFormData: (path: string, value: any) => void;
@@ -21,7 +23,7 @@ interface CustomerFormContextType {
   updateLinkedAccount: (index: number, account: LinkedAccount) => void;
   removeLinkedAccount: (index: number) => void;
   resetForm: () => void;
-  validateRequiredFields: () => { isValid: boolean; errors: string[] };
+  validateRequiredFields: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
 }
 
 const defaultDomesticCustomer: DomesticCustomer = {
@@ -34,15 +36,15 @@ const defaultDomesticCustomer: DomesticCustomer = {
   password: '',
   confirmPassword: '',
   dateOfBirth: '',
-  gender: 'male',
-  maritalStatus: 'single',
+  gender: '',
+  maritalStatus: '',
   customerType: 'Domestic Customer',
   alternateContactNumber: '',
   creationDate: new Date().toISOString(),
   preferredContactMethod: 'whatsapp',
   buildingAccessInfo: {
-    ownershipStatus: 'personal',
-    deliveryAccessLevel: 'ground',
+    ownershipStatus: '',
+    deliveryAccessLevel: '',
   },
   deliveryAddresses: [],
   sameAsBillingAddress: true,
@@ -76,6 +78,7 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
     data: null,
     errors: {},
   });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const setCustomerType = (type: CustomerType) => {
     let initialData: DomesticCustomer | BusinessCustomer;
@@ -94,7 +97,7 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
           username: '',
           password: '',
           dateOfBirth: '',
-          maritalStatus: 'single',
+          maritalStatus: '',
           preferredContactMethod: 'whatsapp',
         } as any,
         businessAddresses: [],
@@ -229,32 +232,104 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
 
   const validateRequiredFields = () => {
     const errors: string[] = [];
+    const fieldErrorsMap: Record<string, string> = {};
 
     if (!state.data) {
       errors.push('Form data is missing');
-      return { isValid: false, errors };
+      return { isValid: false, errors, fieldErrors: fieldErrorsMap };
     }
 
     // Basic required fields
-    if (!state.data.firstName) errors.push('First Name is required');
-    if (!state.data.lastName) errors.push('Last Name is required');
-    if (!state.data.email) errors.push('Email is required');
-    if (!state.data.mobileNumber) errors.push('Mobile Number is required');
-    if (!state.data.username) errors.push('Username is required');
-    if (!state.data.password) errors.push('Password is required');
+    if (!state.data.firstName) {
+      errors.push('First Name is required');
+      fieldErrorsMap['firstName'] = 'First Name is required';
+    }
+    if (!state.data.lastName) {
+      errors.push('Last Name is required');
+      fieldErrorsMap['lastName'] = 'Last Name is required';
+    }
+    if (!state.data.email) {
+      errors.push('Email is required');
+      fieldErrorsMap['email'] = 'Email is required';
+    }
+    if (!state.data.mobileNumber) {
+      errors.push('Mobile Number is required');
+      fieldErrorsMap['mobileNumber'] = 'Mobile Number is required';
+    }
+    if (!state.data.username) {
+      errors.push('Username is required');
+      fieldErrorsMap['username'] = 'Username is required';
+    }
+    if (!state.data.password) {
+      errors.push('Password is required');
+      fieldErrorsMap['password'] = 'Password is required';
+    }
+    if (!state.data.profilePictureAssetId) {
+      errors.push('Profile Picture is required');
+      fieldErrorsMap['profilePictureAssetId'] = 'Profile Picture is required';
+    }
+
+    // Confirm Password validation
+    if (!state.data.confirmPassword) {
+      const confirmPasswordError = 'Please confirm your password';
+      errors.push(confirmPasswordError);
+      fieldErrorsMap['confirmPassword'] = confirmPasswordError;
+    } else if (state.data.password && state.data.confirmPassword !== state.data.password) {
+      const confirmPasswordError = 'Passwords do not match';
+      errors.push(confirmPasswordError);
+      fieldErrorsMap['confirmPassword'] = confirmPasswordError;
+    }
+
+    // Email validation
+    if (state.data.email && !/\S+@\S+\.\S+/.test(state.data.email)) {
+      const emailError = 'Email must be a valid email address';
+      errors.push(emailError);
+      fieldErrorsMap['email'] = emailError;
+    }
+
+    // Date of Birth validation - must be ISO 8601 format
+    if (state.data.dateOfBirth) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(state.data.dateOfBirth)) {
+        const dateError = 'Date of Birth must be in YYYY-MM-DD format';
+        errors.push(dateError);
+        fieldErrorsMap['dateOfBirth'] = dateError;
+      }
+    }
+
+    // National ID/CNIC validation - must be 13 digits if provided
+    if (state.data.cnicNumber && state.data.cnicNumber.toString().trim()) {
+      if (!/^\d+$/.test(state.data.cnicNumber.toString())) {
+        const cnicError = 'CNIC/National ID must contain only numbers';
+        errors.push(cnicError);
+        fieldErrorsMap['cnicNumber'] = cnicError;
+      } else if (state.data.cnicNumber.toString().length !== 13) {
+        const cnicError = 'CNIC/National ID must be exactly 13 digits';
+        errors.push(cnicError);
+        fieldErrorsMap['cnicNumber'] = cnicError;
+      }
+    }
 
     if ('businessName' in state.data) {
-      if (!state.data.businessName) errors.push('Business Name is required');
+      if (!state.data.businessName) {
+        errors.push('Business Name is required');
+        fieldErrorsMap['businessName'] = 'Business Name is required';
+      }
     }
+
+    setFieldErrors(fieldErrorsMap);
 
     return {
       isValid: errors.length === 0,
       errors,
+      fieldErrors: fieldErrorsMap,
     };
   };
 
   const value: CustomerFormContextType = {
     state,
+    fieldErrors,
+    setFieldErrors,
     setCustomerType,
     setCurrentStep,
     updateFormData,

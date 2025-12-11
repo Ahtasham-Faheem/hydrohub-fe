@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -16,7 +16,6 @@ import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaCircle } from "react-icons/fa";
 import { FormProvider, useFormContext } from "../../contexts/FormContext";
 import { staffService } from "../../services/api";
-import { validatePasswordMatch } from "../../utils/validationUtils";
 
 import {
   MdContactMail,
@@ -53,7 +52,6 @@ const CustomStepIcon = ({ active }: { active: boolean }) => (
   </Box>
 );
 
-// ✅ Ordered according to renderStepContent
 const steps = [
   { label: "Personal Information", icon: <LuUserRoundPen size={22} /> },
   {
@@ -67,107 +65,191 @@ const steps = [
     icon: <AiOutlineIdcard size={22} />,
   },
   { label: "Documents Upload", icon: <HiOutlineDocumentDuplicate size={22} /> },
-  // { label: "Attendance & Duty Info", icon: <FaRegCalendarCheck size={22} /> },
-  // { label: "Assets & Equipment Assigned", icon: <GiLaptop size={22} /> },
-  // { label: "Additional Notes", icon: <IoMdClipboard size={22} /> },
 ];
 
-const CreateUserForm = () => {
+const EditUserForm = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [image, setImage] = useState<string | null>(null);
+  const [staffProfileId, setStaffProfileId] = useState<string | null>(null);
   const {
     formData,
     currentStep,
     setCurrentStep,
     setFieldErrors,
-    validateRequiredFields,
     resetForm,
+    updateMultipleFields,
   } = useFormContext();
-  const navigate = useNavigate();
 
-  const [image, setImage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Load user data on mount
+  useEffect(() => {
+    const loadUserData = async () => {
+      if (!id) {
+        setError("User ID not found");
+        return;
+      }
+
+      try {
+        setIsLoadingData(true);
+        const staffData = await staffService.getStaffById(id);
+        
+        setStaffProfileId(staffData.id);
+
+        // Populate form with user data
+        updateMultipleFields({
+          staffProfileId: staffData.id,
+          username: staffData.username || "",
+          email: staffData.email || "",
+          phone: staffData.phone || "",
+          title: staffData.title || "Mr.",
+          firstName: staffData.firstName || "",
+          lastName: staffData.lastName || "",
+          userRole: staffData.role || "delivery_staff",
+          profilePictureAssetId: staffData.profilePictureAssetId || "",
+          // Additional personal info
+          fathersName: staffData.fathersName || "",
+          mothersName: staffData.mothersName || "",
+          dateOfBirth: staffData.dateOfBirth || "",
+          nationality: staffData.nationality || "",
+          nationalId: staffData.nationalId || "",
+          gender: staffData.gender || "",
+          maritalStatus: staffData.maritalStatus || "",
+          alternateContactNumber: staffData.alternateContactNumber || "",
+          secondaryEmailAddress: staffData.secondaryEmailAddress || "",
+          presentAddress: staffData.presentAddress || "",
+          permanentAddress: staffData.permanentAddress || "",
+          emergencyContactName: staffData.emergencyContactName || "",
+          emergencyContactRelation: staffData.emergencyContactRelation || "",
+          emergencyContactNumber: staffData.emergencyContactNumber || "",
+          alternateEmergencyContact: staffData.alternateEmergencyContact || "",
+          // Employment details
+          jobTitle: staffData.jobTitle || "",
+          department: staffData.department || "",
+          employmentType: staffData.employmentType || "",
+          supervisorId: staffData.supervisorId || "",
+          workLocation: staffData.workLocation || "",
+          shiftType: staffData.shiftType || "",
+          employmentStatus: staffData.status || "",
+          // Salary & benefits
+          basicSalary: staffData.basicSalary || "",
+          allowances: staffData.allowances || "",
+          providentFund: staffData.providentFund || "",
+          salaryPaymentMode: staffData.salaryPaymentMode || "",
+          bankName: staffData.bankName || "",
+          bankAccountTitle: staffData.bankAccountTitle || "",
+          bankAccountNumber: staffData.bankAccountNumber || "",
+          taxStatus: staffData.taxStatus || "",
+          // Identification & verification
+          identityDocumentName: staffData.identityDocumentName || "",
+          idCardNumber: staffData.idCardNumber || "",
+          idCardIssuanceDate: staffData.idCardIssuanceDate || "",
+          idCardExpiryDate: staffData.idCardExpiryDate || "",
+          referralPersonName: staffData.referralPersonName || "",
+          referralRelation: staffData.referralRelation || "",
+          referralContact: staffData.referralContact || "",
+          policeVerification: staffData.policeVerification || "",
+          remarks: staffData.remarks || "",
+        });
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load user data");
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadUserData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   const handleNext = async () => {
     setError(null);
     setIsLoading(true);
 
     try {
-      // Step 0: Create staff member via /staff API
+      // Step 0: Update basic profile info via PATCH /staff/{id}
       if (currentStep === 0) {
-        const validation = validateRequiredFields();
+        // Validate only step 0 fields
+        const validation: { isValid: boolean; fieldErrors: Record<string, string>; errors: string[] } = {
+          isValid: true,
+          fieldErrors: {},
+          errors: []
+        };
+
+        if (!formData.firstName || !formData.firstName.trim()) {
+          validation.fieldErrors['firstName'] = 'First Name is required';
+          validation.errors.push('First Name is required');
+          validation.isValid = false;
+        }
+
+        if (!formData.lastName || !formData.lastName.trim()) {
+          validation.fieldErrors['lastName'] = 'Last Name is required';
+          validation.errors.push('Last Name is required');
+          validation.isValid = false;
+        }
+
         if (!validation.isValid) {
+          setFieldErrors(validation.fieldErrors);
           setError(validation.errors.join(", "));
           setIsLoading(false);
           return;
         }
 
-        // Validate password confirmation
-        const passwordValidation = validatePasswordMatch(formData.password, formData.confirmPassword || '');
-        if (!passwordValidation.isValid) {
-          setError(passwordValidation.error || 'Password validation failed');
+        if (!staffProfileId) {
+          setError("Staff ID not found");
           setIsLoading(false);
           return;
         }
 
-        const response = await staffService.createStaff({
-          username: formData.username,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          title: formData.title || "Mr.",
+        await staffService.updateStaffBasicProfile(staffProfileId, {
+          title: formData.title,
           firstName: formData.firstName,
           lastName: formData.lastName,
           profilePictureAssetId: formData.profilePictureAssetId,
-          role: formData.userRole || "delivery_staff",
         });
-
-        // Save staffProfileId for next steps
-        if (response.id) {
-          formData.staffProfileId = response.id;
-        }
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(1);
       }
-      // Step 1: Submit additional personal info via PATCH API
+      // Step 1: Update additional personal info
       else if (currentStep === 1) {
-        if (!formData.staffProfileId) {
-          setError("Staff profile not found. Please complete step 1 first.");
+        const fieldErrorsMap: Record<string, string> = {};
+
+        // Validate dateOfBirth on the frontend
+        if (!formData.dateOfBirth || !formData.dateOfBirth.toString().trim()) {
+          fieldErrorsMap['dateOfBirth'] = 'Date of Birth is required';
+        } else {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (!dateRegex.test(formData.dateOfBirth)) {
+            fieldErrorsMap['dateOfBirth'] = 'Date of Birth must be in YYYY-MM-DD format';
+          }
+        }
+
+        if (!formData.secondaryEmailAddress || !formData.secondaryEmailAddress.trim()) {
+          fieldErrorsMap['secondaryEmailAddress'] = 'Secondary Email Address is required';
+        } else if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
+          fieldErrorsMap['secondaryEmailAddress'] = 'Secondary Email Address must be a valid email';
+        }
+
+        if (Object.keys(fieldErrorsMap).length > 0) {
+          setFieldErrors(fieldErrorsMap);
+          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
           setIsLoading(false);
           return;
         }
 
-        // Validate dateOfBirth and secondaryEmailAddress on the frontend
-        const validation = validateRequiredFields();
-        
-        // Check for dateOfBirth specifically
-        if (!formData.dateOfBirth || !formData.dateOfBirth.trim()) {
-          validation.fieldErrors['dateOfBirth'] = 'Date of Birth is required';
-        } else {
-          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-          if (!dateRegex.test(formData.dateOfBirth)) {
-            validation.fieldErrors['dateOfBirth'] = 'Date of Birth must be in YYYY-MM-DD format';
-          }
-        }
-
-        // Check for secondaryEmailAddress specifically
-        if (!formData.secondaryEmailAddress || !formData.secondaryEmailAddress.trim()) {
-          validation.fieldErrors['secondaryEmailAddress'] = 'Secondary Email Address is required';
-        } else if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
-          validation.fieldErrors['secondaryEmailAddress'] = 'Secondary Email Address must be a valid email';
-        }
-
-        // If there are any field errors, show them and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
-          setError(null); // Don't show alert, errors will show below fields
+        if (!staffProfileId) {
+          setError("Staff ID not found");
           setIsLoading(false);
           return;
         }
 
         await staffService.updateAdditionalPersonalInfo(
-          formData.staffProfileId,
+          staffProfileId,
           {
             fathersName: formData.fathersName,
             mothersName: formData.mothersName,
@@ -191,42 +273,41 @@ const CreateUserForm = () => {
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(2);
       }
-      // Step 2: Submit employment details via PATCH API
+      // Step 2: Update employment details
       else if (currentStep === 2) {
-        if (!formData.staffProfileId) {
-          setError("Staff profile not found. Please complete step 1 first.");
+        const fieldErrorsMap: Record<string, string> = {};
+        
+        if (!formData.employmentType || !formData.employmentType.trim()) {
+          fieldErrorsMap['employmentType'] = 'Please select Employment Type';
+        }
+
+        if (!formData.supervisorId || !formData.supervisorId.trim()) {
+          fieldErrorsMap['supervisorId'] = 'Please select a Supervisor';
+        }
+
+        if (!formData.shiftType || !formData.shiftType.trim()) {
+          fieldErrorsMap['shiftType'] = 'Please select Shift Type';
+        }
+
+        if (!formData.employmentStatus || !formData.employmentStatus.trim()) {
+          fieldErrorsMap['employmentStatus'] = 'Please select Status';
+        }
+
+        if (Object.keys(fieldErrorsMap).length > 0) {
+          setFieldErrors(fieldErrorsMap);
+          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
           setIsLoading(false);
           return;
         }
 
-        // Validate employment details fields
-        const validation = validateRequiredFields();
-        
-        if (!formData.employmentType || !formData.employmentType.trim()) {
-          validation.fieldErrors['employmentType'] = 'Please select Employment Type';
-        }
-
-        if (!formData.supervisorId || !formData.supervisorId.trim()) {
-          validation.fieldErrors['supervisorId'] = 'Please select a Supervisor';
-        }
-
-        if (!formData.shiftType || !formData.shiftType.trim()) {
-          validation.fieldErrors['shiftType'] = 'Please select Shift Type';
-        }
-
-        if (!formData.employmentStatus || !formData.employmentStatus.trim()) {
-          validation.fieldErrors['employmentStatus'] = 'Please select Status';
-        }
-
-        // If there are any field errors, update context and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
-          setFieldErrors(validation.fieldErrors);
+        if (!staffProfileId) {
+          setError("Staff ID not found");
           setIsLoading(false);
           return;
         }
 
         await staffService.updateEmploymentDetails(
-          formData.staffProfileId,
+          staffProfileId,
           {
             jobTitle: formData.jobTitle,
             department: formData.department,
@@ -242,49 +323,46 @@ const CreateUserForm = () => {
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(3);
       }
-      // Step 3: Submit salary & benefits via PATCH API
+      // Step 3: Update salary & benefits
       else if (currentStep === 3) {
-        if (!formData.staffProfileId) {
-          setError("Staff profile not found. Please complete step 1 first.");
+        const fieldErrorsMap: Record<string, string> = {};
+        
+        if (!formData.taxStatus || !formData.taxStatus.trim()) {
+          fieldErrorsMap['taxStatus'] = 'Please select Tax Status';
+        }
+
+        if (formData.bankAccountNumber && formData.bankAccountNumber.trim()) {
+          if (!/^\d+$/.test(formData.bankAccountNumber)) {
+            fieldErrorsMap['bankAccountNumber'] = 'Bank Account Number must contain only numbers';
+          } else if (formData.bankAccountNumber.length > 16) {
+            fieldErrorsMap['bankAccountNumber'] = 'Bank Account Number must be maximum 16 digits';
+          }
+        }
+
+        if (formData.providentFund && formData.providentFund.trim()) {
+          const pfValue = parseInt(formData.providentFund);
+          if (isNaN(pfValue)) {
+            fieldErrorsMap['providentFund'] = 'Provident Fund must be a number';
+          } else if (pfValue < 0 || pfValue > 99) {
+            fieldErrorsMap['providentFund'] = 'Provident Fund must be between 0 and 99';
+          }
+        }
+
+        if (Object.keys(fieldErrorsMap).length > 0) {
+          setFieldErrors(fieldErrorsMap);
+          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
           setIsLoading(false);
           return;
         }
 
-        // Validate salary & benefits fields
-        const validation = validateRequiredFields();
-        
-        if (!formData.taxStatus || !formData.taxStatus.trim()) {
-          validation.fieldErrors['taxStatus'] = 'Please select Tax Status';
-        }
-
-        // Bank Account Number validation - numeric only, max 16 digits
-        if (formData.bankAccountNumber && formData.bankAccountNumber.trim()) {
-          if (!/^\d+$/.test(formData.bankAccountNumber)) {
-            validation.fieldErrors['bankAccountNumber'] = 'Bank Account Number must contain only numbers';
-          } else if (formData.bankAccountNumber.length > 16) {
-            validation.fieldErrors['bankAccountNumber'] = 'Bank Account Number must be maximum 16 digits';
-          }
-        }
-
-        // Provident Fund validation - 0-99 range
-        if (formData.providentFund && formData.providentFund.trim()) {
-          const pfValue = parseInt(formData.providentFund);
-          if (isNaN(pfValue)) {
-            validation.fieldErrors['providentFund'] = 'Provident Fund must be a number';
-          } else if (pfValue < 0 || pfValue > 99) {
-            validation.fieldErrors['providentFund'] = 'Provident Fund must be between 0 and 99';
-          }
-        }
-
-        // If there are any field errors, update context and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
-          setFieldErrors(validation.fieldErrors);
+        if (!staffProfileId) {
+          setError("Staff ID not found");
           setIsLoading(false);
           return;
         }
 
         await staffService.updateSalaryBenefits(
-          formData.staffProfileId,
+          staffProfileId,
           {
             basicSalary: formData.basicSalary ? Number(formData.basicSalary) : undefined,
             allowances: formData.allowances,
@@ -301,44 +379,43 @@ const CreateUserForm = () => {
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(4);
       }
-      // Step 4: Submit identification & verification via PATCH API
+      // Step 4: Update identification & verification
       else if (currentStep === 4) {
-        if (!formData.staffProfileId) {
-          setError("Staff profile not found. Please complete step 1 first.");
-          setIsLoading(false);
-          return;
-        }
-
-        // Validate identification & verification fields
-        const validation = validateRequiredFields();
+        const fieldErrorsMap: Record<string, string> = {};
         
         if (!formData.idCardIssuanceDate || !formData.idCardIssuanceDate.trim()) {
-          validation.fieldErrors['idCardIssuanceDate'] = 'ID Card Issuance Date is required';
+          fieldErrorsMap['idCardIssuanceDate'] = 'ID Card Issuance Date is required';
         } else {
           const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
           if (!dateRegex.test(formData.idCardIssuanceDate)) {
-            validation.fieldErrors['idCardIssuanceDate'] = 'ID Card Issuance Date must be in YYYY-MM-DD format';
+            fieldErrorsMap['idCardIssuanceDate'] = 'ID Card Issuance Date must be in YYYY-MM-DD format';
           }
         }
 
         if (!formData.idCardExpiryDate || !formData.idCardExpiryDate.trim()) {
-          validation.fieldErrors['idCardExpiryDate'] = 'ID Card Expiry Date is required';
+          fieldErrorsMap['idCardExpiryDate'] = 'ID Card Expiry Date is required';
         } else {
           const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
           if (!dateRegex.test(formData.idCardExpiryDate)) {
-            validation.fieldErrors['idCardExpiryDate'] = 'ID Card Expiry Date must be in YYYY-MM-DD format';
+            fieldErrorsMap['idCardExpiryDate'] = 'ID Card Expiry Date must be in YYYY-MM-DD format';
           }
         }
 
-        // If there are any field errors, update context and don't proceed
-        if (Object.keys(validation.fieldErrors).length > 0) {
-          setFieldErrors(validation.fieldErrors);
+        if (Object.keys(fieldErrorsMap).length > 0) {
+          setFieldErrors(fieldErrorsMap);
+          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+          setIsLoading(false);
+          return;
+        }
+
+        if (!staffProfileId) {
+          setError("Staff ID not found");
           setIsLoading(false);
           return;
         }
 
         await staffService.updateIdentificationVerification(
-          formData.staffProfileId,
+          staffProfileId,
           {
             identityDocumentName: formData.identityDocumentName,
             idCardNumber: formData.idCardNumber,
@@ -356,34 +433,8 @@ const CreateUserForm = () => {
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(5);
       }
-      // Step 6: Submit assets & equipment via PATCH API
-      else if (currentStep === 6) {
-        if (!formData.staffProfileId) {
-          setError("Staff profile not found. Please complete step 1 first.");
-          setIsLoading(false);
-          return;
-        }
-
-        await staffService.updateAssetsAndEquipment(
-          formData.staffProfileId,
-          {
-            equipmentType: formData.equipmentType,
-            assetId: formData.assetId,
-            assignedDate: formData.assignedDate,
-            quantity: formData.quantity ? Number(formData.quantity) : undefined,
-            unitOfMeasure: formData.unitOfMeasure,
-            issueBy: formData.issueBy,
-            remarks: formData.remarks,
-          }
-        );
-
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 2000);
-        setCurrentStep(7);
-      }
-      // Step 5: Documents Upload - just move forward (documents are uploaded via CRUD in component)
+      // Step 5: Documents Upload - just move forward
       else if (currentStep === 5) {
-        // Complete the form - reset context and navigate back
         resetForm();
         navigate('/dashboard/users');
         return;
@@ -422,6 +473,7 @@ const CreateUserForm = () => {
             image={image}
             onImageUpload={handleImageUpload}
             onImageReset={() => setImage(null)}
+            isEditMode={true}
           />
         );
       case 1:
@@ -440,10 +492,26 @@ const CreateUserForm = () => {
             image={image}
             onImageUpload={handleImageUpload}
             onImageReset={() => setImage(null)}
+            isEditMode={true}
           />
         );
     }
   };
+
+  if (isLoadingData) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "calc(100vh - 100px)",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
@@ -458,7 +526,7 @@ const CreateUserForm = () => {
         }}
       >
         <Typography variant="h6" sx={{ mb: 3 }}>
-          User Creation Form
+          Edit User
         </Typography>
         <Stepper
           activeStep={currentStep}
@@ -476,10 +544,6 @@ const CreateUserForm = () => {
                 StepIconComponent={() => (
                   <CustomStepIcon active={index === currentStep} />
                 )}
-                sx={{
-                  cursor: "pointer",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <Box
@@ -534,7 +598,7 @@ const CreateUserForm = () => {
             )}
             {success && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                User created successfully!
+                Changes saved successfully!
               </Alert>
             )}
             {renderStepContent(currentStep)}
@@ -563,7 +627,7 @@ const CreateUserForm = () => {
               disabled={isLoading}
             >
               {isLoading ? "Processing..." : currentStep === steps.length - 1
-                ? "Complete & Create User"
+                ? "Complete & Save"
                 : "Next"}
             </PrimaryButton>
           </Box>
@@ -573,10 +637,10 @@ const CreateUserForm = () => {
   );
 };
 
-export const CreateUser = () => {
+export const EditUser = () => {
   return (
     <FormProvider>
-      <CreateUserForm />
+      <EditUserForm />
     </FormProvider>
   );
 };

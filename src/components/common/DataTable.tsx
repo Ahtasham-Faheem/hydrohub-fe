@@ -13,8 +13,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Skeleton,
+  Typography,
 } from "@mui/material";
-import { Visibility, Edit, Delete } from "@mui/icons-material";
+import { Visibility, Edit, Delete, FolderOpen } from "@mui/icons-material";
 import { IoMdClose } from "react-icons/io";
 import { useState } from "react";
 
@@ -114,12 +116,56 @@ export const DataTable = ({
       }}
     >
       {isLoading ? (
-        <Box sx={{ p: 4, textAlign: "center", color: "#6b7280" }}>
-          Loading data...
+        <Box sx={{ p: 2 }}>
+          <Table sx={{ minWidth: 800 }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "#f8fafc" }}>
+                {columns.map((column) => (
+                  <TableCell key={column.key}>
+                    <Skeleton variant="text" width={80} />
+                  </TableCell>
+                ))}
+                {showActions && <TableCell align="center"><Skeleton variant="text" width={60} /></TableCell>}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {[...Array(5)].map((_, index) => (
+                <TableRow key={index}>
+                  {columns.map((column) => (
+                    <TableCell key={column.key}>
+                      <Skeleton variant="text" width={Math.random() * 100 + 50} />
+                    </TableCell>
+                  ))}
+                  {showActions && (
+                    <TableCell align="center">
+                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="circular" width={32} height={32} />
+                      </Box>
+                    </TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </Box>
       ) : data.length === 0 ? (
-        <Box sx={{ p: 4, textAlign: "center", color: "#6b7280" }}>
-          No data available
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          py: 8,
+          color: '#9ca3af'
+        }}>
+          <FolderOpen sx={{ fontSize: 64, mb: 2, color: '#d1d5db' }} />
+          <Typography variant="h6" sx={{ mb: 1, color: '#6b7280', fontWeight: 500 }}>
+            No Data Found
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#9ca3af', textAlign: 'center' }}>
+            There are no records to display at the moment.
+          </Typography>
         </Box>
       ) : (
         <>

@@ -248,8 +248,6 @@ export const ResetPassword = () => {
                       className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
                     >
                       <option value="+92">PK +92</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+1">US +1</option>
                     </select>
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>

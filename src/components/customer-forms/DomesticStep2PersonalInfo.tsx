@@ -9,7 +9,7 @@ import { useState } from "react";
 import { Phone } from "@mui/icons-material";
 
 export const DomesticStep2PersonalInfo = () => {
-  const { state, updateFormData } = useCustomerForm();
+  const { state, updateFormData, fieldErrors } = useCustomerForm();
   const data = (state?.data || {}) as DomesticCustomer;
   const [countryCode, setCountryCode] = useState("+92");
 
@@ -57,16 +57,16 @@ export const DomesticStep2PersonalInfo = () => {
             <CustomDateInput
               label="Date of Birth *"
               value={data.dateOfBirth ? dayjs(data.dateOfBirth) : null}
-              onChange={(date) => updateFormData("dateOfBirth", date)}
+              onChange={(date) => updateFormData("dateOfBirth", date ? date.format("YYYY-MM-DD") : "")}
+              error={fieldErrors['dateOfBirth']}
             />
             <CustomSelect
               label="Nationality"
-              value={data.nationality || ""}
+              value={data.nationality || "Pakistani"}
               onChange={(e) => updateFormData("nationality", e.target.value)}
+              error={fieldErrors['nationality']}
               options={[
                 { label: "Pakistani", value: "Pakistani" },
-                { label: "Indian", value: "Indian" },
-                { label: "Other", value: "Other" },
               ]}
             />
           </Box>
@@ -80,18 +80,22 @@ export const DomesticStep2PersonalInfo = () => {
           >
             <CustomInput
               label="National ID Number (CNIC)"
-              placeholder="Enter CNIC"
+              placeholder="1234567890123"
               value={data.cnicNumber || ""}
-              onChange={(e) => updateFormData("cnicNumber", e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+                updateFormData("cnicNumber", value);
+              }}
+              error={fieldErrors['cnicNumber']}
             />
             <CustomSelect
               label="Gender *"
               value={data.gender || ""}
               onChange={(e) => updateFormData("gender", e.target.value)}
+              error={fieldErrors['gender']}
               options={[
                 { label: "Male", value: "Male" },
                 { label: "Female", value: "Female" },
-                { label: "Other", value: "Other" },
               ]}
             />
           </Box>
@@ -107,6 +111,7 @@ export const DomesticStep2PersonalInfo = () => {
               label="Marital Status *"
               value={data.maritalStatus || ""}
               onChange={(e) => updateFormData("maritalStatus", e.target.value)}
+              error={fieldErrors['maritalStatus']}
               options={[
                 { label: "Single", value: "Single" },
                 { label: "Married", value: "Married" },
@@ -127,8 +132,6 @@ export const DomesticStep2PersonalInfo = () => {
                       className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
                     >
                       <option value="+92">PK +92</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+1">US +1</option>
                     </select>
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>
@@ -192,11 +195,16 @@ export const DomesticStep2PersonalInfo = () => {
                 updateFormData("emergencyContactName", e.target.value)
               }
             />
-            <CustomInput
+            <CustomSelect
               label="Relation"
-              placeholder="Enter relation"
               value={data.emergencyContactRelation || ""}
               onChange={(e) => updateFormData("emergencyContactRelation", e.target.value)}
+              error={fieldErrors['emergencyContactRelation']}
+              options={[
+                { label: "Father", value: "Father" },
+                { label: "Mother", value: "Mother" },
+                { label: "Brother", value: "Brother" }
+              ]}
             />
           </Box>
 
@@ -220,8 +228,6 @@ export const DomesticStep2PersonalInfo = () => {
                       className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
                     >
                       <option value="+92">PK +92</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+1">US +1</option>
                     </select>
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>
@@ -242,8 +248,6 @@ export const DomesticStep2PersonalInfo = () => {
                       className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
                     >
                       <option value="+92">PK +92</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+1">US +1</option>
                     </select>
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>

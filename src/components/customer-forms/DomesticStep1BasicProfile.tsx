@@ -8,9 +8,22 @@ import { useState } from "react";
 import { Phone, Visibility, VisibilityOff } from "@mui/icons-material";
 import { staffService } from "../../services/api";
 import { handleImageUpload as processImage } from "../../utils/imageCompression";
+import { buildFullPhone } from "../../utils/phoneValidation";
 
-export const DomesticStep1BasicProfile = () => {
-  const { state } = useCustomerForm();
+interface DomesticStep1BasicProfileProps {
+  image?: string | null;
+  onImageUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageReset?: () => void;
+  isEditMode?: boolean;
+}
+
+export const DomesticStep1BasicProfile = ({
+  // image,
+  // onImageUpload,
+  // onImageReset,
+  isEditMode = false,
+}: DomesticStep1BasicProfileProps = {}) => {
+  const { state, fieldErrors } = useCustomerForm();
   const { updateFormData } = useCustomerForm();
   
   // Handle null state.data with default empty values
@@ -143,6 +156,11 @@ export const DomesticStep1BasicProfile = () => {
                 {uploadError}
               </Typography>
             )}
+            {fieldErrors['profilePictureAssetId'] && (
+              <Typography variant="caption" color="error" display="block">
+                {fieldErrors['profilePictureAssetId']}
+              </Typography>
+            )}
             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
               Allowed JPG, GIF or PNG. Max size 10MB (will be auto-compressed).
             </Typography>
@@ -170,6 +188,7 @@ export const DomesticStep1BasicProfile = () => {
               label="Customer Type *"
               value={data.customerType || ""}
               onChange={(e) => updateFormData("customerType", e.target.value)}
+              error={fieldErrors['customerType']}
               options={[
                 { label: "Domestic Customer", value: "Domestic Customer" },
                 { label: "Business Customer", value: "Business Customer" },
@@ -180,6 +199,7 @@ export const DomesticStep1BasicProfile = () => {
               label="Title"
               value={data.title}
               onChange={(e) => updateFormData("title", e.target.value)}
+              error={fieldErrors['title']}
               options={[
                 { label: "Mr", value: "Mr." },
                 { label: "Mrs", value: "Mrs." },
@@ -202,12 +222,14 @@ export const DomesticStep1BasicProfile = () => {
               placeholder="Enter first name"
               value={data.firstName}
               onChange={(e) => updateFormData("firstName", e.target.value)}
+              error={fieldErrors['firstName']}
             />
             <CustomInput
               label="Last Name *"
               placeholder="Enter last name"
               value={data.lastName}
               onChange={(e) => updateFormData("lastName", e.target.value)}
+              error={fieldErrors['lastName']}
             />
           </Box>
 
@@ -224,22 +246,28 @@ export const DomesticStep1BasicProfile = () => {
               type="email"
               value={data.email}
               onChange={(e) => updateFormData("email", e.target.value)}
+              error={fieldErrors['email']}
+              disabled={isEditMode}
             />
             <Box>
               <CustomInput
                 label="Phone Number"
-                value={data.mobileNumber}
-                onChange={(e) => updateFormData("mobileNumber", e.target.value)}
+                value={data.mobileNumber && data.mobileNumber.startsWith('+92') ? data.mobileNumber.substring(3) : data.mobileNumber}
+                onChange={(e) => {
+                  const fullPhone = buildFullPhone(countryCode, e.target.value);
+                  updateFormData("mobileNumber", fullPhone);
+                }}
+                error={fieldErrors['mobileNumber']}
+                disabled={isEditMode}
                 startAdornment={
                   <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
                     <select
                       value={countryCode}
                       onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
+                      disabled={isEditMode}
+                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none disabled:opacity-50"
                     >
                       <option value="+92">PK +92</option>
-                      <option value="+91">IN +91</option>
-                      <option value="+1">US +1</option>
                     </select>
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>
@@ -260,13 +288,17 @@ export const DomesticStep1BasicProfile = () => {
               placeholder="Enter username"
               value={data.username}
               onChange={(e) => updateFormData("username", e.target.value)}
+              error={fieldErrors['username']}
+              disabled={isEditMode}
             />
+            {!isEditMode && (
             <CustomInput
               label="Password *"
               placeholder="Enter password"
               type={showPassword ? "text" : "password"}
               value={data.password}
               onChange={(e) => updateFormData("password", e.target.value)}
+              error={fieldErrors['password']}
               endAdornment={
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
@@ -278,8 +310,10 @@ export const DomesticStep1BasicProfile = () => {
                 </IconButton>
               }
             />
+            )}
           </Box>
 
+          {!isEditMode && (
           <Box
             sx={{
               display: "grid",
@@ -293,6 +327,7 @@ export const DomesticStep1BasicProfile = () => {
               type={showConfirmPassword ? "text" : "password"}
               value={data.confirmPassword || ""}
               onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+              error={fieldErrors['confirmPassword']}
               endAdornment={
                 <IconButton
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -305,6 +340,7 @@ export const DomesticStep1BasicProfile = () => {
               }
             />
           </Box>
+          )}
         </Box>
       </Box>
     </Box>

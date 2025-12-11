@@ -69,6 +69,22 @@ export interface LoginResponse {
   };
 }
 
+export interface SendLoginCodeData {
+  email?: string;
+  phone?: string;
+}
+
+export interface SendLoginCodeResponse {
+  message: string;
+  success: boolean;
+}
+
+export interface VerifyLoginCodeData {
+  email?: string;
+  phone?: string;
+  code: string;
+}
+
 export interface RequestResetPasswordData {
   email?: string;
   phone?: string;
@@ -89,6 +105,16 @@ export const authService = {
   
   getProfile: async (): Promise<any> => {
     const response = await api.get('/auth/getProfile');
+    return response.data;
+  },
+
+  sendLoginCode: async (data: SendLoginCodeData): Promise<SendLoginCodeResponse> => {
+    const response = await api.post('/auth/staff/send-login-code', data);
+    return response.data;
+  },
+
+  verifyLoginCode: async (data: VerifyLoginCodeData): Promise<LoginResponse> => {
+    const response = await api.post('/auth/staff/verify-login-code', data);
     return response.data;
   },
   
@@ -245,8 +271,8 @@ export interface UpdateAdditionalPersonalInfoData {
 
 export interface UpdateBuildingInfoData {
   mapLocation?: string;
-  ownership: 'personal' | 'rental' | 'mortgage' | 'other';
-  accessLevel: 'basement' | 'ground' | 'upstairs';
+  ownership: string;
+  accessLevel: string;
   floorPosition?: string;
   basementPosition?: string;
   liftStartTime?: string;
@@ -392,7 +418,7 @@ export const staffService = {
     const vendorId = userData?.vendorId || userData?.id || '';
     
     const response = await api.post('/staff', staffData, {
-      headers: {
+      params: {
         'x-vendorId': vendorId,
       },
     });
@@ -452,9 +478,15 @@ export const staffService = {
   },
 
   getSupervisors: async (vendorId: string): Promise<any[]> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const resolvedVendorId = vendorId || userData?.vendorId || userData?.id || '';
+
     const response = await api.get(`/staff`, {
+      headers: {
+        'x-vendorId': resolvedVendorId,
+      },
       params: {
-        vendorId,
+        'x-vendorId': resolvedVendorId,
         role: 'supervisor',
         limit: 100,
       },
@@ -462,14 +494,31 @@ export const staffService = {
     return response.data?.data || response.data || [];
   },
 
-  getStaff: async (vendorId: string, page = 1, limit = 10): Promise<StaffResponse> => {
+  getStaff: async (vendorId: string, page = 1, limit = 10, filters?: any): Promise<StaffResponse> => {
     const response = await api.get(`/staff`, {
       params: {
         vendorId,
         page,
         limit,
+        ...filters,
       },
     });
+    return response.data;
+  },
+
+  getStaffById: async (staffId: string): Promise<any> => {
+    const response = await api.get(`/staff/${staffId}`);
+    return response.data;
+  },
+
+  updateStaffBasicProfile: async (staffId: string, data: {
+    title?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePictureAssetId?: string;
+    status?: string;
+  }): Promise<any> => {
+    const response = await api.patch(`/staff/${staffId}`, data);
     return response.data;
   },
 
@@ -497,14 +546,31 @@ export const customerService = {
     return response.data;
   },
 
-  getCustomers: async (vendorId: string, page = 1, limit = 10): Promise<CustomersResponse> => {
+  getCustomers: async (vendorId: string, page = 1, limit = 10, filters?: any): Promise<CustomersResponse> => {
     const response = await api.get(`/customers`, {
       params: {
         vendorId,
         page,
         limit,
+        ...filters,
       },
     });
+    return response.data;
+  },
+
+  getCustomerById: async (customerId: string): Promise<any> => {
+    const response = await api.get(`/customers/${customerId}`);
+    return response.data;
+  },
+
+  updateCustomerBasicProfile: async (customerId: string, data: {
+    title?: string;
+    firstName?: string;
+    lastName?: string;
+    profilePictureAssetId?: string;
+    status?: string;
+  }): Promise<any> => {
+    const response = await api.patch(`/customers/${customerId}`, data);
     return response.data;
   },
 

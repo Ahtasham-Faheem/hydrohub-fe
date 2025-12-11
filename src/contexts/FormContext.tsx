@@ -104,11 +104,13 @@ export interface FormData {
 interface FormContextType {
   formData: FormData;
   currentStep: number;
+  fieldErrors: Record<string, string>;
   updateFormData: (field: keyof FormData, value: string | boolean) => void;
   updateMultipleFields: (fields: Partial<FormData>) => void;
   setCurrentStep: (step: number) => void;
+  setFieldErrors: (errors: Record<string, string>) => void;
   resetForm: () => void;
-  validateRequiredFields: () => { isValid: boolean; errors: string[] };
+  validateRequiredFields: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
 }
 
 const initialFormData: FormData = {
@@ -127,9 +129,9 @@ const initialFormData: FormData = {
   mothersName: "",
   fathersName: "",
   dateOfBirth: "",
-  gender: "Male",
+  gender: "",
   nationalId: "",
-  maritalStatus: "Single",
+  maritalStatus: "",
   secondaryEmail: "",
   secondaryEmailAddress: "",
   presentAddress: "",
@@ -211,6 +213,8 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     return saved ? parseInt(saved) : 0;
   });
 
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
   const updateFormData = (field: keyof FormData, value: string | boolean) => {
     const newData = { ...formData, [field]: value };
     setFormData(newData);
@@ -245,27 +249,152 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       "phone",
     ];
     const errors: string[] = [];
+    const fieldErrorsMap: Record<string, string> = {};
 
     requiredFields.forEach((field) => {
       const value = formData[field];
       if (typeof value === "string" && !value.trim()) {
-        errors.push(
-          `${field.charAt(0).toUpperCase() + field.slice(1)} is required`
-        );
+        const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1);
+        const errorMsg = `${fieldLabel} is required`;
+        errors.push(errorMsg);
+        fieldErrorsMap[field] = errorMsg;
       }
     });
 
     // Email validation
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.push("Please enter a valid email address");
+      const emailError = "Please enter a valid email address";
+      errors.push(emailError);
+      fieldErrorsMap["email"] = emailError;
     }
 
     // Password validation
     if (formData.password && formData.password.length < 6) {
-      errors.push("Password must be at least 6 characters");
+      const passwordError = "Password must be at least 6 characters";
+      errors.push(passwordError);
+      fieldErrorsMap["password"] = passwordError;
     }
 
-    return { isValid: errors.length === 0, errors };
+    // Date of Birth validation - must be ISO 8601 format
+    if (formData.dateOfBirth) {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(formData.dateOfBirth)) {
+        const dateError = "Date of Birth must be in YYYY-MM-DD format";
+        errors.push(dateError);
+        fieldErrorsMap["dateOfBirth"] = dateError;
+      }
+    }
+
+    // Secondary Email validation - if provided, must be valid email
+    if (formData.secondaryEmailAddress && formData.secondaryEmailAddress.trim()) {
+      if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
+        const secondaryEmailError = "Secondary Email must be a valid email address";
+        errors.push(secondaryEmailError);
+        fieldErrorsMap["secondaryEmailAddress"] = secondaryEmailError;
+      }
+    }
+
+    // National ID validation - must be 13 digits if provided
+    if (formData.nationalId && formData.nationalId.trim()) {
+      if (!/^\d+$/.test(formData.nationalId)) {
+        const nationalIdError = "National ID must contain only numbers";
+        errors.push(nationalIdError);
+        fieldErrorsMap["nationalId"] = nationalIdError;
+      } else if (formData.nationalId.length !== 13) {
+        const nationalIdError = "National ID must be exactly 13 digits";
+        errors.push(nationalIdError);
+        fieldErrorsMap["nationalId"] = nationalIdError;
+      }
+    }
+
+    // Employment Details validation
+    if (!formData.employmentType || !formData.employmentType.trim()) {
+      const employmentTypeError = "Please select Employment Type";
+      errors.push(employmentTypeError);
+      fieldErrorsMap["employmentType"] = employmentTypeError;
+    }
+
+    if (!formData.supervisorId || !formData.supervisorId.trim()) {
+      const supervisorIdError = "Please select a Supervisor";
+      errors.push(supervisorIdError);
+      fieldErrorsMap["supervisorId"] = supervisorIdError;
+    }
+
+    if (!formData.shiftType || !formData.shiftType.trim()) {
+      const shiftTypeError = "Please select Shift Type";
+      errors.push(shiftTypeError);
+      fieldErrorsMap["shiftType"] = shiftTypeError;
+    }
+
+    if (!formData.employmentStatus || !formData.employmentStatus.trim()) {
+      const employmentStatusError = "Please select Status";
+      errors.push(employmentStatusError);
+      fieldErrorsMap["employmentStatus"] = employmentStatusError;
+    }
+
+    // Salary & Benefits validation
+    if (!formData.taxStatus || !formData.taxStatus.trim()) {
+      const taxStatusError = "Please select Tax Status";
+      errors.push(taxStatusError);
+      fieldErrorsMap["taxStatus"] = taxStatusError;
+    }
+
+    // Bank Account Number validation - max 16 digits, numeric only if provided
+    if (formData.bankAccountNumber && formData.bankAccountNumber.trim()) {
+      if (!/^\d+$/.test(formData.bankAccountNumber)) {
+        const bankAccountError = "Bank Account Number must contain only numbers";
+        errors.push(bankAccountError);
+        fieldErrorsMap["bankAccountNumber"] = bankAccountError;
+      } else if (formData.bankAccountNumber.length > 16) {
+        const bankAccountError = "Bank Account Number must be maximum 16 digits";
+        errors.push(bankAccountError);
+        fieldErrorsMap["bankAccountNumber"] = bankAccountError;
+      }
+    }
+
+    // Provident Fund validation - must be 0-99 if provided
+    if (formData.providentFund && formData.providentFund.trim()) {
+      const pfValue = parseInt(formData.providentFund);
+      if (isNaN(pfValue)) {
+        const pfError = "Provident Fund must be a number";
+        errors.push(pfError);
+        fieldErrorsMap["providentFund"] = pfError;
+      } else if (pfValue < 0 || pfValue > 99) {
+        const pfError = "Provident Fund must be between 0 and 99";
+        errors.push(pfError);
+        fieldErrorsMap["providentFund"] = pfError;
+      }
+    }
+
+    // Identification & Verification validation
+    if (!formData.idCardIssuanceDate || !formData.idCardIssuanceDate.trim()) {
+      const idCardIssuanceDateError = "ID Card Issuance Date is required";
+      errors.push(idCardIssuanceDateError);
+      fieldErrorsMap["idCardIssuanceDate"] = idCardIssuanceDateError;
+    } else {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(formData.idCardIssuanceDate)) {
+        const idCardIssuanceDateError = "ID Card Issuance Date must be in YYYY-MM-DD format";
+        errors.push(idCardIssuanceDateError);
+        fieldErrorsMap["idCardIssuanceDate"] = idCardIssuanceDateError;
+      }
+    }
+
+    if (!formData.idCardExpiryDate || !formData.idCardExpiryDate.trim()) {
+      const idCardExpiryDateError = "ID Card Expiry Date is required";
+      errors.push(idCardExpiryDateError);
+      fieldErrorsMap["idCardExpiryDate"] = idCardExpiryDateError;
+    } else {
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(formData.idCardExpiryDate)) {
+        const idCardExpiryDateError = "ID Card Expiry Date must be in YYYY-MM-DD format";
+        errors.push(idCardExpiryDateError);
+        fieldErrorsMap["idCardExpiryDate"] = idCardExpiryDateError;
+      }
+    }
+
+    setFieldErrors(fieldErrorsMap);
+    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
   };
 
   return (
@@ -273,9 +402,11 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
       value={{
         formData,
         currentStep,
+        fieldErrors,
         updateFormData,
         updateMultipleFields,
         setCurrentStep,
+        setFieldErrors,
         resetForm,
         validateRequiredFields,
       }}

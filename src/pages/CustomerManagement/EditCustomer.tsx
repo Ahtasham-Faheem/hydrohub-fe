@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Box,
   Stepper,
@@ -9,7 +9,6 @@ import {
   Button,
   Card,
   Alert,
-  Stack,
   CircularProgress,
 } from "@mui/material";
 import { PrimaryButton } from "../../components/common/PrimaryButton";
@@ -19,9 +18,8 @@ import {
   useCustomerForm,
   CustomerFormProvider,
 } from "../../contexts/CustomerFormContext";
-import { validatePasswordMatch } from "../../utils/validationUtils";
-import { LuUserRoundPen, LuUserCheck, LuMapPin, LuLink } from "react-icons/lu";
 import { customerService } from "../../services/api";
+import { LuUserRoundPen, LuUserCheck, LuMapPin, LuLink } from "react-icons/lu";
 
 // Import form components
 import { DomesticStep1BasicProfile } from "../../components/customer-forms/DomesticStep1BasicProfile";
@@ -32,7 +30,6 @@ import { DomesticStep4Addresses } from "../../components/customer-forms/Domestic
 import type { DomesticStep5PreferencesHandle } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep5Preferences } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
-import { useCreateCustomer } from "../../hooks/useCreateCustomer";
 
 // Custom Step Icon Component
 const CustomStepIcon = ({ active }: { active: boolean }) => (
@@ -59,9 +56,6 @@ const domesticSteps = [
   { label: "Addresses", icon: <LuMapPin size={22} /> },
   { label: "Preferences", icon: <LuUserRoundPen size={22} /> },
   { label: "Linked Accounts", icon: <LuLink size={22} /> },
-  // { label: "Referral", icon: <LuUserPlus size={22} /> },
-  // { label: "Security", icon: <LuShield size={22} /> },
-  // { label: "Additional Notes", icon: <LuFileText size={22} /> },
 ];
 
 const businessSteps = [
@@ -71,151 +65,225 @@ const businessSteps = [
   { label: "Addresses", icon: <LuMapPin size={22} /> },
   { label: "Preferences", icon: <LuUserRoundPen size={22} /> },
   { label: "Linked Accounts", icon: <LuLink size={22} /> },
-  // { label: "Referral", icon: <LuUserPlus size={22} /> },
-  // { label: "Security", icon: <LuShield size={22} /> },
-  // { label: "Additional Notes", icon: <LuFileText size={22} /> },
 ];
 
-const CreateCustomerFormContent = () => {
+const EditCustomerFormContent = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [customerProfileId, setCustomerProfileId] = useState<string | null>(
-    null
-  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [image, setImage] = useState<string | null>(null);
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const {
     state,
     setCurrentStep,
     setFieldErrors,
-    validateRequiredFields,
     setCustomerType,
     resetForm,
+    updateFormData,
   } = useCustomerForm();
-  const navigate = useNavigate();
 
   // Refs for manual form submission
   const buildingAccessRef = useRef<DomesticStep3BuildingAccessHandle>(null);
   const preferencesRef = useRef<DomesticStep5PreferencesHandle>(null);
 
-  const createCustomerMutation = useCreateCustomer();
-
-  // Initialize customer type on mount - always reset form when component mounts
-  useEffect(() => {
-    resetForm();
-    setCustomerType("Domestic Customer");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const steps =
     state.customerType === "Business Customer" ? businessSteps : domesticSteps;
 
-  const handleNext = async () => {
-    setError(null);
-
-    // Step 0 (Basic Profile): Create customer with /customers API
-    if (state.currentStep === 0 && !customerProfileId) {
-      const validation = validateRequiredFields();
-      if (!validation.isValid) {
-        setFieldErrors(validation.fieldErrors);
-        setError(validation.errors[0] || 'Please fill in all required fields');
+  // Load customer data on mount
+  useEffect(() => {
+    const loadCustomerData = async () => {
+      if (!id) {
+        setError("Customer ID not found");
         return;
       }
 
-      const data = state.data as any;
+      try {
+        setIsLoadingData(true);
+        const customerData = await customerService.getCustomerById(id);
 
-      // Validate password confirmation
-      const passwordValidation = validatePasswordMatch(
-        data.password,
-        data.confirmPassword || ""
-      );
-      if (!passwordValidation.isValid) {
-        setFieldErrors({
-          confirmPassword:
-            passwordValidation.error || "Password validation failed",
-        });
-        setError(passwordValidation.error || "Password validation failed");
+        // Store customer ID in state
+        setCustomerId(customerData.id);
+
+        // Populate form with customer data
+        resetForm();
+        setCustomerType(
+          customerData.customerType || "Domestic Customer"
+        );
+
+        // Set all fields in form using updateFormData
+        updateFormData('customerId', customerData.id);
+        updateFormData('customerType', customerData.customerType || 'Domestic Customer');
+        updateFormData('title', customerData.title || 'Mr.');
+        updateFormData('firstName', customerData.firstName || '');
+        updateFormData('lastName', customerData.lastName || '');
+        updateFormData('email', customerData.email || '');
+        updateFormData('mobileNumber', customerData.phone || '');
+        updateFormData('username', customerData.username || '');
+        updateFormData('profilePictureAssetId', customerData.profilePictureAssetId || '');
+
+        // Personal Information (from additionalPersonalInfo nested object)
+        const additionalInfo = customerData.additionalPersonalInfo || {};
+        updateFormData('fatherHusbandName', additionalInfo.fathersName || '');
+        updateFormData('motherName', additionalInfo.mothersName || '');
+        updateFormData('dateOfBirth', additionalInfo.dateOfBirth || '');
+        updateFormData('cnicNumber', additionalInfo.nationalId || '');
+        updateFormData('nationality', additionalInfo.nationality || '');
+        updateFormData('gender', additionalInfo.gender || '');
+        updateFormData('maritalStatus', additionalInfo.maritalStatus || '');
+        updateFormData('alternateContactNumber', additionalInfo.alternateContactNumber || '');
+        updateFormData('emergencyContactName', additionalInfo.emergencyContactName || '');
+        updateFormData('emergencyContactRelation', additionalInfo.emergencyContactRelation || '');
+        updateFormData('emergencyContactNumber', additionalInfo.emergencyContactNumber || '');
+        updateFormData('alternateEmergencyContact', additionalInfo.alternateEmergencyContact || '');
+        updateFormData('presentAddress', additionalInfo.presentAddress || '');
+        updateFormData('permanentAddress', additionalInfo.permanentAddress || '');
+
+        // Building Access Info (from buildingInfo nested object)
+        const buildingInfo = customerData.buildingInfo || {};
+        updateFormData('buildingAccessInfo.mapLocation', buildingInfo.mapLocation || '');
+        updateFormData('buildingAccessInfo.ownershipStatus', buildingInfo.ownership || '');
+        updateFormData('buildingAccessInfo.deliveryAccessLevel', buildingInfo.accessLevel || '');
+        updateFormData('buildingAccessInfo.floorPosition', buildingInfo.floorPosition || '');
+        updateFormData('buildingAccessInfo.basementPosition', buildingInfo.basementPosition || '');
+        updateFormData('buildingAccessInfo.liftServiceStartTime', buildingInfo.liftStartTime || '');
+        updateFormData('buildingAccessInfo.liftServiceCloseTime', buildingInfo.liftEndTime || '');
+
+        // Preferences (from preferences nested object)
+        const preferences = customerData.preferences || {};
+        updateFormData('preferences.preferredDeliveryTime', preferences.preferredDeliveryTime || '');
+        updateFormData('preferences.deliveryFrequency', preferences.deliveryFrequency || '');
+        updateFormData('preferences.bottleHandlingPreference', preferences.bottleHandling || '');
+        updateFormData('preferences.billingOption', preferences.billingOption || '');
+        updateFormData('preferences.paymentMode', preferences.paymentMode || '');
+        updateFormData('preferences.monthlyConsumption', preferences.expectedConsumption || '');
+        updateFormData('preferences.securitySummary', preferences.securitySummary || '');
+        updateFormData('preferences.additionalRequests', preferences.additionalRequests || '');
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to load customer data");
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    loadCustomerData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const handleNext = async () => {
+    setError(null);
+    setSuccess(false);
+
+    // Step 0 (Basic Profile): Update customer basic profile via PATCH
+    if (state.currentStep === 0) {
+      // Validate only step 0 fields
+      const fieldErrorsMap: Record<string, string> = {};
+
+      if (!state.data?.firstName || !state.data.firstName.trim()) {
+        fieldErrorsMap['firstName'] = 'First Name is required';
+      }
+
+      if (!state.data?.lastName || !state.data.lastName.trim()) {
+        fieldErrorsMap['lastName'] = 'Last Name is required';
+      }
+
+      if (Object.keys(fieldErrorsMap).length > 0) {
+        setFieldErrors(fieldErrorsMap);
+        setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
         return;
       }
 
       try {
         setIsLoading(true);
-        const newCustomer = await createCustomerMutation.mutateAsync({
-          email: data.email,
-          phone: data.mobileNumber,
-          username: data.username,
-          password: data.password,
-          customerType: (data.customerType || "Domestic Customer") as
-            | "Domestic Customer"
-            | "Business Customer"
-            | "Commercial Customer",
-          title: data.title,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          profilePictureAssetId: data.profilePictureAssetId || "",
-        });
+        if (!customerId) {
+          setError("Customer ID not found");
+          setIsLoading(false);
+          return;
+        }
 
-        setCustomerProfileId(newCustomer.id);
+        await customerService.updateCustomerBasicProfile(
+          customerId,
+          {
+            title: state.data?.title,
+            firstName: state.data?.firstName,
+            lastName: state.data?.lastName,
+            profilePictureAssetId: state.data?.profilePictureAssetId,
+          }
+        );
+
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(1);
         return;
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to create customer");
+        setError(err.response?.data?.message || "Failed to update customer");
         return;
       } finally {
         setIsLoading(false);
       }
     }
 
-    // Step 1 (Additional Personal Info): Update customer additional info
-    if (state.currentStep === 1 && customerProfileId) {
+    // Step 1 (Personal Information): Update customer additional info
+    if (state.currentStep === 1) {
       const data = state.data as any;
       const fieldErrorsMap: Record<string, string> = {};
 
       // Validate dateOfBirth on the frontend
       if (!data.dateOfBirth || !data.dateOfBirth.toString().trim()) {
-        fieldErrorsMap['dateOfBirth'] = 'Date of Birth is required';
+        fieldErrorsMap["dateOfBirth"] = "Date of Birth is required";
       } else {
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(data.dateOfBirth)) {
-          fieldErrorsMap['dateOfBirth'] = 'Date of Birth must be in YYYY-MM-DD format';
+          fieldErrorsMap["dateOfBirth"] =
+            "Date of Birth must be in YYYY-MM-DD format";
         }
       }
 
       if (!data.gender || !data.gender.trim()) {
-        fieldErrorsMap['gender'] = 'Gender is required';
+        fieldErrorsMap["gender"] = "Gender is required";
       }
 
       if (!data.maritalStatus || !data.maritalStatus.trim()) {
-        fieldErrorsMap['maritalStatus'] = 'Marital Status is required';
+        fieldErrorsMap["maritalStatus"] = "Marital Status is required";
       }
 
       // If there are any field errors, show them and don't proceed
       if (Object.keys(fieldErrorsMap).length > 0) {
         setFieldErrors(fieldErrorsMap);
-        setError(Object.values(fieldErrorsMap)[0] || 'Please fill in all required fields');
+        setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
         return;
       }
 
       try {
         setIsLoading(true);
-        await customerService.updateAdditionalPersonalInfo(customerProfileId, {
-          fathersName: data.fatherHusbandName || "",
-          mothersName: data.motherName || "",
-          dateOfBirth: data.dateOfBirth || "",
-          nationality: data.nationality || "",
-          nationalId: data.cnicNumber || "",
-          gender: data.gender || "",
-          maritalStatus: data.maritalStatus || "",
-          alternateContactNumber: data.alternateContactNumber || "",
-          secondaryEmailAddress: data.email || "",
-          presentAddress: data.presentAddress || "",
-          permanentAddress: data.permanentAddress || "",
-          emergencyContactName: data.emergencyContactName || "",
-          emergencyContactRelation: data.emergencyContactRelation || "",
-          emergencyContactNumber: data.emergencyContactNumber || "",
-          alternateEmergencyContact: data.alternateEmergencyContact || "",
-        });
+        if (!customerId) {
+          setError("Customer ID not found");
+          setIsLoading(false);
+          return;
+        }
+
+        await customerService.updateAdditionalPersonalInfo(
+          customerId,
+          {
+            fathersName: data.fatherHusbandName || "",
+            mothersName: data.motherName || "",
+            dateOfBirth: data.dateOfBirth || "",
+            nationality: data.nationality || "",
+            nationalId: data.cnicNumber || "",
+            gender: data.gender || "",
+            maritalStatus: data.maritalStatus || "",
+            alternateContactNumber: data.alternateContactNumber || "",
+            secondaryEmailAddress: data.email || "",
+            presentAddress: data.presentAddress || "",
+            permanentAddress: data.permanentAddress || "",
+            emergencyContactName: data.emergencyContactName || "",
+            emergencyContactRelation: data.emergencyContactRelation || "",
+            emergencyContactNumber: data.emergencyContactNumber || "",
+            alternateEmergencyContact: data.alternateEmergencyContact || "",
+          }
+        );
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
@@ -254,7 +322,7 @@ const CreateCustomerFormContent = () => {
 
       try {
         setIsLoading(true);
-        if (!customerProfileId) {
+        if (!customerId) {
           setError("Customer ID not found");
           setIsLoading(false);
           return;
@@ -262,7 +330,7 @@ const CreateCustomerFormContent = () => {
 
         // Call the API directly to update building info
         await customerService.updateBuildingInfo(
-          customerProfileId,
+          customerId,
           {
             mapLocation: data.buildingAccessInfo?.mapLocation || "",
             ownership: data.buildingAccessInfo?.ownershipStatus || "",
@@ -290,12 +358,11 @@ const CreateCustomerFormContent = () => {
       }
     }
 
-    // Step 3 (Addresses): Move to next step
+    // Step 3 (Addresses): Submit and move to next step
     if (state.currentStep === 3) {
       try {
         setIsLoading(true);
-        // Addresses are handled via the component's internal API calls
-        // Just move forward to the next step
+        // Addresses are handled via the component's form ref
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(4);
@@ -341,7 +408,7 @@ const CreateCustomerFormContent = () => {
 
       try {
         setIsLoading(true);
-        if (!customerProfileId) {
+        if (!customerId) {
           setError("Customer ID not found");
           setIsLoading(false);
           return;
@@ -349,7 +416,7 @@ const CreateCustomerFormContent = () => {
 
         // Call the API directly to update preferences
         await customerService.updatePreferences(
-          customerProfileId,
+          customerId,
           {
             preferredDeliveryTime: data.preferences?.preferredDeliveryTime || "",
             deliveryFrequency: data.preferences?.deliveryFrequency || "",
@@ -367,7 +434,9 @@ const CreateCustomerFormContent = () => {
         setCurrentStep(5);
         return;
       } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to save preferences");
+        setError(
+          err.response?.data?.message || "Failed to save preferences"
+        );
         return;
       } finally {
         setIsLoading(false);
@@ -378,8 +447,7 @@ const CreateCustomerFormContent = () => {
     if (state.currentStep === 5) {
       try {
         setIsLoading(true);
-        // Linked accounts are handled via the component's internal API calls
-        // Just complete the form and navigate back
+        // Linked accounts are handled via the component's internal logic
         resetForm();
         navigate("/dashboard/customer-profiles");
         return;
@@ -392,77 +460,94 @@ const CreateCustomerFormContent = () => {
         setIsLoading(false);
       }
     }
-
-    // Regular step navigation (for other steps)
-    setCurrentStep(Math.min(state.currentStep + 1, steps.length - 1));
   };
 
   const handleBack = () => {
     setCurrentStep(Math.max(state.currentStep - 1, 0));
   };
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
-        return <DomesticStep1BasicProfile />;
+        return (
+          <DomesticStep1BasicProfile
+            image={image}
+            onImageUpload={handleImageUpload}
+            onImageReset={() => setImage(null)}
+            isEditMode={true}
+          />
+        );
       case 1:
         return <DomesticStep2PersonalInfo />;
       case 2:
-        return (
-          <DomesticStep3BuildingAccess
-            ref={buildingAccessRef}
-            customerProfileId={customerProfileId || undefined}
-          />
-        );
+        return <DomesticStep3BuildingAccess ref={buildingAccessRef} />;
       case 3:
-        return (
-          <DomesticStep4Addresses
-            customerProfileId={customerProfileId || undefined}
-          />
-        );
+        return <DomesticStep4Addresses />;
       case 4:
-        return (
-          <DomesticStep5Preferences
-            ref={preferencesRef}
-            customerProfileId={customerProfileId || undefined}
-          />
-        );
+        return <DomesticStep5Preferences ref={preferencesRef} />;
       case 5:
-        return (
-          <DomesticStep6LinkedAccounts
-            customerProfileId={customerProfileId || undefined}
-          />
-        );
+        return <DomesticStep6LinkedAccounts />;
       default:
         return (
-          <Box sx={{ py: 2 }}>
-            <Typography>Coming soon...</Typography>
-          </Box>
+          <DomesticStep1BasicProfile
+            image={image}
+            onImageUpload={handleImageUpload}
+            onImageReset={() => setImage(null)}
+            isEditMode={true}
+          />
         );
     }
   };
+
+  if (isLoadingData) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "calc(100vh - 100px)",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
       {/* Sidebar */}
       <Box
         sx={{
-          width: 280,
+          width: 320,
           bgcolor: "white",
-          p: 3,
+          p: 4,
           pr: 0,
           borderRight: "1px solid #e0e0e0",
-          overflowY: "auto",
         }}
       >
         <Typography variant="h6" sx={{ mb: 3 }}>
-          Create Customer
+          Edit Customer
         </Typography>
         <Stepper
           activeStep={state.currentStep}
           orientation="vertical"
           sx={{
             "& .MuiStepLabel-root": { py: 1 },
+            "& .MuiStepLabel-iconContainer": {
+              "& .MuiSvgIcon-root": { fontSize: 28 },
+            },
           }}
         >
           {steps.map((step, index) => (
@@ -490,7 +575,8 @@ const CreateCustomerFormContent = () => {
                         index === state.currentStep
                           ? "var(--color-primary-600)"
                           : "inherit",
-                      fontWeight: index === state.currentStep ? 600 : 400,
+                      fontWeight:
+                        index === state.currentStep ? 600 : 400,
                     }}
                   >
                     {step.label}
@@ -504,18 +590,18 @@ const CreateCustomerFormContent = () => {
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1, height: "auto" }}>
-        <Card sx={{ p: 4, height: "100%", boxShadow: "none" }}>
+        <Card sx={{ p: 3, height: "100%", boxShadow: "none" }}>
           <Box sx={{ mb: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {steps[state.currentStep].icon}
-              <Typography variant="h5" sx={{ my: 1, fontWeight: 600 }}>
+              <Typography variant="h6" sx={{ my: 1 }}>
                 {steps[state.currentStep].label}
               </Typography>
             </Box>
           </Box>
 
           <Box
-            sx={{ height: "60vh", pr: 2, pt: 1, overflowY: "auto" }}
+            sx={{ height: "71vh", pr: 1, pt: 1, overflowY: "scroll" }}
             className="noScrollbar"
           >
             {error && (
@@ -525,19 +611,18 @@ const CreateCustomerFormContent = () => {
             )}
             {success && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Information saved successfully!
+                Changes saved successfully!
               </Alert>
             )}
             {renderStepContent(state.currentStep)}
           </Box>
 
-          <Stack
-            direction="row"
-            spacing={2}
+          <Box
             sx={{
-              mt: 4,
+              display: "flex",
               justifyContent: "space-between",
-              position: "relative",
+              mt: 3,
+              gap: 2,
             }}
           >
             <Button
@@ -550,25 +635,31 @@ const CreateCustomerFormContent = () => {
               Previous
             </Button>
             <PrimaryButton
-              endIcon={isLoading ? <CircularProgress size={20} sx={{ ml: 1 }} /> : <BsArrowRight />}
+              endIcon={
+                isLoading ? (
+                  <CircularProgress size={20} sx={{ ml: 1 }} />
+                ) : (
+                  <BsArrowRight />
+                )
+              }
               onClick={handleNext}
               disabled={isLoading}
             >
               {isLoading ? "Processing..." : state.currentStep === steps.length - 1
-                ? "Complete & Create Customer"
+                ? "Complete & Save"
                 : "Next"}
             </PrimaryButton>
-          </Stack>
+          </Box>
         </Card>
       </Box>
     </Box>
   );
 };
 
-export const CreateCustomer = () => {
+export const EditCustomer = () => {
   return (
     <CustomerFormProvider>
-      <CreateCustomerFormContent />
+      <EditCustomerFormContent />
     </CustomerFormProvider>
   );
 };

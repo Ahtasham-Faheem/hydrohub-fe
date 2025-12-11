@@ -102,8 +102,8 @@ export interface UnifiedFormData {
   businessType?: string;
   preferredContactMethod?: string;
   buildingAccessInfo?: {
-    ownershipStatus: 'personal' | 'rental' | 'mortgage' | 'other';
-    deliveryAccessLevel: 'basement' | 'ground' | 'upstairs';
+    ownershipStatus: string;
+    deliveryAccessLevel: string;
     floorPosition?: string;
     accessNotes?: string;
   };

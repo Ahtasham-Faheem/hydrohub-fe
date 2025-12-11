@@ -15,8 +15,8 @@ export const queryKeys = {
   staff: {
     all: ['staff'] as const,
     lists: () => [...queryKeys.staff.all, 'list'] as const,
-    list: (vendorId: string | null, page: number, limit: number) =>
-      [...queryKeys.staff.lists(), { vendorId, page, limit }] as const,
+    list: (vendorId: string | null, page: number, limit: number, filters?: any) =>
+      [...queryKeys.staff.lists(), { vendorId, page, limit, ...(filters && { ...filters }) }] as const,
     detail: (staffId: string) =>
       [...queryKeys.staff.all, 'detail', staffId] as const,
     supervisors: (vendorId: string) =>
@@ -27,8 +27,8 @@ export const queryKeys = {
   customers: {
     all: ['customers'] as const,
     lists: () => [...queryKeys.customers.all, 'list'] as const,
-    list: (vendorId: string | null, page: number, limit: number) =>
-      [...queryKeys.customers.lists(), { vendorId, page, limit }] as const,
+    list: (vendorId: string | null, page: number, limit: number, filters?: any) =>
+      [...queryKeys.customers.lists(), { vendorId, page, limit, ...(filters && { ...filters }) }] as const,
     detail: (customerId: string) =>
       [...queryKeys.customers.all, 'detail', customerId] as const,
   },

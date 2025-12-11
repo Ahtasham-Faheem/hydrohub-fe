@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   Checkbox,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
 import { DEMO_MODE, useAuth } from "../../contexts/AuthContext";
@@ -17,6 +18,8 @@ import { LuMail } from "react-icons/lu";
 import { Footer } from "../../components/auth/Footer";
 import { PrimaryButton } from "../../components/common/PrimaryButton";
 import { CustomInput } from "../../components/common/CustomInput";
+import { buildFullPhone } from "../../utils/phoneValidation";
+import { authService } from "../../services/api";
 
 export const Login = () => {
   const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
@@ -29,7 +32,10 @@ export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "", phone: "" });
   const [isLoading, setIsLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [codeSuccess, setCodeSuccess] = useState<string | null>(null);
+  const { login, isAuthenticated, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -66,7 +72,15 @@ export const Login = () => {
       }
     }
 
-    if (!useCodeLogin) {
+    if (useCodeLogin) {
+      if (!otp) {
+        setCodeError("Please enter the verification code");
+        valid = false;
+      } else if (!/^\d{6}$/.test(otp)) {
+        setCodeError("Verification code must be exactly 6 digits");
+        valid = false;
+      }
+    } else {
       if (!password) {
         newErrors.password = "Password is required";
         valid = false;
@@ -82,36 +96,106 @@ export const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Additional validation for code login
+    if (useCodeLogin) {
+      if (!otp) {
+        setCodeError("Please enter the verification code");
+        return;
+      }
+      if (!/^\d{6}$/.test(otp)) {
+        setCodeError("Verification code must be exactly 6 digits");
+        return;
+      }
+    }
+    
     if (!validate()) return;
 
     setIsLoading(true);
     setErrors({ email: "", password: "", phone: "" });
+    setCodeError(null);
 
     try {
-      const loginPayload =
-        loginMode === "email"
-          ? { email, password: useCodeLogin ? otp : password }
-          : {
-              phone: `${countryCode}${phone}`,
-              password: useCodeLogin ? otp : password,
-            };
+      if (useCodeLogin) {
+        // Verify login code
+        const verifyPayload = loginMode === "email" 
+          ? { email, code: otp }
+          : { phone: buildFullPhone(countryCode, phone), code: otp };
+        
+        const response = await authService.verifyLoginCode(verifyPayload);
+        
+        // Store auth token and user data
+        localStorage.setItem('authToken', response.access_token);
+        localStorage.setItem('userData', JSON.stringify(response.user));
 
-      await login(loginPayload);
-      // navigate("/dashboard");
+        setIsAuthenticated(true);
+      
+        try {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (e) {
+          // Ignore any errors from this approach
+        }
+      } else {
+        // Regular password login
+        const loginPayload =
+          loginMode === "email"
+            ? { email, password }
+            : {
+                phone: buildFullPhone(countryCode, phone),
+                password,
+              };
+
+        await login(loginPayload);
+      }
     } catch (error: any) {
       console.error("Login error:", error);
       const errorMessage =
         error.response?.data?.message ||
         "Login failed. Please check your credentials.";
-      setErrors({ email: errorMessage, password: "", phone: "" });
+      
+      if (useCodeLogin) {
+        setCodeError(errorMessage);
+      } else {
+        setErrors({ email: errorMessage, password: "", phone: "" });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendCode = () => {
-    if (!phone) return alert("Please enter your phone number first");
-    alert(`Code sent to ${countryCode} ${phone}`);
+  const handleSendCode = async () => {
+    // Validate email or phone
+    if (loginMode === "email" && !email) {
+      setCodeError("Please enter your email address");
+      return;
+    }
+    
+    if (loginMode === "phone" && !phone) {
+      setCodeError("Please enter your phone number");
+      return;
+    }
+
+    setCodeLoading(true);
+    setCodeError(null);
+    setCodeSuccess(null);
+
+    try {
+      const sendPayload = loginMode === "email"
+        ? { email }
+        : { phone: buildFullPhone(countryCode, phone) };
+      
+      const response = await authService.sendLoginCode(sendPayload);
+      
+      setCodeSuccess(response.message || `Code sent successfully!`);
+      setOtp("");
+    } catch (error: any) {
+      const errorMessage = 
+        error.response?.data?.message || 
+        "Failed to send code. Please try again.";
+      setCodeError(errorMessage);
+    } finally {
+      setCodeLoading(false);
+    }
   };
 
   return (
@@ -203,6 +287,9 @@ export const Login = () => {
               onClick={() => {
                 setLoginMode(loginMode === "email" ? "phone" : "email");
                 setUseCodeLogin(false);
+                setCodeError(null);
+                setCodeSuccess(null);
+                setOtp("");
               }}
             >
               {loginMode === "email"
@@ -238,8 +325,6 @@ export const Login = () => {
                         className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
                       >
                         <option value="+92">PK +92</option>
-                        <option value="+91">IN +91</option>
-                        <option value="+1">US +1</option>
                       </select>
                       <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                     </Box>
@@ -253,29 +338,77 @@ export const Login = () => {
 
             {/* Password or Code */}
             <div className="mb-2">
-              {loginMode === "phone" && useCodeLogin ? (
-                <Box sx={{ display: "flex", alignItems: "center" }}>
+              {useCodeLogin ? (
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                  {codeError && (
+                    <Box
+                      sx={{
+                        p: 1,
+                        backgroundColor: "#fee2e2",
+                        border: "1px solid #fecaca",
+                        borderRadius: 1,
+                        color: "#991b1b",
+                        fontSize: 14,
+                      }}
+                    >
+                      {codeError}
+                    </Box>
+                  )}
+                  {codeSuccess && (
+                    <Box
+                      sx={{
+                        p: 1,
+                        backgroundColor: "#dcfce7",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: 1,
+                        color: "#166534",
+                        fontSize: 14,
+                      }}
+                    >
+                      {codeSuccess}
+                    </Box>
+                  )}
                   <CustomInput
-                    label="Enter 6-digit code"
+                    label="Enter verification code"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setOtp(value);
+                      // Clear error when user starts typing
+                      if (codeError) {
+                        setCodeError(null);
+                      }
+                    }}
+                    placeholder="Enter 6-digit code"
+                    // error={codeError || undefined}
                     endAdornment={
                       <Button
                         variant="outlined"
+                        disabled={codeLoading}
                         sx={{
                           textTransform: "none",
                           border: "none",
                           height: "38px",
-                          fontSize: 15,
-                          color: "#4b5563",
+                          fontSize: 13,
+                          color: codeLoading ? "#9ca3af" : "#4b5563",
                           borderLeft: "1px solid #D1CFD4",
                           borderRadius: 0,
                           paddingRight: 0,
-                          ":hover": { textDecoration: "underline" },
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          ":hover": { textDecoration: codeLoading ? "none" : "underline" },
                         }}
                         onClick={handleSendCode}
                       >
-                        Send code
+                        {codeLoading ? (
+                          <>
+                            <CircularProgress size={14} />
+                            Sending...
+                          </>
+                        ) : (
+                          "Send code"
+                        )}
                       </Button>
                     }
                   />
@@ -315,7 +448,13 @@ export const Login = () => {
                   textDecoration: "underline",
                   marginBottom: 3,
                 }}
-                onClick={() => setUseCodeLogin(!useCodeLogin)}
+                onClick={() => {
+                  setUseCodeLogin(!useCodeLogin);
+                  setCodeError(null);
+                  setCodeSuccess(null);
+                  setOtp("");
+                  setErrors({ email: "", password: "", phone: "" });
+                }}
               >
                 {useCodeLogin ? "Log in with password" : "Log in with code"}
               </Typography>

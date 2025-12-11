@@ -168,11 +168,16 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
             Discount
           </Typography>
           <CustomInput
-            label="Discount (% or Amount)"
-            placeholder="Enter discount amount or percentage"
+            label="Discount (0-99)"
+            placeholder="Enter discount percentage (0-99)"
             type="number"
             value={String(data.discount || '')}
-            onChange={(e) => updateFormData('discount', e.target.value ? Number(e.target.value) : undefined)}
+            onChange={(e) => {
+              const value = e.target.value ? Number(e.target.value) : undefined;
+              if (value === undefined || (value >= 0 && value <= 99)) {
+                updateFormData('discount', value);
+              }
+            }}
           />
         </Box>
 

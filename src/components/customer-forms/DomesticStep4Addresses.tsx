@@ -15,12 +15,13 @@ interface DomesticStep4AddressesProps {
 export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4AddressesProps) => {
   const { state, updateFormData, addAddress, removeAddress, updateAddress } = useCustomerForm();
   const data = state.data as DomesticCustomer;
-  const [expandedAddressIndex, setExpandedAddressIndex] = useState<number | null>(0);
+  const [expandedAddressIndex, setExpandedAddressIndex] = useState<number | null>(null);
   const [editingAddressIndex, setEditingAddressIndex] = useState<number | null>(null);
   const [newAddressMode, setNewAddressMode] = useState(false);
   const [sameAsBilling, setSameAsBilling] = useState(data.sameAsBillingAddress !== false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [loadedAddresses, setLoadedAddresses] = useState<(AddressResponse & { localId?: string })[]>([]);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // API hooks
   const { data: addressesData, isLoading: isLoadingAddresses, error: loadError } = useGetAddresses(customerProfileId);
@@ -52,11 +53,48 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
 
   const [formAddress, setFormAddress] = useState<Address>(emptyAddress);
 
+  const validateAddressFields = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formAddress.title || !formAddress.title.trim()) {
+      errors['title'] = 'Address Title is required';
+    }
+    if (!formAddress.houseNumber || !formAddress.houseNumber.trim()) {
+      errors['houseNumber'] = 'House/Building Number is required';
+    }
+    if (!formAddress.street || !formAddress.street.trim()) {
+      errors['street'] = 'Street is required';
+    }
+    if (!formAddress.society || !formAddress.society.trim()) {
+      errors['society'] = 'Society/Town/Community is required';
+    }
+    if (!formAddress.city || !formAddress.city.trim()) {
+      errors['city'] = 'City is required';
+    }
+    if (!formAddress.province || !formAddress.province.trim()) {
+      errors['province'] = 'Province is required';
+    }
+    if (!formAddress.country || !formAddress.country.trim()) {
+      errors['country'] = 'Country is required';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAddressChange = (field: keyof Address, value: string) => {
     setFormAddress((prev) => ({
       ...prev,
       [field]: value,
     }));
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const mapToApiPayload = (address: Address): CreateAddressData => {
@@ -79,100 +117,106 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
   };
 
   const handleAddNewAddress = async () => {
-    if (formAddress.city && formAddress.country) {
-      if (!customerProfileId) {
-        setApiError('Customer profile not initialized. Please try again.');
-        return;
-      }
+    if (!validateAddressFields()) {
+      return;
+    }
 
-      try {
-        setApiError(null);
-        const apiPayload = mapToApiPayload(formAddress);
-        
-        await createAddressMutation.mutateAsync({
-          customerProfileId,
-          addressData: apiPayload,
-        });
+    if (!customerProfileId) {
+      setApiError('Customer profile not initialized. Please try again.');
+      return;
+    }
 
-        // Build concatenated address
-        const parts = [
-          formAddress.houseNumber,
-          formAddress.street,
-          formAddress.block,
-          formAddress.sector,
-          formAddress.society,
-          formAddress.landmark,
-          formAddress.city,
-          formAddress.province,
-          formAddress.country,
-          formAddress.postalCode,
-        ].filter(Boolean);
+    try {
+      setApiError(null);
+      const apiPayload = mapToApiPayload(formAddress);
+      
+      await createAddressMutation.mutateAsync({
+        customerProfileId,
+        addressData: apiPayload,
+      });
 
-        const concatenated = parts.join(', ');
+      // Build concatenated address
+      const parts = [
+        formAddress.houseNumber,
+        formAddress.street,
+        formAddress.block,
+        formAddress.sector,
+        formAddress.society,
+        formAddress.landmark,
+        formAddress.city,
+        formAddress.province,
+        formAddress.country,
+        formAddress.postalCode,
+      ].filter(Boolean);
 
-        const newAddress: Address = {
-          ...formAddress,
-          concatenatedAddress: concatenated,
-        };
+      const concatenated = parts.join(', ');
 
-        addAddress('delivery', newAddress);
-        setFormAddress(emptyAddress);
-        setNewAddressMode(false);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.message || 'Failed to create address';
-        setApiError(errorMessage);
-      }
+      const newAddress: Address = {
+        ...formAddress,
+        concatenatedAddress: concatenated,
+      };
+
+      addAddress('delivery', newAddress);
+      setFormAddress(emptyAddress);
+      setNewAddressMode(false);
+      setFieldErrors({});
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to create address';
+      setApiError(errorMessage);
     }
   };
 
   const handleUpdateAddress = async (index: number) => {
-    if (formAddress.city && formAddress.country) {
-      if (!customerProfileId) {
-        setApiError('Customer profile not initialized. Please try again.');
-        return;
-      }
+    if (!validateAddressFields()) {
+      return;
+    }
 
-      try {
-        setApiError(null);
-        const addressToUpdate = loadedAddresses[index];
+    if (!customerProfileId) {
+      setApiError('Customer profile not initialized. Please try again.');
+      return;
+    }
+
+    try {
+      setApiError(null);
+      const addressToUpdate = loadedAddresses[index];
+      
+      if (addressToUpdate?.id) {
+        const apiPayload = mapToApiPayload(formAddress);
         
-        if (addressToUpdate?.id) {
-          const apiPayload = mapToApiPayload(formAddress);
-          
-          await updateAddressMutation.mutateAsync({
-            customerProfileId,
-            addressId: addressToUpdate.id,
-            addressData: apiPayload,
-          });
-        }
-
-        const parts = [
-          formAddress.houseNumber,
-          formAddress.street,
-          formAddress.block,
-          formAddress.sector,
-          formAddress.society,
-          formAddress.landmark,
-          formAddress.city,
-          formAddress.province,
-          formAddress.country,
-          formAddress.postalCode,
-        ].filter(Boolean);
-
-        const concatenated = parts.join(', ');
-
-        const updatedAddress: Address = {
-          ...formAddress,
-          concatenatedAddress: concatenated,
-        };
-
-        updateAddress('delivery', index, updatedAddress);
-        setFormAddress(emptyAddress);
-        setEditingAddressIndex(null);
-      } catch (err: any) {
-        const errorMessage = err.response?.data?.message || 'Failed to update address';
-        setApiError(errorMessage);
+        await updateAddressMutation.mutateAsync({
+          customerProfileId,
+          addressId: addressToUpdate.id,
+          addressData: apiPayload,
+        });
       }
+
+      const parts = [
+        formAddress.houseNumber,
+        formAddress.street,
+        formAddress.block,
+        formAddress.sector,
+        formAddress.society,
+        formAddress.landmark,
+        formAddress.city,
+        formAddress.province,
+        formAddress.country,
+        formAddress.postalCode,
+      ].filter(Boolean);
+
+      const concatenated = parts.join(', ');
+
+      const updatedAddress: Address = {
+        ...formAddress,
+        concatenatedAddress: concatenated,
+      };
+
+      updateAddress('delivery', index, updatedAddress);
+      setFormAddress(emptyAddress);
+      setEditingAddressIndex(null);
+      setFieldErrors({});
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Failed to update address';
+      setApiError(errorMessage);
     }
   };
 
@@ -237,6 +281,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
               onClick={() => {
                 setNewAddressMode(true);
                 setFormAddress(emptyAddress);
+                setFieldErrors({});
               }}
               sx={{ color: 'var(--color-primary-600)' }}
             >
@@ -252,22 +297,26 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
               <Card
                 key={index}
                 sx={{
-                  p: 2,
-                  backgroundColor: expandedAddressIndex === index ? '#f0f9ff' : '#f9fafb',
+                  p: 0,
+                  backgroundColor: '#f9fafb',
                   border: '1px solid #e5e7eb',
-                  cursor: 'pointer',
+                  overflow: 'hidden',
                   transition: 'all 0.2s',
-                  '&:hover': {
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-                  },
                 }}
               >
+                {/* Address Summary - Always Visible */}
                 <Box
                   sx={{
+                    p: 2,
+                    backgroundColor: expandedAddressIndex === index || editingAddressIndex === index ? '#f0f9ff' : '#f9fafb',
+                    cursor: editingAddressIndex === null && !newAddressMode ? 'pointer' : 'default',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: expandedAddressIndex === index ? 2 : 0,
+                    borderBottom: expandedAddressIndex === index || editingAddressIndex === index ? '1px solid #e5e7eb' : 'none',
+                    '&:hover': {
+                      backgroundColor: editingAddressIndex === null && !newAddressMode ? '#f3f4f6' : undefined,
+                    },
                   }}
                   onClick={() => {
                     if (editingAddressIndex === null && !newAddressMode) {
@@ -280,10 +329,11 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                       {address.title || `Address ${index + 1}`}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#6b7280' }}>
-                      {address.concatenatedAddress?.substring(0, 60)}...
+                      {address.concatenatedAddress?.substring(0, 80)}
+                      {(address.concatenatedAddress?.length || 0) > 80 ? '...' : ''}
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
                     {editingAddressIndex !== index && (
                       <>
                         <IconButton
@@ -292,7 +342,10 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                             e.stopPropagation();
                             setEditingAddressIndex(index);
                             setFormAddress(address);
+                            setExpandedAddressIndex(index);
+                            setFieldErrors({});
                           }}
+                          sx={{ color: 'var(--color-primary-600)' }}
                         >
                           <MdEdit size={18} />
                         </IconButton>
@@ -302,166 +355,299 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                             e.stopPropagation();
                             handleRemoveAddress(index);
                           }}
+                          sx={{ color: '#ef4444' }}
                         >
-                          <MdDelete size={18} style={{ color: '#ef4444' }} />
+                          <MdDelete size={18} />
                         </IconButton>
                       </>
                     )}
                   </Box>
                 </Box>
 
+                {/* Expanded Form - Only visible when expanded or editing */}
                 <Collapse in={expandedAddressIndex === index || editingAddressIndex === index}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                      <CustomInput
-                        label="Address Title *"
-                        placeholder="e.g., My Office, My Home"
-                        value={formAddress.title ?? ''}
-                        onChange={(e) => handleAddressChange('title', e.target.value)}
-                      />
-                      <CustomInput
-                        label="House / Flat / Building Number *"
-                        placeholder="e.g., 123"
-                        value={formAddress.houseNumber ?? ''}
-                        onChange={(e) => handleAddressChange('houseNumber', e.target.value)}
-                      />
-                    </Box>
+                  <Box sx={{ p: 2, backgroundColor: '#ffffff', borderTop: '1px solid #e5e7eb' }}>
+                    {/* Read-Only View - When just viewing */}
+                    {editingAddressIndex !== index ? (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Address Title
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.title || 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              House / Building Number
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.houseNumber || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                      <CustomInput
-                        label="Street: Name or Number *"
-                        placeholder="e.g., Main Street"
-                        value={formAddress.street ?? ''}
-                        onChange={(e) => handleAddressChange('street', e.target.value)}
-                      />
-                      <CustomInput
-                        label="Block: Name or Number"
-                        placeholder="e.g., Block A"
-                        value={formAddress.block ?? ''}
-                        onChange={(e) => handleAddressChange('block', e.target.value)}
-                      />
-                    </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Street
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.street || 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Block
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.block || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                      <CustomInput
-                        label="Sector / Phase: Name or Number"
-                        placeholder="e.g., Sector 5"
-                        value={formAddress.sector ?? ''}
-                        onChange={(e) => handleAddressChange('sector', e.target.value)}
-                      />
-                      <CustomInput
-                        label="Society / Town / Community *"
-                        placeholder="e.g., Defense Housing Authority"
-                        value={formAddress.society ?? ''}
-                        onChange={(e) => handleAddressChange('society', e.target.value)}
-                      />
-                    </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Sector / Phase
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.sector || 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Society / Town / Community
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.society || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                      <CustomInput
-                        label="Any Nearby Landmarks"
-                        placeholder="e.g., Near Park, Close to Market"
-                        value={formAddress.landmark ?? ''}
-                        onChange={(e) => handleAddressChange('landmark', e.target.value)}
-                      />
-                      <CustomInput
-                        label="City *"
-                        placeholder="e.g., Karachi"
-                        value={formAddress.city ?? ''}
-                        onChange={(e) => handleAddressChange('city', e.target.value)}
-                      />
-                    </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Landmarks
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.landmark || 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              City
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.city || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-                      <CustomInput
-                        label="Province / State *"
-                        placeholder="e.g., Sindh"
-                        value={formAddress.province ?? ''}
-                        onChange={(e) => handleAddressChange('province', e.target.value)}
-                      />
-                      <CustomInput
-                        label="Country *"
-                        placeholder="e.g., Pakistan"
-                        value={formAddress.country ?? ''}
-                        onChange={(e) => handleAddressChange('country', e.target.value)}
-                      />
-                    </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Province / State
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.province || 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Box>
+                            <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                              Country
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                              {address.country || 'N/A'}
+                            </Typography>
+                          </Box>
+                        </Box>
 
-                    <CustomInput
-                      label="Postal / ZIP Code"
-                      placeholder="e.g., 75500"
-                      value={formAddress.postalCode ?? ''}
-                      onChange={(e) => handleAddressChange('postalCode', e.target.value)}
-                    />
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                            Postal / ZIP Code
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5 }}>
+                            {address.postalCode || 'N/A'}
+                          </Typography>
+                        </Box>
 
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
-                        Building Access Type
-                      </Typography>
-                      <CustomSelect
-                        label="Access Type *"
-                        value={formAddress.access || 'none'}
-                        onChange={(e) => handleAddressChange('access', e.target.value)}
-                        options={[
-                          { label: 'None', value: 'none' },
-                          { label: 'Stairs', value: 'stairs' },
-                          { label: 'Lift', value: 'lift' },
-                          { label: 'Service Lift', value: 'service_lift' },
-                        ]}
-                      />
-                    </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#6b7280' }}>
+                            Building Access Type
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: '#1f2937', mt: 0.5, textTransform: 'capitalize' }}>
+                            {address.access ? address.access.replace(/_/g, ' ') : 'N/A'}
+                          </Typography>
+                        </Box>
 
-                    <Box sx={{ p: 2, backgroundColor: '#fef2f2', borderRadius: 1, border: '1px solid #fecaca' }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: '#991b1b' }}>
-                        Concatenated Address:
-                      </Typography>
-                      <Typography variant="caption" sx={{ display: 'block', color: '#7f1d1d', mt: 0.5 }}>
-                        {[
-                          formAddress.houseNumber,
-                          formAddress.street,
-                          formAddress.block,
-                          formAddress.sector,
-                          formAddress.society,
-                          formAddress.landmark,
-                          formAddress.city,
-                          formAddress.province,
-                          formAddress.country,
-                          formAddress.postalCode,
-                        ]
-                          .filter(Boolean)
-                          .join(', ')}
-                      </Typography>
-                    </Box>
+                        <Box sx={{ p: 2, backgroundColor: '#f0f9ff', borderRadius: 1, border: '1px solid #bfdbfe' }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#0369a1' }}>
+                            Full Address:
+                          </Typography>
+                          <Typography variant="caption" sx={{ display: 'block', color: '#0c4a6e', mt: 0.5 }}>
+                            {address.concatenatedAddress || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ) : (
+                      /* Edit Mode - Show form fields */
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <CustomInput
+                            label="Address Title *"
+                            placeholder="e.g., My Office, My Home"
+                            value={formAddress.title ?? ''}
+                            onChange={(e) => handleAddressChange('title', e.target.value)}
+                            error={fieldErrors['title']}
+                          />
+                          <CustomInput
+                            label="House / Flat / Building Number *"
+                            placeholder="e.g., 123"
+                            value={formAddress.houseNumber ?? ''}
+                            onChange={(e) => handleAddressChange('houseNumber', e.target.value)}
+                            error={fieldErrors['houseNumber']}
+                          />
+                        </Box>
 
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => {
-                          if (editingAddressIndex !== null) {
-                            setEditingAddressIndex(null);
-                          } else {
-                            setNewAddressMode(false);
-                          }
-                          setFormAddress(emptyAddress);
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => {
-                          if (editingAddressIndex !== null) {
-                            handleUpdateAddress(editingAddressIndex);
-                          } else {
-                            handleAddNewAddress();
-                          }
-                        }}
-                      >
-                        {editingAddressIndex !== null ? 'Update Address' : 'Save Address'}
-                      </Button>
-                    </Box>
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <CustomInput
+                            label="Street: Name or Number *"
+                            placeholder="e.g., Main Street"
+                            value={formAddress.street ?? ''}
+                            onChange={(e) => handleAddressChange('street', e.target.value)}
+                            error={fieldErrors['street']}
+                          />
+                          <CustomInput
+                            label="Block: Name or Number"
+                            placeholder="e.g., Block A"
+                            value={formAddress.block ?? ''}
+                            onChange={(e) => handleAddressChange('block', e.target.value)}
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <CustomInput
+                            label="Sector / Phase: Name or Number"
+                            placeholder="e.g., Sector 5"
+                            value={formAddress.sector ?? ''}
+                            onChange={(e) => handleAddressChange('sector', e.target.value)}
+                          />
+                          <CustomInput
+                            label="Society / Town / Community *"
+                            placeholder="e.g., Defense Housing Authority"
+                            value={formAddress.society ?? ''}
+                            onChange={(e) => handleAddressChange('society', e.target.value)}
+                            error={fieldErrors['society']}
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <CustomInput
+                            label="Any Nearby Landmarks"
+                            placeholder="e.g., Near Park, Close to Market"
+                            value={formAddress.landmark ?? ''}
+                            onChange={(e) => handleAddressChange('landmark', e.target.value)}
+                          />
+                          <CustomInput
+                            label="City *"
+                            placeholder="e.g., Karachi"
+                            value={formAddress.city ?? ''}
+                            onChange={(e) => handleAddressChange('city', e.target.value)}
+                            error={fieldErrors['city']}
+                          />
+                        </Box>
+
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                          <CustomInput
+                            label="Province / State *"
+                            placeholder="e.g., Sindh"
+                            value={formAddress.province ?? ''}
+                            onChange={(e) => handleAddressChange('province', e.target.value)}
+                            error={fieldErrors['province']}
+                          />
+                          <CustomInput
+                            label="Country *"
+                            placeholder="e.g., Pakistan"
+                            value={formAddress.country ?? ''}
+                            onChange={(e) => handleAddressChange('country', e.target.value)}
+                            error={fieldErrors['country']}
+                          />
+                        </Box>
+
+                        <CustomInput
+                          label="Postal / ZIP Code"
+                          placeholder="e.g., 75500"
+                          value={formAddress.postalCode ?? ''}
+                          onChange={(e) => handleAddressChange('postalCode', e.target.value)}
+                        />
+
+                        <Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+                            Building Access Type
+                          </Typography>
+                          <CustomSelect
+                            label="Access Type *"
+                            value={formAddress.access || 'none'}
+                            onChange={(e) => handleAddressChange('access', e.target.value)}
+                            options={[
+                              { label: 'None', value: 'none' },
+                              { label: 'Stairs', value: 'stairs' },
+                              { label: 'Lift', value: 'lift' },
+                              { label: 'Service Lift', value: 'service_lift' },
+                            ]}
+                          />
+                        </Box>
+
+                        <Box sx={{ p: 2, backgroundColor: '#f0f9ff', borderRadius: 1, border: '1px solid #bfdbfe' }}>
+                          <Typography variant="caption" sx={{ fontWeight: 600, color: '#0369a1' }}>
+                            Concatenated Address:
+                          </Typography>
+                          <Typography variant="caption" sx={{ display: 'block', color: '#0c4a6e', mt: 0.5 }}>
+                            {[
+                              formAddress.houseNumber,
+                              formAddress.street,
+                              formAddress.block,
+                              formAddress.sector,
+                              formAddress.society,
+                              formAddress.landmark,
+                              formAddress.city,
+                              formAddress.province,
+                              formAddress.country,
+                              formAddress.postalCode,
+                            ]
+                              .filter(Boolean)
+                              .join(', ') || 'Address will appear here as you fill the fields'}
+                          </Typography>
+                        </Box>
+
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => {
+                              setEditingAddressIndex(null);
+                              setExpandedAddressIndex(null);
+                              setFormAddress(emptyAddress);
+                              setFieldErrors({});
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => {
+                              handleUpdateAddress(index);
+                            }}
+                          >
+                            Update Address
+                          </Button>
+                        </Box>
+                      </Box>
+                    )}
                   </Box>
                 </Collapse>
               </Card>
@@ -469,7 +655,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
           </Box>
         )}
 
-        {/* New Address Form */}
+        {/* New Address Form - Modal Style */}
         {newAddressMode && (
           <Card sx={{ p: 2, backgroundColor: '#f0f9ff', border: '2px solid var(--color-primary-600)' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
@@ -482,12 +668,14 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                   placeholder="e.g., My Office, My Home"
                   value={formAddress.title ?? ''}
                   onChange={(e) => handleAddressChange('title', e.target.value)}
+                  error={fieldErrors['title']}
                 />
                 <CustomInput
                   label="House / Flat / Building Number *"
                   placeholder="e.g., 123"
                   value={formAddress.houseNumber ?? ''}
                   onChange={(e) => handleAddressChange('houseNumber', e.target.value)}
+                  error={fieldErrors['houseNumber']}
                 />
               </Box>
 
@@ -497,6 +685,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                   placeholder="e.g., Main Street"
                   value={formAddress.street ?? ''}
                   onChange={(e) => handleAddressChange('street', e.target.value)}
+                  error={fieldErrors['street']}
                 />
                 <CustomInput
                   label="Block: Name or Number"
@@ -518,6 +707,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                   placeholder="e.g., Defense Housing Authority"
                   value={formAddress.society ?? ''}
                   onChange={(e) => handleAddressChange('society', e.target.value)}
+                  error={fieldErrors['society']}
                 />
               </Box>
 
@@ -533,6 +723,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                   placeholder="e.g., Karachi"
                   value={formAddress.city ?? ''}
                   onChange={(e) => handleAddressChange('city', e.target.value)}
+                  error={fieldErrors['city']}
                 />
               </Box>
 
@@ -542,12 +733,14 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                   placeholder="e.g., Sindh"
                   value={formAddress.province ?? ''}
                   onChange={(e) => handleAddressChange('province', e.target.value)}
+                  error={fieldErrors['province']}
                 />
                 <CustomInput
                   label="Country *"
                   placeholder="e.g., Pakistan"
                   value={formAddress.country ?? ''}
                   onChange={(e) => handleAddressChange('country', e.target.value)}
+                  error={fieldErrors['country']}
                 />
               </Box>
 
@@ -575,11 +768,11 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                 />
               </Box>
 
-              <Box sx={{ p: 2, backgroundColor: '#fef2f2', borderRadius: 1, border: '1px solid #fecaca' }}>
-                <Typography variant="caption" sx={{ fontWeight: 600, color: '#991b1b' }}>
+              <Box sx={{ p: 2, backgroundColor: '#f0f9ff', borderRadius: 1, border: '1px solid #bfdbfe' }}>
+                <Typography variant="caption" sx={{ fontWeight: 600, color: '#0369a1' }}>
                   Concatenated Address:
                 </Typography>
-                <Typography variant="caption" sx={{ display: 'block', color: '#7f1d1d', mt: 0.5 }}>
+                <Typography variant="caption" sx={{ display: 'block', color: '#0c4a6e', mt: 0.5 }}>
                   {[
                     formAddress.houseNumber,
                     formAddress.street,
@@ -593,7 +786,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                     formAddress.postalCode,
                   ]
                     .filter(Boolean)
-                    .join(', ')}
+                    .join(', ') || 'Address will appear here as you fill the fields'}
                 </Typography>
               </Box>
 
@@ -604,6 +797,7 @@ export const DomesticStep4Addresses = ({ customerProfileId }: DomesticStep4Addre
                   onClick={() => {
                     setNewAddressMode(false);
                     setFormAddress(emptyAddress);
+                    setFieldErrors({});
                   }}
                 >
                   Cancel

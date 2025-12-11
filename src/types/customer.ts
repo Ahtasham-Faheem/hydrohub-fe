@@ -22,8 +22,8 @@ export interface Address {
 export interface BuildingAccessInfo {
   mapLocation?: string;
   googleMapLocation?: string;
-  ownershipStatus: 'personal' | 'rental' | 'mortgage' | 'other';
-  deliveryAccessLevel: 'basement' | 'ground' | 'upstairs';
+  ownershipStatus: string;
+  deliveryAccessLevel: string;
   floorPosition?: '1st' | '2nd' | '3rd' | '4th' | 'other';
   basementPosition?: 'LG1' | 'LG2' | 'LG3' | 'LG4' | 'other';
   accessOptions?: string[];
@@ -106,8 +106,8 @@ export interface DomesticCustomer {
   dateOfBirth: string;
   nationality?: string;
   cnicNumber?: string;
-  gender: 'male' | 'female' | 'other' | 'Male' | 'Female' | 'Other';
-  maritalStatus: 'single' | 'married' | 'divorced' | 'widowed' | 'Single' | 'Married' | 'Divorced' | 'Widowed';
+  gender: string;
+  maritalStatus: string;
   alternateContactNumber: string;
   preferredContactMethod: 'whatsapp' | 'phone' | 'sms' | 'email';
   presentAddress?: string;
@@ -163,7 +163,8 @@ export interface BusinessContactPerson {
   dateOfBirth: string;
   nationality?: string;
   cnicNumber?: string;
-  maritalStatus: 'single' | 'married' | 'divorced' | 'widowed';
+  gender: string;
+  maritalStatus: string;
   alternateContactNumber?: string;
   preferredContactMethod: 'whatsapp' | 'phone' | 'sms' | 'email';
 }

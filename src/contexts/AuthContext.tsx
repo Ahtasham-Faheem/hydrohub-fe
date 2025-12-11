@@ -16,9 +16,11 @@ interface User {
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  setIsAuthenticated: (value: boolean) => void;
   user: User | null;
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
+  setAuthDirectly: (accessToken: string, user: User) => void;
   logout: () => void;
 }
 
@@ -95,6 +97,13 @@ const AuthProviderInner = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setAuthDirectly = (accessToken: string, user: User) => {
+    localStorage.setItem('authToken', accessToken);
+    localStorage.setItem('userData', JSON.stringify(user));
+    setUser(user);
+    setIsAuthenticated(true);
+  };
+
   const logout = () => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
@@ -103,7 +112,7 @@ const AuthProviderInner = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, isLoading, login, setAuthDirectly, logout, setIsAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

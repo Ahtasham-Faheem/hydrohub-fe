@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Box, Card, Divider } from "@mui/material";
-import dayjs from "dayjs";
+import { useNavigate } from "react-router-dom";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
 import { UserStatsCards } from "../../components/users/UserStatsCards";
 import { UserFilters } from "../../components/users/UserFilters";
@@ -11,12 +11,11 @@ import { useGetCustomers } from "../../hooks/useCustomer";
 import { customerService } from "../../services/api";
 
 export const CustomerProfiles = () => {
+  const navigate = useNavigate();
   const [status, setStatus] = useState("");
   const [customerType, setCustomerType] = useState("");
+  const [dateRange, setDateRange] = useState("");
   const [search, setSearch] = useState("");
-  const [startDate, setStartDate] = useState<dayjs.Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<dayjs.Dayjs | null>(null);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(
@@ -27,11 +26,22 @@ export const CustomerProfiles = () => {
   const vendorData = localStorage.getItem("userData");
   const vendorId = vendorData ? JSON.parse(vendorData).id : null;
 
-  // Fetch customers using the API
-  const { data: customerData, isLoading, refetch } = useGetCustomers(
+  // Build filters object for API
+  const buildFilters = () => {
+    const filters: any = {};
+    if (status) filters.status = status;
+    if (customerType) filters.customerType = customerType;
+    if (dateRange) filters.dateRange = dateRange;
+    if (search) filters.search = search;
+    return Object.keys(filters).length > 0 ? filters : undefined;
+  };
+
+  // Fetch customers using the API with filters
+  const { data: customerData, isLoading } = useGetCustomers(
     vendorId,
     currentPage,
-    10
+    10,
+    buildFilters()
   );
 
   const customers = customerData?.data || [];
@@ -42,7 +52,7 @@ export const CustomerProfiles = () => {
     try {
       await customerService.deleteCustomer(item.id);
       // Refetch customers list after deletion
-      refetch();
+      // refetch();
     } catch (err: any) {
       alert(err.response?.data?.message || 'Failed to delete customer');
     }
@@ -56,91 +66,6 @@ export const CustomerProfiles = () => {
     { id: 5, label: "Verified", enabled: true },
     { id: 6, label: "Actions", enabled: true },
   ]);
-
-  const dateRangeOptions = [
-    {
-      label: "Today",
-      value: "today",
-      startDate: dayjs().startOf("day"),
-      endDate: dayjs().endOf("day"),
-    },
-    {
-      label: "Yesterday",
-      value: "yesterday",
-      startDate: dayjs().subtract(1, "day").startOf("day"),
-      endDate: dayjs().subtract(1, "day").endOf("day"),
-    },
-    {
-      label: "Last 7 Days",
-      value: "last7",
-      startDate: dayjs().subtract(7, "day").startOf("day"),
-      endDate: dayjs().endOf("day"),
-    },
-    {
-      label: "Last 30 Days",
-      value: "last30",
-      startDate: dayjs().subtract(30, "day").startOf("day"),
-      endDate: dayjs().endOf("day"),
-    },
-    {
-      label: "This Month",
-      value: "thisMonth",
-      startDate: dayjs().startOf("month"),
-      endDate: dayjs().endOf("month"),
-    },
-    {
-      label: "Last Month",
-      value: "lastMonth",
-      startDate: dayjs().subtract(1, "month").startOf("month"),
-      endDate: dayjs().subtract(1, "month").endOf("month"),
-    },
-  ];
-
-  // Filter customers based on selected filters
-  const filteredCustomers = useMemo(() => {
-    return customers.filter((customer: any) => {
-      // Filter by date range
-      if (startDate && endDate) {
-        const customerCreatedDate = dayjs(customer.createdAt);
-        const isInRange =
-          (customerCreatedDate.isAfter(startDate) || customerCreatedDate.isSame(startDate, "day")) &&
-          (customerCreatedDate.isBefore(endDate) || customerCreatedDate.isSame(endDate, "day"));
-        if (!isInRange) {
-          return false;
-        }
-      }
-
-      // Filter by status - check status field directly
-      if (status && customer.status !== status.toLowerCase()) {
-        return false;
-      }
-
-      // Filter by customer type
-      if (customerType && customer.customerType !== customerType) {
-        return false;
-      }
-
-      // Filter by search
-      if (search) {
-        const searchLower = search.toLowerCase();
-        const firstName = customer.firstName || "";
-        const lastName = customer.lastName || "";
-        const email = customer.email || "";
-        const customerId = customer.customerId || "";
-
-        if (
-          !firstName.toLowerCase().includes(searchLower) &&
-          !lastName.toLowerCase().includes(searchLower) &&
-          !email.toLowerCase().includes(searchLower) &&
-          !customerId.toLowerCase().includes(searchLower)
-        ) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [customers, status, customerType, startDate, endDate, search]);
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -308,19 +233,13 @@ export const CustomerProfiles = () => {
         </Box>
 
         <UserFilters
-          {...{
-            status,
-            setStatus,
-            customerType,
-            setCustomerType,
-            startDate,
-            setStartDate,
-            endDate,
-            setEndDate,
-            isCalendarOpen,
-            setIsCalendarOpen,
-            dateRangeOptions,
-          }}
+          status={status}
+          setStatus={setStatus}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          customerType={customerType}
+          setCustomerType={setCustomerType}
+          onFiltersChange={() => setCurrentPage(1)}
         />
         <Divider sx={{ my: 2 }} />
         <SortAndManageColumns
@@ -342,7 +261,7 @@ export const CustomerProfiles = () => {
       </Card>
       <DataTable
         columns={tableColumns}
-        data={filteredCustomers}
+        data={customers}
         isLoading={isLoading}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
@@ -350,7 +269,7 @@ export const CustomerProfiles = () => {
         keyField="id"
         showActions={true}
         onView={(item) => console.log("View customer", item)}
-        onEdit={(item) => console.log("Edit customer", item)}
+        onEdit={(item) => navigate(`/dashboard/customer-profiles/edit/${item.id}`)}
         onDelete={(item) => handleDeleteCustomer(item)}
       />
     </Box>

@@ -1,13 +1,40 @@
-import {
-  Stack,
-} from "@mui/material";
+import { Stack } from "@mui/material";
 import dayjs from "dayjs";
 import { CustomSelect } from "../common/CustomSelect";
 import { CustomDateInput } from "../common/CustomDateInput";
 import { useFormContext } from "../../contexts/FormContext";
+import { useEffect, useState } from "react";
+import { staffService } from "../../services/api";
 
 export const EmploymentDetails = () => {
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateFormData, fieldErrors } = useFormContext();
+  const [supervisors, setSupervisors] = useState<Array<{ id: string; firstName?: string; lastName?: string; email?: string; username?: string }>>([]);
+  const [loadingSupervisors, setLoadingSupervisors] = useState(false);
+  
+  useEffect(() => {
+    let mounted = true;
+    const loadSupervisors = async () => {
+      setLoadingSupervisors(true);
+      try {
+        const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        const vendorId = userData?.vendorId || userData?.id || '';
+        const data = await staffService.getSupervisors(vendorId);
+        if (mounted && Array.isArray(data)) {
+          setSupervisors(data);
+        }
+      } catch (err) {
+        console.error('Failed to load supervisors:', err);
+      } finally {
+        if (mounted) setLoadingSupervisors(false);
+      }
+    };
+
+    loadSupervisors();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <Stack spacing={3}>
@@ -17,11 +44,13 @@ export const EmploymentDetails = () => {
           label="Joining Date"
           value={formData.joiningDate ? dayjs(formData.joiningDate) : null}
           onChange={(date) => updateFormData('joiningDate', date ? date.format('YYYY-MM-DD') : '')}
+          error={fieldErrors['joiningDate']}
         />
         <CustomSelect
           label="Designation / Job Title"
           value={formData.jobTitle || ''}
           onChange={(e) => updateFormData('jobTitle', e.target.value)}
+          error={fieldErrors['jobTitle']}
           options={[
             { value: "senior_manager", label: "Senior Manager" },
             { value: "delivery_rider", label: "Delivery Rider" },
@@ -36,6 +65,7 @@ export const EmploymentDetails = () => {
           label="Department"
           value={formData.department || ''}
           onChange={(e) => updateFormData('department', e.target.value)}
+          error={fieldErrors['department']}
           options={[
             { value: "operations", label: "Operations" },
             { value: "sales", label: "Sales" },
@@ -53,6 +83,7 @@ export const EmploymentDetails = () => {
           label="Employment Type"
           value={formData.employmentType || ''}
           onChange={(e) => updateFormData('employmentType', e.target.value)}
+          error={fieldErrors['employmentType']}
           options={[
             { value: "Full-Time", label: "Full-Time" },
             { value: "Part-Time", label: "Part-Time" },
@@ -63,17 +94,23 @@ export const EmploymentDetails = () => {
           label="Supervisor / Reporting To"
           value={formData.supervisorId || ''}
           onChange={(e) => updateFormData('supervisorId', e.target.value)}
-          options={[
-            { value: "dfa452e2-4b58-4fad-a01e-fdebef553815", label: "Sarah Khan" },
-            { value: "550e8400-e29b-41d4-a716-446655440001", label: "Ahmed Malik" },
-            { value: "550e8400-e29b-41d4-a716-446655440002", label: "Fatima Ali" },
-            { value: "550e8400-e29b-41d4-a716-446655440003", label: "Hassan Khan" },
-          ]}
+          error={fieldErrors['supervisorId']}
+          options={
+            loadingSupervisors
+              ? [{ value: '', label: 'Loading supervisors...' }]
+              : supervisors.length > 0
+              ? supervisors.map((s) => ({
+                  value: s.id,
+                  label: s.firstName || s.username || s.email || 'Supervisor',
+                }))
+              : [{ value: '', label: 'No supervisors available' }]
+          }
         />
         <CustomSelect
           label="Work Location"
           value={formData.workLocation || ''}
           onChange={(e) => updateFormData('workLocation', e.target.value)}
+          error={fieldErrors['workLocation']}
           options={[
             { value: "plant", label: "Plant" },
             { value: "office", label: "Office" },
@@ -90,6 +127,7 @@ export const EmploymentDetails = () => {
           label="Shift Type"
           value={formData.shiftType || ''}
           onChange={(e) => updateFormData('shiftType', e.target.value)}
+          error={fieldErrors['shiftType']}
           options={[
             { value: "Morning", label: "Morning" },
             { value: "Evening", label: "Evening" },
@@ -100,6 +138,7 @@ export const EmploymentDetails = () => {
           label="Status"
           value={formData.employmentStatus || ''}
           onChange={(e) => updateFormData('employmentStatus', e.target.value)}
+          error={fieldErrors['employmentStatus']}
           options={[
             { value: "Active", label: "Active" },
             { value: "Inactive", label: "Inactive" },

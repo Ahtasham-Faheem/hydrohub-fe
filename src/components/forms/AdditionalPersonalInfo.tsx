@@ -8,7 +8,7 @@ import { useState } from "react";
 import { Phone } from "@mui/icons-material";
 
 export const AdditionalPersonalInfo = () => {
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateFormData, fieldErrors } = useFormContext();
   const [countryCode, setCountryCode] = useState("+92");
 
   return (
@@ -20,12 +20,14 @@ export const AdditionalPersonalInfo = () => {
           placeholder="Michael Doe"
           value={formData.fathersName || ""}
           onChange={(e) => updateFormData("fathersName", e.target.value)}
+          error={fieldErrors['fathersName']}
         />
         <CustomInput
           label="Mother's Name"
           placeholder="Mary Doe"
           value={formData.mothersName || ""}
           onChange={(e) => updateFormData("mothersName", e.target.value)}
+          error={fieldErrors['mothersName']}
         />
         <CustomDateInput
           label="Date of Birth"
@@ -33,6 +35,7 @@ export const AdditionalPersonalInfo = () => {
           onChange={(date) =>
             updateFormData("dateOfBirth", date ? date.format("YYYY-MM-DD") : "")
           }
+          error={fieldErrors['dateOfBirth']}
         />
       </Stack>
 
@@ -41,23 +44,28 @@ export const AdditionalPersonalInfo = () => {
         <CustomInput
           label="Nationality"
           placeholder="e.g., Pakistani"
-          value={formData.nationality || ""}
+          value={formData.nationality || "Pakistani"}
           onChange={(e) => updateFormData("nationality", e.target.value)}
+          error={fieldErrors['nationality']}
         />
         <CustomInput
           label="National ID"
           placeholder="12345-6789012-3"
           value={formData.nationalId || ""}
-          onChange={(e) => updateFormData("nationalId", e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, '').slice(0, 13);
+            updateFormData("nationalId", value);
+          }}
+          error={fieldErrors['nationalId']}
         />
         <CustomSelect
           label="Gender"
           value={formData.gender || ""}
           onChange={(e) => updateFormData("gender", e.target.value)}
+          error={fieldErrors['gender']}
           options={[
             { value: "Male", label: "Male" },
             { value: "Female", label: "Female" },
-            { value: "Other", label: "Other" },
           ]}
         />
       </Stack>
@@ -68,6 +76,7 @@ export const AdditionalPersonalInfo = () => {
           label="Marital Status"
           value={formData.maritalStatus || ""}
           onChange={(e) => updateFormData("maritalStatus", e.target.value)}
+          error={fieldErrors['maritalStatus']}
           options={[
             { value: "Single", label: "Single" },
             { value: "Married", label: "Married" },
@@ -82,6 +91,7 @@ export const AdditionalPersonalInfo = () => {
           onChange={(e) =>
             updateFormData("alternateContactNumber", e.target.value)
           }
+          error={fieldErrors['alternateContactNumber']}
           startAdornment={
             <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
               <select
@@ -90,8 +100,6 @@ export const AdditionalPersonalInfo = () => {
                 className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
               >
                 <option value="+92">PK +92</option>
-                <option value="+91">IN +91</option>
-                <option value="+1">US +1</option>
               </select>
               <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
             </Box>
@@ -106,6 +114,7 @@ export const AdditionalPersonalInfo = () => {
           onChange={(e) =>
             updateFormData("secondaryEmailAddress", e.target.value)
           }
+          error={fieldErrors['secondaryEmailAddress']}
         />
       </Stack>
 
@@ -116,12 +125,14 @@ export const AdditionalPersonalInfo = () => {
           placeholder="House 10, Block A, Lahore"
           value={formData.presentAddress || ""}
           onChange={(e) => updateFormData("presentAddress", e.target.value)}
+          error={fieldErrors['presentAddress']}
         />
         <CustomInput
           label="Permanent Address"
           placeholder="House 20, Model Town, Lahore"
           value={formData.permanentAddress || ""}
           onChange={(e) => updateFormData("permanentAddress", e.target.value)}
+          error={fieldErrors['permanentAddress']}
         />
       </Stack>
 
@@ -134,6 +145,7 @@ export const AdditionalPersonalInfo = () => {
           onChange={(e) =>
             updateFormData("emergencyContactName", e.target.value)
           }
+          error={fieldErrors['emergencyContactName']}
         />
         <CustomInput
           label="Emergency Contact Relation"
@@ -142,6 +154,7 @@ export const AdditionalPersonalInfo = () => {
           onChange={(e) =>
             updateFormData("emergencyContactRelation", e.target.value)
           }
+          error={fieldErrors['emergencyContactRelation']}
         />
         <CustomInput
           label="Emergency Contact Number"
@@ -150,6 +163,7 @@ export const AdditionalPersonalInfo = () => {
           onChange={(e) =>
             updateFormData("emergencyContactNumber", e.target.value)
           }
+          error={fieldErrors['emergencyContactNumber']}
           startAdornment={
             <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
               <select
@@ -158,8 +172,6 @@ export const AdditionalPersonalInfo = () => {
                 className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
               >
                 <option value="+92">PK +92</option>
-                <option value="+91">IN +91</option>
-                <option value="+1">US +1</option>
               </select>
               <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
             </Box>

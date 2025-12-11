@@ -6,7 +6,7 @@ import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 
 export const SalaryBenefits = () => {
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateFormData, fieldErrors } = useFormContext();
 
   return (
     <Stack spacing={3}>
@@ -18,19 +18,31 @@ export const SalaryBenefits = () => {
           placeholder="50000"
           value={formData.basicSalary || ''}
           onChange={(e) => updateFormData('basicSalary', e.target.value)}
+          error={fieldErrors['basicSalary']}
         />
         <CustomInput
           label="Allowances"
           placeholder="Transport: 5000, Medical: 3000, Food: 2000"
           value={formData.allowances || ''}
           onChange={(e) => updateFormData('allowances', e.target.value)}
+          error={fieldErrors['allowances']}
         />
         <CustomInput
           label="Provident Fund"
           type="number"
-          placeholder="e.g., 3%, 6%"
+          placeholder="0-99"
           value={formData.providentFund || ''}
-          onChange={(e) => updateFormData('providentFund', e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value;
+            // Only allow numeric input, max 2 digits (0-99)
+            if (value === '' || /^\d{1,2}$/.test(value)) {
+              const numValue = value ? parseInt(value) : 0;
+              if (numValue <= 99) {
+                updateFormData('providentFund', value);
+              }
+            }
+          }}
+          error={fieldErrors['providentFund']}
         />
       </Stack>
 
@@ -40,10 +52,10 @@ export const SalaryBenefits = () => {
           label="Salary Payment Mode"
           value={formData.salaryPaymentMode || ''}
           onChange={(e) => updateFormData('salaryPaymentMode', e.target.value)}
+          error={fieldErrors['salaryPaymentMode']}
           options={[
             { value: "bank_transfer", label: "Bank Transfer" },
             { value: "cash", label: "Cash" },
-            { value: "other", label: "Other" },
           ]}
         />
         <CustomInput
@@ -51,12 +63,14 @@ export const SalaryBenefits = () => {
           placeholder="HBL Bank"
           value={formData.bankName || ''}
           onChange={(e) => updateFormData('bankName', e.target.value)}
+          error={fieldErrors['bankName']}
         />
         <CustomInput
           label="Bank Account Title"
           placeholder="John Doe"
           value={formData.bankAccountTitle || ''}
           onChange={(e) => updateFormData('bankAccountTitle', e.target.value)}
+          error={fieldErrors['bankAccountTitle']}
         />
       </Stack>
 
@@ -64,14 +78,19 @@ export const SalaryBenefits = () => {
       <Stack direction="row" spacing={2}>
         <CustomInput
           label="Bank Account Number"
-          placeholder="PK00HABB000123456789"
+          placeholder="1234567890123456"
           value={formData.bankAccountNumber || ''}
-          onChange={(e) => updateFormData('bankAccountNumber', e.target.value)}
+          onChange={(e) => {
+            const value = e.target.value.replace(/\D/g, '').slice(0, 16);
+            updateFormData('bankAccountNumber', value);
+          }}
+          error={fieldErrors['bankAccountNumber']}
         />
         <CustomSelect
           label="Tax Status"
           value={formData.taxStatus || ''}
           onChange={(e) => updateFormData('taxStatus', e.target.value)}
+          error={fieldErrors['taxStatus']}
           options={[
             { value: "Taxable", label: "Taxable" },
             { value: "Non-Taxable", label: "Non-Taxable" },

@@ -5,20 +5,23 @@ import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
 import { useFormContext } from "../../contexts/FormContext";
 import { useUploadFile } from "../../hooks/useAssets";
+import { buildFullPhone } from "../../utils/phoneValidation";
 import { useState } from "react";
 
 interface PersonalInformationProps {
   image: string | null;
   onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onImageReset: () => void;
+  isEditMode?: boolean;
 }
 
 export const PersonalInformation = ({
   image,
   onImageUpload,
   onImageReset,
+  isEditMode = false,
 }: PersonalInformationProps) => {
-  const { formData, updateFormData } = useFormContext();
+  const { formData, updateFormData, fieldErrors } = useFormContext();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -59,9 +62,9 @@ export const PersonalInformation = ({
   };
 
   const handlePhoneChange = (value: string) => {
-    // Store phone without country code
-    const phoneWithoutCode = value.replace(/^\+\d+/, "");
-    updateFormData("phone", phoneWithoutCode);
+    // Store full phone with country code
+    const fullPhone = buildFullPhone(countryCode, value);
+    updateFormData("phone", fullPhone);
   };
 
   return (
@@ -139,6 +142,7 @@ export const PersonalInformation = ({
           label="Title"
           value={formData.title || ""}
           onChange={(e) => updateFormData("title", e.target.value)}
+          error={fieldErrors['title']}
           options={[
             { value: "Mr", label: "Mr." },
             { value: "Ms", label: "Ms." },
@@ -151,12 +155,14 @@ export const PersonalInformation = ({
           placeholder="John"
           value={formData.firstName}
           onChange={(e) => updateFormData("firstName", e.target.value)}
+          error={fieldErrors['firstName']}
         />
         <CustomInput
           label="Last Name *"
           placeholder="Doe"
           value={formData.lastName}
           onChange={(e) => updateFormData("lastName", e.target.value)}
+          error={fieldErrors['lastName']}
         />
       </Stack>
 
@@ -168,22 +174,25 @@ export const PersonalInformation = ({
           type="email"
           value={formData.email}
           onChange={(e) => updateFormData("email", e.target.value)}
+          error={fieldErrors['email']}
+          disabled={isEditMode}
         />
         <CustomInput
           label="Phone Number"
-          placeholder="1234567890"
-          value={formData.phone}
+          placeholder="3001234567"
+          value={formData.phone && formData.phone.startsWith('+92') ? formData.phone.substring(3) : formData.phone}
           onChange={(e) => handlePhoneChange(e.target.value)}
+          error={fieldErrors['phone']}
+          disabled={isEditMode}
           startAdornment={
             <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
               <select
                 value={countryCode}
                 onChange={(e) => setCountryCode(e.target.value)}
-                className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
+                disabled={isEditMode}
+                className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none disabled:opacity-50"
               >
                 <option value="+92">PK +92</option>
-                <option value="+91">IN +91</option>
-                <option value="+1">US +1</option>
               </select>
               <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
             </Box>
@@ -195,15 +204,19 @@ export const PersonalInformation = ({
           placeholder="johndoe"
           value={formData.username}
           onChange={(e) => updateFormData("username", e.target.value)}
+          error={fieldErrors['username']}
+          disabled={isEditMode}
         />
       </Stack>
 
       {/* Primary Mobile Number + Login Username + Role */}
+      {!isEditMode && (
       <Stack direction="row" spacing={2}>
         <CustomSelect
           label="Role"
           value={formData.userRole}
           onChange={(e) => updateFormData("userRole", e.target.value)}
+          error={fieldErrors['userRole']}
           options={[
             { value: "supervisor", label: "Supervisor" },
             { value: "delivery_staff", label: "Delivery Staff" },
@@ -218,6 +231,7 @@ export const PersonalInformation = ({
           placeholder="********"
           value={formData.password}
           onChange={(e) => updateFormData("password", e.target.value)}
+          error={fieldErrors['password']}
           endAdornment={
             <IconButton
               onClick={() => setShowPassword(!showPassword)}
@@ -234,6 +248,7 @@ export const PersonalInformation = ({
           placeholder="********"
           value={formData.confirmPassword || ""}
           onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+          error={fieldErrors['confirmPassword']}
           endAdornment={
             <IconButton
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -245,6 +260,24 @@ export const PersonalInformation = ({
           }
         />
       </Stack>
+      )}
+      {isEditMode && (
+      <Stack direction="row" spacing={2}>
+        <CustomSelect
+          label="Role"
+          value={formData.userRole}
+          onChange={(e) => updateFormData("userRole", e.target.value)}
+          error={fieldErrors['userRole']}
+          options={[
+            { value: "supervisor", label: "Supervisor" },
+            { value: "delivery_staff", label: "Delivery Staff" },
+            { value: "billing_operator", label: "Billing Operator" },
+            { value: "customer_support", label: "Customer Support" },
+            { value: "data_entry", label: "Data Entry" },
+          ]}
+        />
+      </Stack>
+      )}
     </Stack>
   );
 };
