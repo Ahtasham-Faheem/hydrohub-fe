@@ -33,6 +33,7 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
               boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
               border: "1px solid #f1f5f9",
               transition: "transform 0.2s, box-shadow 0.2s",
+              height: "100%",
               "&:hover": {
                 transform: "translateY(-2px)",
                 boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
