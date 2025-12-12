@@ -163,7 +163,7 @@ export const SortAndManageColumns = ({
           onClick={() => {
             navigate(addButtonPath);
             // localStorage.removeItem("createUserCurrentStep");
-            // localStorage.removeItem("createUserFormData");
+            localStorage.removeItem("createUserFormData");
           }}
         >
           {addButtonLabel}
