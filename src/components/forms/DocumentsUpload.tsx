@@ -134,6 +134,7 @@ export const DocumentsUpload = () => {
               onFileChange={(files) => handleDocumentUpload(files, "cnic")}
               staffProfileId={formData.staffProfileId}
               documentId={uploadedDocuments.find((d) => d.documentType === "CNIC Copy")?.id}
+              uploadedLabel={uploadedDocuments.find((d) => d.documentType === "CNIC Copy")?.documentName}
               isUploaded={!!uploadedDocuments.find((d) => d.documentType === "CNIC Copy")}
             />
           )}
@@ -171,6 +172,7 @@ export const DocumentsUpload = () => {
               onFileChange={(files) => handleDocumentUpload(files, "agreement")}
               staffProfileId={formData.staffProfileId}
               documentId={uploadedDocuments.find((d) => d.documentType === "Agreement")?.id}
+              uploadedLabel={uploadedDocuments.find((d) => d.documentType === "Agreement")?.documentName}
               isUploaded={!!uploadedDocuments.find((d) => d.documentType === "Agreement")}
             />
           )}
@@ -187,6 +189,7 @@ export const DocumentsUpload = () => {
               onFileChange={(files) => handleDocumentUpload(files, "joiningForm")}
               staffProfileId={formData.staffProfileId}
               documentId={uploadedDocuments.find((d) => d.documentType === "Joining Form")?.id}
+              uploadedLabel={uploadedDocuments.find((d) => d.documentType === "Joining Form")?.documentName}
               isUploaded={!!uploadedDocuments.find((d) => d.documentType === "Joining Form")}
             />
           )}
@@ -208,6 +211,7 @@ export const DocumentsUpload = () => {
               multiple={true}
               staffProfileId={formData.staffProfileId}
               documentId={uploadedDocuments.find((d) => d.documentType === "Other Attachments")?.id}
+              uploadedLabel={uploadedDocuments.find((d) => d.documentType === "Other Attachments")?.documentName}
               isUploaded={!!uploadedDocuments.find((d) => d.documentType === "Other Attachments")}
             />
           )}
