@@ -98,6 +98,11 @@ const EditUserForm = () => {
         const staffData = await staffService.getStaffById(id);
         
         setStaffProfileId(staffData.id);
+        
+        // Set profile picture URL from API response if available
+        if (staffData.profilePictureAsset?.fileUrl) {
+          setImage(staffData.profilePictureAsset.fileUrl);
+        }
 
         // Populate form with user data
         updateMultipleFields({

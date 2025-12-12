@@ -18,12 +18,10 @@ interface DomesticStep1BasicProfileProps {
 }
 
 export const DomesticStep1BasicProfile = ({
-  // image,
-  // onImageUpload,
-  // onImageReset,
+  image: externalImage,
   isEditMode = false,
 }: DomesticStep1BasicProfileProps = {}) => {
-  const { state, fieldErrors } = useCustomerForm();
+  const { state, fieldErrors, setFieldErrors } = useCustomerForm();
   const { updateFormData } = useCustomerForm();
   
   // Handle null state.data with default empty values
@@ -38,7 +36,7 @@ export const DomesticStep1BasicProfile = ({
     title: 'Mr.',
   };
   
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(externalImage || null);
   const [countryCode, setCountryCode] = useState("+92");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -76,6 +74,10 @@ export const DomesticStep1BasicProfile = ({
 
       // Store the asset ID
       updateFormData("profilePictureAssetId", profilePictureAssetId);
+      // Clear error when image is uploaded
+      if (fieldErrors['profilePictureAssetId']) {
+        setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" });
+      }
     } catch (err: any) {
       console.error("Failed to upload profile picture:", err);
       setUploadError(err.message || 'Failed to upload image');
@@ -157,7 +159,7 @@ export const DomesticStep1BasicProfile = ({
               </Typography>
             )}
             {fieldErrors['profilePictureAssetId'] && (
-              <Typography variant="caption" color="error" display="block">
+              <Typography variant="caption" color="error" display="block" sx={{ fontWeight: 600 }}>
                 {fieldErrors['profilePictureAssetId']}
               </Typography>
             )}

@@ -106,6 +106,14 @@ const CreateUserForm = () => {
           return;
         }
 
+        // Validate profile picture is uploaded
+        if (!formData.profilePictureAssetId || !formData.profilePictureAssetId.trim()) {
+          setFieldErrors({ profilePictureAssetId: 'Profile picture is required' });
+          setError('Please upload a profile picture to continue');
+          setIsLoading(false);
+          return;
+        }
+
         // Validate password confirmation
         const passwordValidation = validatePasswordMatch(formData.password, formData.confirmPassword || '');
         if (!passwordValidation.isValid) {

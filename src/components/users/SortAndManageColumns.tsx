@@ -158,9 +158,13 @@ export const SortAndManageColumns = ({
             </Button>
           </Box>
         </Popover>
-        <PrimaryButton 
+        <PrimaryButton
           className="px-16! font-medium!"
-          onClick={() => navigate(addButtonPath)}
+          onClick={() => {
+            navigate(addButtonPath);
+            // localStorage.removeItem("createUserCurrentStep");
+            // localStorage.removeItem("createUserFormData");
+          }}
         >
           {addButtonLabel}
         </PrimaryButton>

@@ -20,6 +20,10 @@ interface UserFiltersProps {
   setStatus: (status: string) => void;
   dateRange: string;
   setDateRange: (range: string) => void;
+  startDate: Dayjs | null;
+  setStartDate: (date: Dayjs | null) => void;
+  endDate: Dayjs | null;
+  setEndDate: (date: Dayjs | null) => void;
   customerType?: string;
   setCustomerType?: (customerType: string) => void;
   role?: string;
@@ -39,14 +43,16 @@ export const UserFilters = ({
   setStatus,
   dateRange,
   setDateRange,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
   customerType,
   setCustomerType,
   role,
   setRole,
   onFiltersChange,
 }: UserFiltersProps) => {
-  const [startDate, setStartDate] = useState<Dayjs | null>(null);
-  const [endDate, setEndDate] = useState<Dayjs | null>(null);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [leftMonth, setLeftMonth] = useState<Dayjs>(dayjs());
   const [rightMonth, setRightMonth] = useState<Dayjs>(dayjs().add(1, "month"));

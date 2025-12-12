@@ -21,7 +21,8 @@ export const PersonalInformation = ({
   onImageReset,
   isEditMode = false,
 }: PersonalInformationProps) => {
-  const { formData, updateFormData, fieldErrors } = useFormContext();
+  const { formData, updateFormData, fieldErrors, setFieldErrors } =
+    useFormContext();
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,7 +40,10 @@ export const PersonalInformation = ({
     uploadMutation.mutate(file, {
       onSuccess: (uploadResponse) => {
         updateFormData("profilePictureAssetId", uploadResponse.id);
-
+        // Clear error when image is uploaded
+        if (fieldErrors["profilePictureAssetId"]) {
+          setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" });
+        }
         // Create local preview URL
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -124,6 +128,16 @@ export const PersonalInformation = ({
                 </Button>
               )}
             </Box>
+            {fieldErrors["profilePictureAssetId"] && (
+              <Typography
+                variant="caption"
+                color="error"
+                display="block"
+                sx={{ fontWeight: 600 }}
+              >
+                {fieldErrors["profilePictureAssetId"]}
+              </Typography>
+            )}
             <Typography variant="caption" display="block" sx={{ mt: 1 }}>
               Allowed JPG, GIF or PNG. Max size 800KB.
             </Typography>
@@ -142,7 +156,7 @@ export const PersonalInformation = ({
           label="Title"
           value={formData.title || ""}
           onChange={(e) => updateFormData("title", e.target.value)}
-          error={fieldErrors['title']}
+          error={fieldErrors["title"]}
           options={[
             { value: "Mr", label: "Mr." },
             { value: "Ms", label: "Ms." },
@@ -155,14 +169,14 @@ export const PersonalInformation = ({
           placeholder="John"
           value={formData.firstName}
           onChange={(e) => updateFormData("firstName", e.target.value)}
-          error={fieldErrors['firstName']}
+          error={fieldErrors["firstName"]}
         />
         <CustomInput
           label="Last Name *"
           placeholder="Doe"
           value={formData.lastName}
           onChange={(e) => updateFormData("lastName", e.target.value)}
-          error={fieldErrors['lastName']}
+          error={fieldErrors["lastName"]}
         />
       </Stack>
 
@@ -174,15 +188,19 @@ export const PersonalInformation = ({
           type="email"
           value={formData.email}
           onChange={(e) => updateFormData("email", e.target.value)}
-          error={fieldErrors['email']}
+          error={fieldErrors["email"]}
           disabled={isEditMode}
         />
         <CustomInput
           label="Phone Number"
           placeholder="3001234567"
-          value={formData.phone && formData.phone.startsWith('+92') ? formData.phone.substring(3) : formData.phone}
+          value={
+            formData.phone && formData.phone.startsWith("+92")
+              ? formData.phone.substring(3)
+              : formData.phone
+          }
           onChange={(e) => handlePhoneChange(e.target.value)}
-          error={fieldErrors['phone']}
+          error={fieldErrors["phone"]}
           disabled={isEditMode}
           startAdornment={
             <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
@@ -204,79 +222,79 @@ export const PersonalInformation = ({
           placeholder="johndoe"
           value={formData.username}
           onChange={(e) => updateFormData("username", e.target.value)}
-          error={fieldErrors['username']}
+          error={fieldErrors["username"]}
           disabled={isEditMode}
         />
       </Stack>
 
       {/* Primary Mobile Number + Login Username + Role */}
       {!isEditMode && (
-      <Stack direction="row" spacing={2}>
-        <CustomSelect
-          label="Role"
-          value={formData.userRole}
-          onChange={(e) => updateFormData("userRole", e.target.value)}
-          error={fieldErrors['userRole']}
-          options={[
-            { value: "supervisor", label: "Supervisor" },
-            { value: "delivery_staff", label: "Delivery Staff" },
-            { value: "billing_operator", label: "Billing Operator" },
-            { value: "customer_support", label: "Customer Support" },
-            { value: "data_entry", label: "Data Entry" },
-          ]}
-        />
-        <CustomInput
-          label="Login Password *"
-          type={showPassword ? "text" : "password"}
-          placeholder="********"
-          value={formData.password}
-          onChange={(e) => updateFormData("password", e.target.value)}
-          error={fieldErrors['password']}
-          endAdornment={
-            <IconButton
-              onClick={() => setShowPassword(!showPassword)}
-              edge="end"
-              sx={{ mr: -1 }}
-            >
-              {showPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
-          }
-        />
-        <CustomInput
-          label="Confirm Password *"
-          type={showConfirmPassword ? "text" : "password"}
-          placeholder="********"
-          value={formData.confirmPassword || ""}
-          onChange={(e) => updateFormData("confirmPassword", e.target.value)}
-          error={fieldErrors['confirmPassword']}
-          endAdornment={
-            <IconButton
-              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              edge="end"
-              sx={{ mr: -1 }}
-            >
-              {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
-          }
-        />
-      </Stack>
+        <Stack direction="row" spacing={2}>
+          <CustomSelect
+            label="Role"
+            value={formData.userRole}
+            onChange={(e) => updateFormData("userRole", e.target.value)}
+            error={fieldErrors["userRole"]}
+            options={[
+              { value: "supervisor", label: "Supervisor" },
+              { value: "delivery_staff", label: "Delivery Staff" },
+              { value: "billing_operator", label: "Billing Operator" },
+              { value: "customer_support", label: "Customer Support" },
+              { value: "data_entry", label: "Data Entry" },
+            ]}
+          />
+          <CustomInput
+            label="Login Password *"
+            type={showPassword ? "text" : "password"}
+            placeholder="********"
+            value={formData.password}
+            onChange={(e) => updateFormData("password", e.target.value)}
+            error={fieldErrors["password"]}
+            endAdornment={
+              <IconButton
+                onClick={() => setShowPassword(!showPassword)}
+                edge="end"
+                sx={{ mr: -1 }}
+              >
+                {showPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            }
+          />
+          <CustomInput
+            label="Confirm Password *"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="********"
+            value={formData.confirmPassword || ""}
+            onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+            error={fieldErrors["confirmPassword"]}
+            endAdornment={
+              <IconButton
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                edge="end"
+                sx={{ mr: -1 }}
+              >
+                {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+              </IconButton>
+            }
+          />
+        </Stack>
       )}
       {isEditMode && (
-      <Stack direction="row" spacing={2}>
-        <CustomSelect
-          label="Role"
-          value={formData.userRole}
-          onChange={(e) => updateFormData("userRole", e.target.value)}
-          error={fieldErrors['userRole']}
-          options={[
-            { value: "supervisor", label: "Supervisor" },
-            { value: "delivery_staff", label: "Delivery Staff" },
-            { value: "billing_operator", label: "Billing Operator" },
-            { value: "customer_support", label: "Customer Support" },
-            { value: "data_entry", label: "Data Entry" },
-          ]}
-        />
-      </Stack>
+        <Stack direction="row" spacing={2}>
+          <CustomSelect
+            label="Role"
+            value={formData.userRole}
+            onChange={(e) => updateFormData("userRole", e.target.value)}
+            error={fieldErrors["userRole"]}
+            options={[
+              { value: "supervisor", label: "Supervisor" },
+              { value: "delivery_staff", label: "Delivery Staff" },
+              { value: "billing_operator", label: "Billing Operator" },
+              { value: "customer_support", label: "Customer Support" },
+              { value: "data_entry", label: "Data Entry" },
+            ]}
+          />
+        </Stack>
       )}
     </Stack>
   );

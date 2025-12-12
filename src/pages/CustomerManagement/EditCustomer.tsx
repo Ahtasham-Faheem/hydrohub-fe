@@ -106,6 +106,11 @@ const EditCustomerFormContent = () => {
 
         // Store customer ID in state
         setCustomerId(customerData.id);
+        
+        // Set profile picture URL from API response if available
+        if (customerData.profilePictureAsset?.fileUrl) {
+          setImage(customerData.profilePictureAsset.fileUrl);
+        }
 
         // Populate form with customer data
         resetForm();

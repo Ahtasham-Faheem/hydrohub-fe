@@ -123,6 +123,13 @@ const CreateCustomerFormContent = () => {
 
       const data = state.data as any;
 
+      // Validate profile picture is uploaded
+      if (!data.profilePictureAssetId || !data.profilePictureAssetId.trim()) {
+        setFieldErrors({ profilePictureAssetId: 'Profile picture is required' });
+        setError('Please upload a profile picture to continue');
+        return;
+      }
+
       // Validate password confirmation
       const passwordValidation = validatePasswordMatch(
         data.password,

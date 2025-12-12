@@ -14,6 +14,8 @@ export const UsersPage = () => {
   const [status, setStatus] = useState("");
   const [role, setRole] = useState("");
   const [dateRange, setDateRange] = useState("");
+  const [startDate, setStartDate] = useState<any>(null);
+  const [endDate, setEndDate] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   
@@ -26,7 +28,8 @@ export const UsersPage = () => {
     const filters: any = {};
     if (status) filters.status = status;
     if (role) filters.role = role;
-    if (dateRange) filters.dateRange = dateRange;
+    if (startDate) filters.dateFrom = startDate.format('YYYY-MM-DD');
+    if (endDate) filters.dateTo = endDate.format('YYYY-MM-DD');
     if (search) filters.search = search;
     return Object.keys(filters).length > 0 ? filters : undefined;
   };
@@ -208,6 +211,10 @@ export const UsersPage = () => {
           setStatus={setStatus}
           dateRange={dateRange}
           setDateRange={setDateRange}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
           role={role}
           setRole={setRole}
           onFiltersChange={() => setCurrentPage(1)}

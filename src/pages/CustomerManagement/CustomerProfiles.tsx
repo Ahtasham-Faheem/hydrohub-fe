@@ -15,6 +15,8 @@ export const CustomerProfiles = () => {
   const [status, setStatus] = useState("");
   const [customerType, setCustomerType] = useState("");
   const [dateRange, setDateRange] = useState("");
+  const [startDate, setStartDate] = useState<any>(null);
+  const [endDate, setEndDate] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
@@ -31,7 +33,8 @@ export const CustomerProfiles = () => {
     const filters: any = {};
     if (status) filters.status = status;
     if (customerType) filters.customerType = customerType;
-    if (dateRange) filters.dateRange = dateRange;
+    if (startDate) filters.dateFrom = startDate.format('YYYY-MM-DD');
+    if (endDate) filters.dateTo = endDate.format('YYYY-MM-DD');
     if (search) filters.search = search;
     return Object.keys(filters).length > 0 ? filters : undefined;
   };
@@ -237,6 +240,10 @@ export const CustomerProfiles = () => {
           setStatus={setStatus}
           dateRange={dateRange}
           setDateRange={setDateRange}
+          startDate={startDate}
+          setStartDate={setStartDate}
+          endDate={endDate}
+          setEndDate={setEndDate}
           customerType={customerType}
           setCustomerType={setCustomerType}
           onFiltersChange={() => setCurrentPage(1)}

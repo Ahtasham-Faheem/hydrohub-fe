@@ -219,6 +219,8 @@ export const DataTable = ({
                             if (formContext?.resetForm) {
                               formContext.resetForm();
                             }
+                            localStorage.removeItem("createUserCurrentStep");
+                            localStorage.removeItem("createUserFormData");
                             onEdit(item);
                           }}
                         >
