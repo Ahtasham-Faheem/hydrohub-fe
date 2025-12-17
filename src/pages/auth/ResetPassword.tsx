@@ -16,8 +16,10 @@ import { PrimaryButton } from "../../components/common/PrimaryButton";
 import WaterLogo from "../../assets/WATER-INN-logo.svg";
 import { Footer } from "../../components/auth/Footer";
 import { authService } from "../../services/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const ResetPassword = () => {
+  const { colors } = useTheme();
   const [resetMode, setResetMode] = useState<"email" | "phone">("email");
   const [countryCode, setCountryCode] = useState("+92");
   const [phone, setPhone] = useState("");
@@ -139,12 +141,16 @@ export const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between">
+    <div 
+      className="min-h-screen flex flex-col items-center justify-between"
+      style={{ backgroundColor: colors.background.primary }}
+    >
       {/* Header - Reduced padding */}
       <div className="flex justify-between items-center w-full px-12 pt-8">
         <Link
           to="/login"
-          className="text-primary-600 hover:underline cursor-pointer"
+          className="hover:underline cursor-pointer"
+          style={{ color: colors.primary[500] }}
         >
           <img
             src={WaterLogo}
@@ -152,13 +158,16 @@ export const ResetPassword = () => {
             className="w-[190px]" // Reduced size
           />
         </Link>
-        <div className="text-center font-extrabold text-primary-600 flex items-center cursor-pointer">
+        <div 
+          className="text-center font-extrabold flex items-center cursor-pointer"
+          style={{ color: colors.primary[500] }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             height="20px"
             width="20px"
-            fill="#2092ec"
+            fill={colors.primary[500]}
           >
             <path d="M0 0h24v24H0V0z" fill="none" />
             <path
@@ -185,9 +194,11 @@ export const ResetPassword = () => {
         sx={{
           maxWidth: 500, // Reduced width
           width: "90%",
-          boxShadow: 3,
+          boxShadow: colors.shadow.lg,
           borderRadius: 2,
-          margin: 'auto 0' // Centers vertically
+          margin: 'auto 0', // Centers vertically
+          backgroundColor: colors.background.card,
+          border: `1px solid ${colors.border.primary}`,
         }}
       >
         <CardContent sx={{ px: 4, py: 5 }}> {/* Reduced padding */}
@@ -195,7 +206,7 @@ export const ResetPassword = () => {
             variant="h4"
             align="center"
             fontWeight="800"
-            className="text-primary-600 text-2xl!" // Reduced font size
+            sx={{ fontSize: 24, color: colors.primary[500] }} // Reduced font size
           >
             Business Control Center
           </Typography>
@@ -203,15 +214,13 @@ export const ResetPassword = () => {
             variant="h4"
             align="center"
             fontWeight="800"
-            color="text.primary"
-            sx={{ mt: 1, mb: 2, fontSize: 26 }} // Reduced margins and font size
+            sx={{ mt: 1, mb: 2, fontSize: 26, color: colors.text.primary }} // Reduced margins and font size
           >
             Reset Password
           </Typography>
           <Typography
             align="center"
-            color="text.secondary"
-            sx={{ mt: 1, mb: 3, fontSize: 15 }} // Reduced margins and font size
+            sx={{ mt: 1, mb: 3, fontSize: 15, color: colors.text.secondary }} // Reduced margins and font size
           >
             Empower your team, enhance performance and grow smarter everyday
           </Typography>
@@ -230,7 +239,7 @@ export const ResetPassword = () => {
               <div></div>
               <Typography
                 sx={{
-                  color: "#2092ec",
+                  color: colors.primary[500],
                   fontSize: 14, // Reduced font size
                   cursor: "pointer",
                   textDecoration: "underline",
@@ -258,8 +267,8 @@ export const ResetPassword = () => {
                   }
                 }}
                 error={errors.email}
-                sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
-                endAdornment={<Email sx={{ color: "#9ca3af", fontSize: 22 }} />}
+                sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
+                endAdornment={<Email sx={{ color: colors.text.secondary, fontSize: 22 }} />}
               />
             ) : (
               <CustomInput
@@ -273,20 +282,37 @@ export const ResetPassword = () => {
                   }
                 }}
                 error={errors.phone}
-                sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
+                sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
                 startAdornment={
                   <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
                     <select
                       value={countryCode}
                       onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
+                      style={{
+                        border: 'none',
+                        backgroundColor: 'transparent',
+                        fontSize: '14px',
+                        color: colors.text.secondary,
+                        cursor: 'pointer',
+                        paddingRight: '8px',
+                        outline: 'none'
+                      }}
                     >
-                      <option value="+92">PK +92</option>
+                      <option value="+92" style={{ backgroundColor: colors.background.card, color: colors.text.primary }}>
+                        PK +92
+                      </option>
                     </select>
-                    <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
+                    <span 
+                      style={{ 
+                        marginLeft: '8px', 
+                        color: colors.border.primary, 
+                        borderRight: `1px solid ${colors.border.primary}`, 
+                        height: '24px' 
+                      }}
+                    ></span>
                   </Box>
                 }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
+                endAdornment={<Phone sx={{ color: colors.text.secondary, fontSize: 22 }} />}
               />
             )}
 
@@ -303,7 +329,7 @@ export const ResetPassword = () => {
                   }
                 }}
                 error={errors.otp}
-                sx={fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
+                sx={fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
                 endAdornment={
                   <Button
                     variant="outlined"
@@ -312,8 +338,8 @@ export const ResetPassword = () => {
                       height: "38px",
                       border: "none",
                       fontSize: 15,
-                      color: "#4b5563",
-                      borderLeft: "1px solid #D1CFD4",
+                      color: colors.text.secondary,
+                      borderLeft: `1px solid ${colors.border.primary}`,
                       borderRadius: 0,
                       paddingRight: 0,
                       ":hover": { textDecoration: "underline" },
@@ -341,7 +367,7 @@ export const ResetPassword = () => {
               }}
               error={errors.password}
               disabled={!codeSent}
-              sx={fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626" } } } : {}}
+              sx={fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
               endAdornment={
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
@@ -349,9 +375,9 @@ export const ResetPassword = () => {
                   disabled={!codeSent}
                 >
                   {showPassword ? (
-                    <VisibilityOff sx={{ color: codeSent ? "#9ca3af" : "#d1d5db", fontSize: 22 }} />
+                    <VisibilityOff sx={{ color: codeSent ? colors.text.secondary : colors.text.tertiary, fontSize: 22 }} />
                   ) : (
-                    <Visibility sx={{ color: codeSent ? "#9ca3af" : "#d1d5db", fontSize: 22 }} />
+                    <Visibility sx={{ color: codeSent ? colors.text.secondary : colors.text.tertiary, fontSize: 22 }} />
                   )}
                 </IconButton>
               }
@@ -365,7 +391,8 @@ export const ResetPassword = () => {
             <Box textAlign="center" mt={1}>
               <Link
                 to="/login"
-                className="text-text-600 text-sm flex justify-center items-center hover:text-text-600"
+                className="text-sm flex justify-center items-center"
+                style={{ color: colors.text.secondary }}
               >
                 <span>
                   <svg
@@ -373,7 +400,7 @@ export const ResetPassword = () => {
                     height="20px"
                     viewBox="0 0 24 24"
                     width="20px"
-                    fill="#4b5563"
+                    fill={colors.text.secondary}
                   >
                     <path d="M0 0h24v24H0V0z" fill="none" />
                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59z" />
@@ -388,23 +415,24 @@ export const ResetPassword = () => {
 
       {/* Terms - Reduced margins */}
       <Typography
-        color="text.secondary"
         align="center"
-        sx={{ mt: 3, mb: 2, maxWidth: 500, px: 4, fontSize: 14 }}
+        sx={{ mt: 3, mb: 2, maxWidth: 500, px: 4, fontSize: 14, color: colors.text.secondary }}
       >
         By continuing, you agree to our{" "}
         <Link
           to="/terms"
-          className="text-primary-600 hover:underline"
+          className="hover:underline"
           target="_blank"
+          style={{ color: colors.primary[500] }}
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           to="/privacy"
-          className="text-primary-600 hover:underline"
+          className="hover:underline"
           target="_blank"
+          style={{ color: colors.primary[500] }}
         >
           Privacy Policy
         </Link>{" "}

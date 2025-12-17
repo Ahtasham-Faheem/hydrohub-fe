@@ -9,9 +9,11 @@ import { DataTable } from "../../components/common/DataTable";
 import type { Column } from "../../components/common/DataTable";
 import { useGetCustomers } from "../../hooks/useCustomer";
 import { customerService } from "../../services/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const CustomerProfiles = () => {
   const navigate = useNavigate();
+  const { colors } = useTheme();
   const [status, setStatus] = useState("");
   const [customerType, setCustomerType] = useState("");
   const [dateRange, setDateRange] = useState("");
@@ -89,8 +91,8 @@ export const CustomerProfiles = () => {
       value: customers.length.toString(),
       change: "0%",
       desc: "Total customers in the system",
-      color: "var(--color-status-success)",
-      bgColor: "var(--color-status-success-light)",
+      color: colors.status.success,
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundCheck />,
     },
     {
@@ -100,8 +102,8 @@ export const CustomerProfiles = () => {
         .length.toString(),
       change: "+0%",
       desc: "All customers currently active in the system",
-      color: "var(--color-primary-600)",
-      bgColor: "var(--color-primary-bg-light)",
+      color: colors.primary[600],
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundCheck />,
     },
     {
@@ -111,8 +113,8 @@ export const CustomerProfiles = () => {
         .length.toString(),
       change: "+0%",
       desc: "Customers with complete profile information",
-      color: "var(--color-status-warning)",
-      bgColor: "var(--color-status-warning-light)",
+      color: colors.status.warning,
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundX />,
     },
     {
@@ -122,8 +124,8 @@ export const CustomerProfiles = () => {
         .length.toString(),
       change: "0%",
       desc: "Customers no longer active",
-      color: "var(--color-status-error)",
-      bgColor: "var(--color-status-error-light)",
+      color: colors.status.error,
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundX />,
     },
   ];
@@ -146,8 +148,8 @@ export const CustomerProfiles = () => {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                bgcolor: "var(--color-primary-600)",
-                color: "white",
+                bgcolor: colors.primary[600],
+                color: colors.text.inverse,
                 fontWeight: 600,
                 fontSize: "0.875rem",
               }}
@@ -155,10 +157,10 @@ export const CustomerProfiles = () => {
               {initials}
             </Box>
             <Box>
-              <Box sx={{ fontWeight: 600, fontSize: 14 }}>
+              <Box sx={{ fontWeight: 600, fontSize: 14, color: colors.text.primary }}>
                 {firstName} {lastName}
               </Box>
-              <Box sx={{ fontSize: 12, color: "#6b7280" }}>
+              <Box sx={{ fontSize: 12, color: colors.text.secondary }}>
                 ID: {item.customerId}
               </Box>
             </Box>
@@ -193,15 +195,16 @@ export const CustomerProfiles = () => {
               borderRadius: 1,
               bgcolor:
                 item?.status === "active"
-                  ? "var(--color-status-success-light)"
-                  : "var(--color-status-error-light)",
+                  ? colors.background.tertiary
+                  : colors.background.tertiary,
               color:
                 item?.status === "active"
-                  ? "var(--color-status-success)"
-                  : "var(--color-status-error)",
+                  ? colors.status.success
+                  : colors.status.error,
               fontSize: "0.75rem",
               fontWeight: 600,
               textTransform: "capitalize",
+              border: `1px solid ${item?.status === "active" ? colors.status.success : colors.status.error}`,
             }}
           >
             {item?.status || "N/A"}
@@ -212,14 +215,15 @@ export const CustomerProfiles = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ backgroundColor: colors.background.primary, minHeight: '100vh' }}>
       <UserStatsCards cards={cards} />
       <Card
         sx={{
           mb: 3,
           borderRadius: 3,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          border: "1px solid #e5e7eb",
+          boxShadow: colors.shadow.md,
+          border: `1px solid ${colors.border.primary}`,
+          backgroundColor: colors.background.card,
           p: 3,
           overflow: "visible",
         }}
@@ -232,7 +236,7 @@ export const CustomerProfiles = () => {
             mb: 2,
           }}
         >
-          <h2 className="text-lg">Filters</h2>
+          <h2 className="text-lg" style={{ color: colors.text.primary }}>Filters</h2>
         </Box>
 
         <UserFilters
@@ -248,7 +252,7 @@ export const CustomerProfiles = () => {
           setCustomerType={setCustomerType}
           onFiltersChange={() => setCurrentPage(1)}
         />
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 2, borderColor: colors.border.primary }} />
         <SortAndManageColumns
           {...{
             sortAnchorEl,

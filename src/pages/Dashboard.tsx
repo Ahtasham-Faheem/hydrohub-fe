@@ -9,19 +9,21 @@ import BusinessControlCenter from "./BusinessControlCenter";
 import { CreateUser } from "./WorkforceShiftManagement/CreateUser";
 import { EditUser } from "./WorkforceShiftManagement/EditUser";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import { FaAngleDown } from "react-icons/fa";
+
 import { CustomerProfiles } from "./CustomerManagement/CustomerProfiles";
 import { CreateCustomer } from "./CustomerManagement/CreateCustomer";
 import { EditCustomer } from "./CustomerManagement/EditCustomer";
 import { CustomerFormProvider } from "../contexts/CustomerFormContext";
 import { CatalogueManagement } from "./CatalogeManagement/CatalogueManagement";
 import { OrderFlow } from "./Orders/OrderFlow";
+import { useTheme } from "../contexts/ThemeContext";
 
 export const Dashboard = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [headerVisible, setHeaderVisible] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const { colors } = useTheme();
 
   // Extract the active section from the current path
   const getActiveSection = () => {
@@ -35,12 +37,19 @@ export const Dashboard = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
+    <Box
+      sx={{
+        display: "flex",
+        height: "100vh",
+        backgroundColor: colors.background.primary,
+      }}
+    >
       {/* Sidebar */}
       <Sidebar
         onSelect={handleSectionChange}
         activeSection={getActiveSection()}
         collapsed={sidebarCollapsed}
+        onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
       />
 
       {/* Right Panel */}
@@ -50,45 +59,28 @@ export const Dashboard = () => {
           display: "flex",
           flexDirection: "column",
           position: "relative",
+          backgroundColor: colors.background.primary,
         }}
       >
         <div className="absolute top-0 w-full">
           <Header
             onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
             isVisible={headerVisible}
+            onToggleVisibility={() => setHeaderVisible(!headerVisible)}
           />
         </div>
-        {/* Add toggle button in top-right when header is hidden */}
-        {!headerVisible && (
-          <Box
-            onClick={() => setHeaderVisible(true)}
-            sx={{
-              position: "absolute",
-              top: 14,
-              right: 20,
-              width: 34,
-              height: 34,
-              cursor: "pointer",
-              zIndex: 1300,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 18,
-              background: "white",
-              borderRadius: "50%",
-              boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
-              color: "#666",
-              "&:hover": { color: "#000" },
-            }}
-            title="Show header"
-          >
-            <FaAngleDown />
-          </Box>
-        )}
 
         {/* Content Area */}
         <div className="h-screen flex flex-col justify-between">
-          <Box sx={{ p: 2, pr: 3, pt: 10 }}>
+          <Box
+            sx={{
+              p: 4,
+              pr: 6,
+              pt: headerVisible ? 10.5 : 2,
+              transition: "padding-top 0.4s ease-out",
+              bgcolor: colors.background.primary,
+            }}
+          >
             <Breadcrumb />
             <Routes>
               <Route

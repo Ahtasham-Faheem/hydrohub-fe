@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { Menu, MenuItem } from "@mui/material";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const Footer = () => {
+  const { colors } = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedLang, setSelectedLang] = useState("English (US)");
   const open = Boolean(anchorEl);
@@ -27,7 +29,10 @@ export const Footer = () => {
   return (
     <footer className="w-full">
       {/* Top section */}
-      <div className="relative w-full border-t border-text-300 border-opacity-50">
+      <div 
+        className="relative w-full border-t border-opacity-50"
+        style={{ borderColor: colors.border.primary }}
+      >
         <nav className="w-full p-4 md:px-6 lg:px-14 xl:px-18">
           <div className="w-full mx-auto flex flex-wrap items-center justify-center gap-5 md:gap-7 lg:gap-10 xl:gap-12">
             {[
@@ -44,7 +49,13 @@ export const Footer = () => {
               <a
                 key={item}
                 href="/"
-                className="text-[#6d6c80] text-center text-sm font-normal whitespace-nowrap hover:text-primary-600 transition-colors"
+                className="text-center text-sm font-normal whitespace-nowrap transition-colors"
+                style={{ 
+                  color: colors.text.secondary,
+                  ':hover': { color: colors.primary[500] }
+                }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.color = colors.primary[500]}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.color = colors.text.secondary}
               >
                 {item}
               </a>
@@ -54,7 +65,10 @@ export const Footer = () => {
       </div>
 
       {/* Bottom section */}
-      <div className="w-full bg-primary-600 py-5 px-16">
+      <div 
+        className="w-full py-5 px-16"
+        style={{ backgroundColor: colors.primary[500] }}
+      >
         <div className="w-full mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Language selector with dropdown */}
           <div>
@@ -89,10 +103,11 @@ export const Footer = () => {
               onClose={() => handleClose()}
               PaperProps={{
                 style: {
-                  backgroundColor: "#ffffff",
-                  color: "#333",
+                  backgroundColor: colors.background.card,
+                  color: colors.text.primary,
                   borderRadius: "8px",
                   padding: "4px",
+                  border: `1px solid ${colors.border.primary}`,
                 },
               }}
             >
@@ -101,6 +116,18 @@ export const Footer = () => {
                   key={lang}
                   onClick={() => handleClose(lang)}
                   selected={lang === selectedLang}
+                  sx={{
+                    color: colors.text.primary,
+                    '&:hover': {
+                      backgroundColor: colors.background.tertiary,
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: colors.primary[100],
+                      '&:hover': {
+                        backgroundColor: colors.primary[200],
+                      },
+                    },
+                  }}
                 >
                   {lang}
                 </MenuItem>

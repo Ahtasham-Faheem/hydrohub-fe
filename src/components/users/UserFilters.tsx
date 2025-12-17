@@ -1,9 +1,6 @@
 import {
   Box,
   FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Tooltip,
   Button,
   Card,
@@ -14,6 +11,7 @@ import { PrimaryButton } from "../common/PrimaryButton";
 import { DateCalendarGrid } from "../common/DateCalendarGrid";
 import dayjs, { Dayjs } from "dayjs";
 import { useState, useRef, useEffect } from "react";
+import { CustomSelect } from "../common/CustomSelect";
 
 interface UserFiltersProps {
   status: string;
@@ -275,16 +273,14 @@ export const UserFilters = ({
                         px: 2,
                         textTransform: "none",
                         backgroundColor:
-                          dateRange === option.value ? "#3b82f6" : "transparent",
-                        color:
                           dateRange === option.value
-                            ? "white"
-                            : "text.primary",
+                            ? "#3b82f6"
+                            : "transparent",
+                        color:
+                          dateRange === option.value ? "white" : "text.primary",
                         "&:hover": {
                           bgcolor:
-                            dateRange === option.value
-                              ? "#3b82f6"
-                              : "#f3f4f6",
+                            dateRange === option.value ? "#3b82f6" : "#f3f4f6",
                         },
                       }}
                     >
@@ -315,15 +311,17 @@ export const UserFilters = ({
                       </Button>
                       <Typography
                         variant="subtitle2"
-                        sx={{ fontWeight: 600, minWidth: "100px", textAlign: "center" }}
+                        sx={{
+                          fontWeight: 600,
+                          minWidth: "100px",
+                          textAlign: "center",
+                        }}
                       >
                         {leftMonth.format("MMM YYYY")}
                       </Typography>
                       <Button
                         size="small"
-                        onClick={() =>
-                          setLeftMonth(leftMonth.add(1, "month"))
-                        }
+                        onClick={() => setLeftMonth(leftMonth.add(1, "month"))}
                       >
                         →
                       </Button>
@@ -332,9 +330,7 @@ export const UserFilters = ({
                       month={leftMonth}
                       startDate={startDate}
                       endDate={endDate}
-                      onDateClick={(date: Dayjs) =>
-                        handleDateClick(date, true)
-                      }
+                      onDateClick={(date: Dayjs) => handleDateClick(date, true)}
                     />
                   </Box>
 
@@ -358,7 +354,11 @@ export const UserFilters = ({
                       </Button>
                       <Typography
                         variant="subtitle2"
-                        sx={{ fontWeight: 600, minWidth: "100px", textAlign: "center" }}
+                        sx={{
+                          fontWeight: 600,
+                          minWidth: "100px",
+                          textAlign: "center",
+                        }}
                       >
                         {rightMonth.format("MMM YYYY")}
                       </Typography>
@@ -430,53 +430,54 @@ export const UserFilters = ({
         </Box>
 
         {setCustomerType ? (
-          <FormControl size="small">
-            <InputLabel>Select Customer Type</InputLabel>
-            <Select
+          <FormControl>
+            <CustomSelect
+              label="Select Customer Type"
               value={customerType || ""}
               onChange={(e) => handleCustomerTypeChange(e.target.value)}
-              label="Select Customer Type"
-            >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="Domestic Customer">Domestic Customer</MenuItem>
-              <MenuItem value="Business Customer">Business Customer</MenuItem>
-              <MenuItem value="Commercial Customer">
-                Commercial Customer
-              </MenuItem>
-            </Select>
+              size="small"
+              options={[
+                { label: "Select Customer Type", value: "" },
+                { label: "Domestic Customer", value: "Domestic Customer" },
+                { label: "Business Customer", value: "Business Customer" },
+                { label: "Commercial Customer", value: "Commercial Customer" },
+              ]}
+            />
           </FormControl>
         ) : (
-          <FormControl size="small">
-            <InputLabel>Select Role</InputLabel>
-            <Select
+          <FormControl>
+            <CustomSelect
+              label="Select Role"
               value={role || ""}
               onChange={(e) => handleRoleChange(e.target.value)}
-              label="Select Role"
-            >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="vendor_admin">Vendor Admin</MenuItem>
-              <MenuItem value="supervisor">Supervisor</MenuItem>
-              <MenuItem value="delivery_staff">Delivery Staff</MenuItem>
-              <MenuItem value="billing_operator">Billing Operator</MenuItem>
-              <MenuItem value="customer_support">Customer Support</MenuItem>
-              <MenuItem value="data_entry">Data Entry</MenuItem>
-            </Select>
+              size="small"
+              options={[
+                { label: "Select Role", value: "" },
+                { label: "vendor_admin", value: "Vendor Admin" },
+                { label: "supervisor", value: "Supervisor" },
+                { label: "delivery_staff", value: "Delivery Staff" },
+                { label: "billing_operator", value: "Billing Operator" },
+                { label: "customer_support", value: "Customer Support" },
+                { label: "data_entry", value: "Data Entry" },
+              ]}
+            />
           </FormControl>
         )}
 
         <FormControl size="small">
-          <InputLabel>Select Status</InputLabel>
-          <Select
+          <CustomSelect
             value={status}
             onChange={(e) => handleStatusChange(e.target.value)}
             label="Select Status"
-          >
-            <MenuItem value="">None</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="suspended">Suspended</MenuItem>
-          </Select>
+            size="small"
+            options={[
+              { label: "None", value: "" },
+              { label: "active", value: "Active" },
+              { label: "inactive", value: "Inactive" },
+              { label: "pending", value: "Pending" },
+              { label: "suspended", value: "Suspended" },
+            ]}
+          />
         </FormControl>
 
         <Tooltip title="Reset All Filters">

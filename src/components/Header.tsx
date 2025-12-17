@@ -11,14 +11,14 @@ import {
   Paper,
 } from "@mui/material";
 import {
-  Menu as MenuIcon,
   ExitToApp as LogoutIcon,
   Person as PersonIcon,
   Settings as SettingsIcon,
 } from "@mui/icons-material";
-import { LuSearch } from "react-icons/lu";
+import { LuSearch, LuSun, LuMoon, LuChevronUp, LuChevronDown } from "react-icons/lu";
 import { useAuth } from "../contexts/AuthContext";
-import NightIcon from "../assets/HeaderIcons/night.svg";
+import { useTheme } from "../contexts/ThemeContext";
+// import NightIcon from "../assets/HeaderIcons/night.svg";
 import BellIcon from "../assets/HeaderIcons/bell.svg";
 import boxesIcon from "../assets/HeaderIcons/boxes.svg";
 import chatIcon from "../assets/HeaderIcons/chat.svg";
@@ -31,10 +31,12 @@ import languageIcon from "../assets/HeaderIcons/language.svg";
 interface HeaderProps {
   onToggleSidebar: () => void;
   isVisible?: boolean;
+  onToggleVisibility?: () => void;
 }
 
-export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
+export const Header = ({ isVisible = true, onToggleVisibility }: HeaderProps) => {
   const { logout } = useAuth();
+  const { mode, toggleTheme, colors } = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -43,37 +45,32 @@ export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
   const handleMenuClose = () => setAnchorEl(null);
 
   return (
-    <Box
-      sx={{
-        height: 70,
-        backgroundColor: "#fff",
-        borderBottom: "1px solid var(--color-gray-200)",
-        borderBottomLeftRadius: 8,
-        borderBottomRightRadius: 8,
-        mr: 3,
-        px: 3,
-        py: 1,
-        ml: 2,
-        display: isVisible ? "flex" : "none",
-        alignItems: "center",
-        justifyContent: "space-between",
-        position: "sticky",
-        top: 0,
-        zIndex: 1200,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-        animation: isVisible ? "slideDown 0.4s ease-out" : "none",
-        '@keyframes slideDown': {
-          '0%': {
-            transform: 'translateY(-100%)',
-            opacity: 0,
-          },
-          '100%': {
-            transform: 'translateY(0)',
-            opacity: 1,
-          },
-        },
-      }}
-    >
+    <>
+      <Box
+        sx={{
+          height: 70,
+          backgroundColor: colors.background.card,
+          borderBottom: `1px solid ${colors.border.primary}`,
+          borderBottomLeftRadius: 8,
+          borderBottomRightRadius: 8,
+          mr: 6,
+          px: 3,
+          py: 1,
+          ml: 4,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          position: "sticky",
+          gap: 3,
+          top: 0,
+          zIndex: 1200,
+          boxShadow: colors.shadow.sm,
+          transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
+          opacity: isVisible ? 1 : 0,
+          transition: 'transform 0.4s ease-out, opacity 0.4s ease-out',
+          pointerEvents: isVisible ? 'auto' : 'none',
+        }}
+      >
       {/* Left Section: Sidebar Toggle + Search */}
       <Box
         sx={{
@@ -84,18 +81,6 @@ export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
           minWidth: 0,
         }}
       >
-        <IconButton
-          onClick={onToggleSidebar}
-          sx={{
-            color: "white",
-            borderRadius: 0.5,
-            backgroundColor: "var(--color-primary-600)",
-            padding: "3px !important",
-            "&:hover": { color: "var(--color-primary-600)", backgroundColor: "var(--color-primary-light)" }
-          }}
-        >
-          <MenuIcon fontSize="medium" />
-        </IconButton>
 
         <Paper
           component="form"
@@ -108,12 +93,22 @@ export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
             boxShadow: "none",
             flex: 1,
             minWidth: 200,
-            marginLeft: 10,
+            maxWidth: '80%',
+            // backgroundColor: colors.background.secondary,
+            // border: `1px solid ${colors.border.primary}`,
           }}
         >
-          <LuSearch style={{ color: "var(--color-text-600)", marginRight: 8 }} />
+          <LuSearch style={{ color: colors.text.secondary, marginRight: 8 }} />
           <InputBase
-            sx={{ flex: 1, fontSize: 14, border: "none" }}
+            sx={{ 
+              flex: 1, 
+              fontSize: 14, 
+              border: "none",
+              color: colors.text.primary,
+              '& input::placeholder': {
+                color: colors.text.tertiary,
+              }
+            }}
             placeholder="Search [CTRL + K]"
             inputProps={{ "aria-label": "search" }}
           />
@@ -130,9 +125,19 @@ export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
           flexShrink: 0,
         }}
       >
-        <Tooltip title="Night">
-          <IconButton sx={{ p: 0.5 }}>
-            <img src={NightIcon} alt="apps" style={{ width: 16, height: 16 }} />
+        <Tooltip title={mode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}>
+          <IconButton 
+            onClick={toggleTheme}
+            sx={{ 
+              p: 0.5,
+              color: colors.text.secondary,
+              '&:hover': {
+                color: colors.text.primary,
+                backgroundColor: colors.background.tertiary,
+              }
+            }}
+          >
+            {mode === 'light' ? <LuMoon size={16} /> : <LuSun size={16} />}
           </IconButton>
         </Tooltip>
         <Tooltip title="Corners">
@@ -219,6 +224,73 @@ export const Header = ({ onToggleSidebar, isVisible = true }: HeaderProps) => {
           Logout
         </MenuItem>
       </Menu>
-    </Box>
+
+        {/* Header Toggle Button - Bottom Right */}
+        {onToggleVisibility && (
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: -16,
+              right: 20,
+              zIndex: 1300,
+            }}
+          >
+            <Tooltip title={isVisible ? "Hide header" : "Show header"}>
+              <IconButton
+                onClick={onToggleVisibility}
+                sx={{
+                  width: 32,
+                  height: 32,
+                  backgroundColor: colors.background.card,
+                  border: `1px solid ${colors.border.primary}`,
+                  boxShadow: colors.shadow.md,
+                  color: colors.text.secondary,
+                  "&:hover": {
+                    color: colors.text.primary,
+                    backgroundColor: colors.background.tertiary,
+                    boxShadow: colors.shadow.lg,
+                  },
+                }}
+              >
+                {isVisible ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+        )}
+      </Box>
+
+      {/* Toggle Button When Header is Hidden */}
+      {onToggleVisibility && !isVisible && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 14,
+            right: 20,
+            zIndex: 1300,
+          }}
+        >
+          <Tooltip title="Show header">
+            <IconButton
+              onClick={onToggleVisibility}
+              sx={{
+                width: 34,
+                height: 34,
+                backgroundColor: colors.background.card,
+                border: `1px solid ${colors.border.primary}`,
+                boxShadow: colors.shadow.md,
+                color: colors.text.secondary,
+                "&:hover": {
+                  color: colors.text.primary,
+                  backgroundColor: colors.background.tertiary,
+                  boxShadow: colors.shadow.lg,
+                },
+              }}
+            >
+              <LuChevronDown size={16} />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+    </>
   );
 };

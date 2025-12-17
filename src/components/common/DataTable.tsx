@@ -20,6 +20,7 @@ import { Visibility, Edit, Delete, FolderOpen } from "@mui/icons-material";
 import { IoMdClose } from "react-icons/io";
 import { useState } from "react";
 import { useFormContext } from "../../contexts/FormContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Custom hook to safely use FormContext only when available
 const useFormContextSafe = () => {
@@ -64,6 +65,7 @@ export const DataTable = ({
   onDelete,
 }: DataTableProps) => {
   const formContext = useFormContextSafe();
+  const { colors } = useTheme();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [openModal, setOpenModal] = useState(false);
@@ -121,8 +123,9 @@ export const DataTable = ({
     <Card
       sx={{
         borderRadius: 3,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-        border: "1px solid #e5e7eb",
+        boxShadow: colors.shadow.md,
+        border: `1px solid ${colors.border.primary}`,
+        backgroundColor: colors.background.card,
         overflow: "hidden",
       }}
     >
@@ -130,13 +133,13 @@ export const DataTable = ({
         <Box sx={{ p: 2 }}>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: "#f8fafc" }}>
+              <TableRow sx={{ bgcolor: colors.background.secondary }}>
                 {columns.map((column) => (
-                  <TableCell key={column.key}>
+                  <TableCell key={column.key} sx={{ color: colors.text.primary }}>
                     <Skeleton variant="text" width={80} />
                   </TableCell>
                 ))}
-                {showActions && <TableCell align="center"><Skeleton variant="text" width={60} /></TableCell>}
+                {showActions && <TableCell align="center" sx={{ color: colors.text.primary }}><Skeleton variant="text" width={60} /></TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -168,13 +171,13 @@ export const DataTable = ({
           alignItems: 'center', 
           justifyContent: 'center',
           py: 8,
-          color: '#9ca3af'
+          color: colors.text.tertiary
         }}>
-          <FolderOpen sx={{ fontSize: 64, mb: 2, color: '#d1d5db' }} />
-          <Typography variant="h6" sx={{ mb: 1, color: '#6b7280', fontWeight: 500 }}>
+          <FolderOpen sx={{ fontSize: 64, mb: 2, color: colors.text.tertiary }} />
+          <Typography variant="h6" sx={{ mb: 1, color: colors.text.secondary, fontWeight: 500 }}>
             No Data Found
           </Typography>
-          <Typography variant="body2" sx={{ color: '#9ca3af', textAlign: 'center' }}>
+          <Typography variant="body2" sx={{ color: colors.text.tertiary, textAlign: 'center' }}>
             There are no records to display at the moment.
           </Typography>
         </Box>
@@ -182,19 +185,30 @@ export const DataTable = ({
         <>
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
-              <TableRow sx={{ bgcolor: "#f8fafc" }}>
+              <TableRow sx={{ bgcolor: colors.background.secondary }}>
                 {columns.map((column) => (
-                  <TableCell key={column.key}>{column.label}</TableCell>
+                  <TableCell key={column.key} sx={{ color: colors.text.primary, fontWeight: 600 }}>
+                    {column.label}
+                  </TableCell>
                 ))}
-                {showActions && <TableCell align="center">Actions</TableCell>}
+                {showActions && <TableCell align="center" sx={{ color: colors.text.primary, fontWeight: 600 }}>Actions</TableCell>}
               </TableRow>
             </TableHead>
             <TableBody>
               {data.map((item: any) => (
-                <TableRow key={getNestedValue(item, keyField)} hover>
+                <TableRow 
+                  key={getNestedValue(item, keyField)} 
+                  hover
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: colors.background.secondary,
+                    }
+                  }}
+                >
                   {columns.map((column) => (
                     <TableCell
                       key={`${getNestedValue(item, keyField)}-${column.key}`}
+                      sx={{ color: colors.text.primary }}
                     >
                       {renderCellValue(item, column)}
                     </TableCell>
@@ -204,7 +218,7 @@ export const DataTable = ({
                       {onView && (
                         <IconButton
                           size="small"
-                          sx={{ color: "#6b7280" }}
+                          sx={{ color: colors.text.secondary }}
                           onClick={() => handleOpenModal(item)}
                         >
                           <Visibility fontSize="small" />
@@ -213,7 +227,7 @@ export const DataTable = ({
                       {onEdit && (
                         <IconButton
                           size="small"
-                          sx={{ color: "#f59e0b" }}
+                          sx={{ color: colors.status.warning }}
                           onClick={() => {
                             // Reset form context if available (when editing within a form)
                             if (formContext?.resetForm) {
@@ -230,7 +244,7 @@ export const DataTable = ({
                       {onDelete && (
                         <IconButton
                           size="small"
-                          sx={{ color: "#ef4444" }}
+                          sx={{ color: colors.status.error }}
                           onClick={() => handleDeleteClick(item)}
                           disabled={
                             deletingId === getNestedValue(item, keyField)
@@ -239,7 +253,7 @@ export const DataTable = ({
                           {deletingId === getNestedValue(item, keyField) ? (
                             <CircularProgress
                               size={20}
-                              sx={{ color: "#ef4444" }}
+                              sx={{ color: colors.status.error }}
                             />
                           ) : (
                             <Delete fontSize="small" />
@@ -260,7 +274,8 @@ export const DataTable = ({
               justifyContent: "end",
               gap: 1,
               p: 2,
-              borderTop: "1px solid #e5e7eb",
+              borderTop: `1px solid ${colors.border.primary}`,
+              backgroundColor: colors.background.secondary,
             }}
           >
             <Button

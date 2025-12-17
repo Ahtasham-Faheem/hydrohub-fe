@@ -1,9 +1,11 @@
 import { Breadcrumbs, Typography, Link, Box } from '@mui/material';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { NavigateNext } from '@mui/icons-material';
+import { useTheme } from '../contexts/ThemeContext';
 
 const routeLabels: Record<string, string> = {
   dashboard: 'Dashboard',
+  overview: 'Dashboard',
   users: 'System Users',
   'create-user': 'Create User',
   'edit': 'Edit',
@@ -17,6 +19,7 @@ const routeLabels: Record<string, string> = {
 
 export const Breadcrumb = () => {
   const location = useLocation();
+  const { colors } = useTheme();
   const pathnames = location.pathname.split('/').filter((x) => x);
 
   if (pathnames.length <= 1 || (pathnames.length === 2 && pathnames[1] === 'overview')) return null;
@@ -31,6 +34,8 @@ export const Breadcrumb = () => {
       currentPageLabel = 'Edit User';
     } else if (parentSection === 'customer-profiles') {
       currentPageLabel = 'Edit Customer';
+      } else if (parentSection === 'dashboard') {
+      currentPageLabel = 'Business Control Center';
     } else {
       currentPageLabel = 'Edit';
     }
@@ -49,11 +54,11 @@ export const Breadcrumb = () => {
 
   return (
     <Box sx={{ mb: 3, display: 'flex',flexDirection: 'column', gap: 0.5, justifyContent: 'start' }}>
-      <Typography variant="h5" sx={{ fontWeight: 600}}>
+      <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text.primary }}>
         {currentPageLabel}
       </Typography>
       <Breadcrumbs
-        separator={<NavigateNext fontSize="small" />}
+        separator={<NavigateNext fontSize="small" sx={{ color: colors.text.secondary }} />}
       >
         {breadcrumbItems.map((pathname, index) => {
           const routeTo = `/${breadcrumbItems.slice(0, index + 1).join('/')}`;
@@ -61,7 +66,7 @@ export const Breadcrumb = () => {
           const label = routeLabels[pathname] || pathname.charAt(0).toUpperCase() + pathname.slice(1);
 
           return isLast ? (
-            <Typography key={pathname} color="text.primary" sx={{ fontWeight: 500 }}>
+            <Typography key={pathname} sx={{ fontWeight: 500, color: colors.text.primary }}>
               {label}
             </Typography>
           ) : (
@@ -70,8 +75,13 @@ export const Breadcrumb = () => {
               component={RouterLink}
               to={routeTo}
               underline="hover"
-              color="inherit"
-              sx={{ fontWeight: 400 }}
+              sx={{ 
+                fontWeight: 400,
+                color: colors.text.secondary,
+                '&:hover': {
+                  color: colors.text.primary,
+                }
+              }}
             >
               {label}
             </Link>

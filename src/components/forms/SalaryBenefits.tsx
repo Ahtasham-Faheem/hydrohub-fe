@@ -18,6 +18,7 @@ export const SalaryBenefits = () => {
           placeholder="50000"
           value={formData.basicSalary || ''}
           onChange={(e) => updateFormData('basicSalary', e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, basicSalary: "" })}
           error={fieldErrors['basicSalary']}
         />
         <CustomInput
@@ -25,6 +26,7 @@ export const SalaryBenefits = () => {
           placeholder="Transport: 5000, Medical: 3000, Food: 2000"
           value={formData.allowances || ''}
           onChange={(e) => updateFormData('allowances', e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, allowances: "" })}
           error={fieldErrors['allowances']}
         />
         <CustomInput
@@ -39,6 +41,10 @@ export const SalaryBenefits = () => {
               const numValue = value ? parseInt(value) : 0;
               if (numValue <= 99) {
                 updateFormData('providentFund', value);
+                // Clear error when user starts typing
+                if (fieldErrors['providentFund']) {
+                  setFieldErrors({ ...fieldErrors, providentFund: "" });
+                }
               }
             }
           }}
@@ -69,6 +75,7 @@ export const SalaryBenefits = () => {
           placeholder="HBL Bank"
           value={formData.bankName || ''}
           onChange={(e) => updateFormData('bankName', e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, bankName: "" })}
           error={fieldErrors['bankName']}
         />
         <CustomInput
@@ -76,6 +83,7 @@ export const SalaryBenefits = () => {
           placeholder="John Doe"
           value={formData.bankAccountTitle || ''}
           onChange={(e) => updateFormData('bankAccountTitle', e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, bankAccountTitle: "" })}
           error={fieldErrors['bankAccountTitle']}
         />
       </Stack>
@@ -89,13 +97,23 @@ export const SalaryBenefits = () => {
           onChange={(e) => {
             const value = e.target.value.replace(/\D/g, '').slice(0, 16);
             updateFormData('bankAccountNumber', value);
+            // Clear error when user starts typing
+            if (fieldErrors['bankAccountNumber']) {
+              setFieldErrors({ ...fieldErrors, bankAccountNumber: "" });
+            }
           }}
           error={fieldErrors['bankAccountNumber']}
         />
         <CustomSelect
           label="Tax Status"
           value={formData.taxStatus || ''}
-          onChange={(e) => updateFormData('taxStatus', e.target.value)}
+          onChange={(e) => {
+            updateFormData('taxStatus', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['taxStatus']) {
+              setFieldErrors({ ...fieldErrors, taxStatus: "" });
+            }
+          }}
           error={fieldErrors['taxStatus']}
           options={[
             { value: "Taxable", label: "Taxable" },

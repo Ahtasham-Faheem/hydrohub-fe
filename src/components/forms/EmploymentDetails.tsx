@@ -49,7 +49,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Designation / Job Title"
           value={formData.jobTitle || ''}
-          onChange={(e) => updateFormData('jobTitle', e.target.value)}
+          onChange={(e) => {
+            updateFormData('jobTitle', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['jobTitle']) {
+              setFieldErrors({ ...fieldErrors, jobTitle: "" });
+            }
+          }}
           error={fieldErrors['jobTitle']}
           options={[
             { value: "senior_manager", label: "Senior Manager" },
@@ -64,7 +70,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Department"
           value={formData.department || ''}
-          onChange={(e) => updateFormData('department', e.target.value)}
+          onChange={(e) => {
+            updateFormData('department', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['department']) {
+              setFieldErrors({ ...fieldErrors, department: "" });
+            }
+          }}
           error={fieldErrors['department']}
           options={[
             { value: "operations", label: "Operations" },
@@ -82,7 +94,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Employment Type"
           value={formData.employmentType || ''}
-          onChange={(e) => updateFormData('employmentType', e.target.value)}
+          onChange={(e) => {
+            updateFormData('employmentType', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['employmentType']) {
+              setFieldErrors({ ...fieldErrors, employmentType: "" });
+            }
+          }}
           error={fieldErrors['employmentType']}
           options={[
             { value: "Full-Time", label: "Full-Time" },
@@ -93,7 +111,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Supervisor / Reporting To"
           value={formData.supervisorId || ''}
-          onChange={(e) => updateFormData('supervisorId', e.target.value)}
+          onChange={(e) => {
+            updateFormData('supervisorId', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['supervisorId']) {
+              setFieldErrors({ ...fieldErrors, supervisorId: "" });
+            }
+          }}
           error={fieldErrors['supervisorId']}
           options={
             loadingSupervisors
@@ -109,7 +133,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Work Location"
           value={formData.workLocation || ''}
-          onChange={(e) => updateFormData('workLocation', e.target.value)}
+          onChange={(e) => {
+            updateFormData('workLocation', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['workLocation']) {
+              setFieldErrors({ ...fieldErrors, workLocation: "" });
+            }
+          }}
           error={fieldErrors['workLocation']}
           options={[
             { value: "plant", label: "Plant" },
@@ -126,7 +156,13 @@ export const EmploymentDetails = () => {
         <CustomSelect
           label="Shift Type"
           value={formData.shiftType || ''}
-          onChange={(e) => updateFormData('shiftType', e.target.value)}
+          onChange={(e) => {
+            updateFormData('shiftType', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['shiftType']) {
+              setFieldErrors({ ...fieldErrors, shiftType: "" });
+            }
+          }}
           error={fieldErrors['shiftType']}
           options={[
             { value: "Morning", label: "Morning" },

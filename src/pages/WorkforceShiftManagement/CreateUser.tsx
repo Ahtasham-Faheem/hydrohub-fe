@@ -17,6 +17,7 @@ import { FaCircle } from "react-icons/fa";
 import { FormProvider, useFormContext } from "../../contexts/FormContext";
 import { staffService } from "../../services/api";
 import { validatePasswordMatch } from "../../utils/validationUtils";
+import { useTheme } from "../../contexts/ThemeContext";
 
 import {
   MdContactMail,
@@ -75,6 +76,7 @@ const steps = [
 const CreateUserForm = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const { colors } = useTheme();
   const {
     formData,
     currentStep,
@@ -89,7 +91,6 @@ const CreateUserForm = () => {
   } = useFormContext();
   const navigate = useNavigate();
 
-  const [image, setImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleNext = async () => {
@@ -99,9 +100,9 @@ const CreateUserForm = () => {
     try {
       // Step 0: Create staff member via /staff API
       if (currentStep === 0) {
-        const validation = validateRequiredFields();
+        const validation = await validateRequiredFields();
         if (!validation.isValid) {
-          setError(validation.errors.join(", "));
+          setError(validation.errors[0] || 'Please fill in all required fields');
           setIsLoading(false);
           return;
         }
@@ -151,10 +152,9 @@ const CreateUserForm = () => {
           return;
         }
 
-        const validation = validateStep1();
+        const validation = await validateStep1();
         if (!validation.isValid) {
-          setFieldErrors(validation.fieldErrors);
-          setError(null);
+          setError(validation.errors[0] || 'Please fill in all required fields');
           setIsLoading(false);
           return;
         }
@@ -192,10 +192,9 @@ const CreateUserForm = () => {
           return;
         }
 
-        const validation = validateStep2();
+        const validation = await validateStep2();
         if (!validation.isValid) {
-          setFieldErrors(validation.fieldErrors);
-          setError(null);
+          setError(validation.errors[0] || 'Please fill in all required fields');
           setIsLoading(false);
           return;
         }
@@ -225,10 +224,9 @@ const CreateUserForm = () => {
           return;
         }
 
-        const validation = validateStep3();
+        const validation = await validateStep3();
         if (!validation.isValid) {
-          setFieldErrors(validation.fieldErrors);
-          setError(null);
+          setError(validation.errors[0] || 'Please fill in all required fields');
           setIsLoading(false);
           return;
         }
@@ -259,10 +257,9 @@ const CreateUserForm = () => {
           return;
         }
 
-        const validation = validateStep4();
+        const validation = await validateStep4();
         if (!validation.isValid) {
-          setFieldErrors(validation.fieldErrors);
-          setError(null);
+          setError(validation.errors[0] || 'Please fill in all required fields');
           setIsLoading(false);
           return;
         }
@@ -333,27 +330,12 @@ const CreateUserForm = () => {
     setCurrentStep(Math.max(currentStep - 1, 0));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
 
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
-        return (
-          <PersonalInformation
-            image={image}
-            onImageUpload={handleImageUpload}
-            onImageReset={() => setImage(null)}
-          />
-        );
+        return <PersonalInformation />;
       case 1:
         return <AdditionalPersonalInfo />;
       case 2:
@@ -365,29 +347,27 @@ const CreateUserForm = () => {
       case 5:
         return <DocumentsUpload />;
       default:
-        return (
-          <PersonalInformation
-            image={image}
-            onImageUpload={handleImageUpload}
-            onImageReset={() => setImage(null)}
-          />
-        );
+        return <PersonalInformation />;
     }
   };
 
   return (
-    <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
+    <Box sx={{ 
+      display: "flex", 
+      minHeight: "calc(100vh - 100px)",
+      backgroundColor: colors.background.primary 
+    }}>
       {/* Sidebar */}
       <Box
         sx={{
           width: 320,
-          bgcolor: "white",
+          bgcolor: colors.background.card,
           p: 4,
           pr: 0,
-          borderRight: "1px solid #e0e0e0",
+          borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
           User Creation Form
         </Typography>
         <Stepper
@@ -443,7 +423,13 @@ const CreateUserForm = () => {
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1, height: "auto" }}>
-        <Card sx={{ p: 3, height: "100%", boxShadow: "none" }}>
+        <Card sx={{ 
+          p: 3, 
+          height: "100%", 
+          boxShadow: "none",
+          backgroundColor: colors.background.card,
+          color: colors.text.primary 
+        }}>
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {steps[currentStep].icon}

@@ -17,7 +17,7 @@ export interface DomesticStep3BuildingAccessHandle {
 
 export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAccessHandle, DomesticStep3BuildingAccessProps>(
   ({ customerProfileId }: DomesticStep3BuildingAccessProps, ref) => {
-    const { state, updateFormData } = useCustomerForm();
+    const { state, updateFormData, fieldErrors, setFieldErrors } = useCustomerForm();
     const data = state.data as DomesticCustomer;
     const buildingAccess = data.buildingAccessInfo || {};
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -92,7 +92,14 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
           label="Location Map Link / Coordinates"
           placeholder="Paste Google Maps location link or coordinates"
           value={buildingAccess.mapLocation || ''}
-          onChange={(e) => updateFormData('buildingAccessInfo.mapLocation', e.target.value)}
+          onChange={(e) => {
+            updateFormData('buildingAccessInfo.mapLocation', e.target.value);
+            // Clear error when user starts typing
+            if (fieldErrors['buildingAccessInfo.mapLocation']) {
+              setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.mapLocation': "" });
+            }
+          }}
+          error={fieldErrors['buildingAccessInfo.mapLocation']}
         />
       </Box>
 
@@ -104,12 +111,18 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
         <CustomSelect
           label="Ownership Status *"
           value={buildingAccess.ownershipStatus || ''}
-          onChange={(e) => updateFormData('buildingAccessInfo.ownershipStatus', e.target.value)}
+          onChange={(e) => {
+            updateFormData('buildingAccessInfo.ownershipStatus', e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['buildingAccessInfo.ownershipStatus']) {
+              setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.ownershipStatus': "" });
+            }
+          }}
+          error={fieldErrors['buildingAccessInfo.ownershipStatus']}
           options={[
             { label: 'Personal', value: 'personal' },
             { label: 'Rental', value: 'rental' },
             { label: 'Mortgage', value: 'mortgage' },
-            { label: 'Other', value: 'other' },
           ]}
         />
       </Box>
@@ -122,7 +135,24 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
         <CustomSelect
           label="Delivery Access Level *"
           value={buildingAccess.deliveryAccessLevel || ''}
-          onChange={(e) => updateFormData('buildingAccessInfo.deliveryAccessLevel', e.target.value)}
+          onChange={(e) => {
+            const newValue = e.target.value;
+            updateFormData('buildingAccessInfo.deliveryAccessLevel', newValue);
+            
+            // Clear conditional fields when access level changes
+            if (newValue !== 'upstairs') {
+              updateFormData('buildingAccessInfo.floorPosition', '');
+            }
+            if (newValue !== 'basement') {
+              updateFormData('buildingAccessInfo.basementPosition', '');
+            }
+            
+            // Clear error when user selects
+            if (fieldErrors['buildingAccessInfo.deliveryAccessLevel']) {
+              setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.deliveryAccessLevel': "" });
+            }
+          }}
+          error={fieldErrors['buildingAccessInfo.deliveryAccessLevel']}
           options={[
             { label: 'Basement', value: 'basement' },
             { label: 'Ground Floor', value: 'ground' },
@@ -140,7 +170,15 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
           <CustomSelect
             label="Floor Position *"
             value={buildingAccess.floorPosition || ''}
-            onChange={(e) => updateFormData('buildingAccessInfo.floorPosition', e.target.value)}
+            onChange={(e) => {
+              updateFormData('buildingAccessInfo.floorPosition', e.target.value);
+              // Clear error when user selects
+              if (fieldErrors['buildingAccessInfo.floorPosition']) {
+                setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.floorPosition': "" });
+              }
+            }}
+            onClearError={() => setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.floorPosition': "" })}
+            error={fieldErrors['buildingAccessInfo.floorPosition']}
             options={[
               { label: '1st Floor', value: '1st' },
               { label: '2nd Floor', value: '2nd' },
@@ -161,7 +199,15 @@ export const DomesticStep3BuildingAccess = forwardRef<DomesticStep3BuildingAcces
           <CustomSelect
             label="Basement Position *"
             value={buildingAccess.basementPosition || ''}
-            onChange={(e) => updateFormData('buildingAccessInfo.basementPosition', e.target.value)}
+            onChange={(e) => {
+              updateFormData('buildingAccessInfo.basementPosition', e.target.value);
+              // Clear error when user selects
+              if (fieldErrors['buildingAccessInfo.basementPosition']) {
+                setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.basementPosition': "" });
+              }
+            }}
+            onClearError={() => setFieldErrors({ ...fieldErrors, 'buildingAccessInfo.basementPosition': "" })}
+            error={fieldErrors['buildingAccessInfo.basementPosition']}
             options={[
               { label: 'LG 1', value: 'LG1' },
               { label: 'LG 2', value: 'LG2' },

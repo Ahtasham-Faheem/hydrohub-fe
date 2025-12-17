@@ -20,10 +20,12 @@ import {
   CustomerFormProvider,
 } from "../../contexts/CustomerFormContext";
 import { validatePasswordMatch } from "../../utils/validationUtils";
-import { LuUserRoundPen, LuUserCheck, LuMapPin, LuLink } from "react-icons/lu";
+import { LuUserRoundPen, LuUserCheck, LuMapPin, LuLink, LuGlassWater } from "react-icons/lu";
 import { customerService } from "../../services/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 // Import form components
+import { CustomerTypeSelection } from "../../components/customer-forms/CustomerTypeSelection";
 import { DomesticStep1BasicProfile } from "../../components/customer-forms/DomesticStep1BasicProfile";
 import { DomesticStep2PersonalInfo } from "../../components/customer-forms/DomesticStep2PersonalInfo";
 import type { DomesticStep3BuildingAccessHandle } from "../../components/customer-forms/DomesticStep3BuildingAccess";
@@ -32,7 +34,9 @@ import { DomesticStep4Addresses } from "../../components/customer-forms/Domestic
 import type { DomesticStep5PreferencesHandle } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep5Preferences } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
+import { CustomerBottleManagement } from "../../components/customer-forms/CustomerBottleManagement";
 import { useCreateCustomer } from "../../hooks/useCreateCustomer";
+import type { CustomerType } from "../../types/customer";
 
 // Custom Step Icon Component
 const CustomStepIcon = ({ active }: { active: boolean }) => (
@@ -59,8 +63,8 @@ const domesticSteps = [
   { label: "Addresses", icon: <LuMapPin size={22} /> },
   { label: "Preferences", icon: <LuUserRoundPen size={22} /> },
   { label: "Linked Accounts", icon: <LuLink size={22} /> },
+  { label: "Bottle Management", icon: <LuGlassWater size={22} /> },
   // { label: "Referral", icon: <LuUserPlus size={22} /> },
-  // { label: "Security", icon: <LuShield size={22} /> },
   // { label: "Additional Notes", icon: <LuFileText size={22} /> },
 ];
 
@@ -71,8 +75,8 @@ const businessSteps = [
   { label: "Addresses", icon: <LuMapPin size={22} /> },
   { label: "Preferences", icon: <LuUserRoundPen size={22} /> },
   { label: "Linked Accounts", icon: <LuLink size={22} /> },
+  { label: "Bottle Management", icon: <LuGlassWater size={22} /> },
   // { label: "Referral", icon: <LuUserPlus size={22} /> },
-  // { label: "Security", icon: <LuShield size={22} /> },
   // { label: "Additional Notes", icon: <LuFileText size={22} /> },
 ];
 
@@ -80,7 +84,9 @@ const CreateCustomerFormContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [customerProfileId, setCustomerProfileId] = useState<string | null>(
-    null
+    () => {
+      return localStorage.getItem("createCustomerProfileId") || null;
+    }
   );
   const [isLoading, setIsLoading] = useState(false);
   const {
@@ -88,10 +94,15 @@ const CreateCustomerFormContent = () => {
     setCurrentStep,
     setFieldErrors,
     validateRequiredFields,
+    validateStep2,
+    validateStep3,
+    validateStep5,
+    validateStep7,
     setCustomerType,
     resetForm,
   } = useCustomerForm();
   const navigate = useNavigate();
+  const { colors } = useTheme();
 
   // Refs for manual form submission
   const buildingAccessRef = useRef<DomesticStep3BuildingAccessHandle>(null);
@@ -99,12 +110,32 @@ const CreateCustomerFormContent = () => {
 
   const createCustomerMutation = useCreateCustomer();
 
-  // Initialize customer type on mount - always reset form when component mounts
+  // Automatically resume progress on mount - no dialog needed
   useEffect(() => {
-    resetForm();
-    setCustomerType("Domestic Customer");
+    const savedState = localStorage.getItem("createCustomerFormState");
+
+    if (savedState) {
+      const parsed = JSON.parse(savedState);
+      // If there's no meaningful progress, clear the saved state
+      if (
+        !parsed.customerType ||
+        !parsed.data ||
+        (!parsed.currentStep &&
+          !Object.keys(parsed.data).some(
+            (key) => parsed.data[key] && key !== "customerType"
+          ))
+      ) {
+        localStorage.removeItem("createCustomerFormState");
+      }
+      // Otherwise, the context will automatically load the saved state
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleCustomerTypeSelection = (type: CustomerType) => {
+    setCustomerType(type);
+    setCurrentStep(0); // Move to first step after selection
+  };
 
   const steps =
     state.customerType === "Business Customer" ? businessSteps : domesticSteps;
@@ -114,10 +145,9 @@ const CreateCustomerFormContent = () => {
 
     // Step 0 (Basic Profile): Create customer with /customers API
     if (state.currentStep === 0 && !customerProfileId) {
-      const validation = validateRequiredFields();
+      const validation = await validateRequiredFields();
       if (!validation.isValid) {
-        setFieldErrors(validation.fieldErrors);
-        setError(validation.errors[0] || 'Please fill in all required fields');
+        setError(validation.errors[0] || "Please fill in all required fields");
         return;
       }
 
@@ -125,8 +155,10 @@ const CreateCustomerFormContent = () => {
 
       // Validate profile picture is uploaded
       if (!data.profilePictureAssetId || !data.profilePictureAssetId.trim()) {
-        setFieldErrors({ profilePictureAssetId: 'Profile picture is required' });
-        setError('Please upload a profile picture to continue');
+        setFieldErrors({
+          profilePictureAssetId: "Profile picture is required",
+        });
+        setError("Please upload a profile picture to continue");
         return;
       }
 
@@ -162,6 +194,7 @@ const CreateCustomerFormContent = () => {
         });
 
         setCustomerProfileId(newCustomer.id);
+        localStorage.setItem("createCustomerProfileId", newCustomer.id);
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(1);
@@ -176,36 +209,15 @@ const CreateCustomerFormContent = () => {
 
     // Step 1 (Additional Personal Info): Update customer additional info
     if (state.currentStep === 1 && customerProfileId) {
-      const data = state.data as any;
-      const fieldErrorsMap: Record<string, string> = {};
-
-      // Validate dateOfBirth on the frontend
-      if (!data.dateOfBirth || !data.dateOfBirth.toString().trim()) {
-        fieldErrorsMap['dateOfBirth'] = 'Date of Birth is required';
-      } else {
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-        if (!dateRegex.test(data.dateOfBirth)) {
-          fieldErrorsMap['dateOfBirth'] = 'Date of Birth must be in YYYY-MM-DD format';
-        }
-      }
-
-      if (!data.gender || !data.gender.trim()) {
-        fieldErrorsMap['gender'] = 'Gender is required';
-      }
-
-      if (!data.maritalStatus || !data.maritalStatus.trim()) {
-        fieldErrorsMap['maritalStatus'] = 'Marital Status is required';
-      }
-
-      // If there are any field errors, show them and don't proceed
-      if (Object.keys(fieldErrorsMap).length > 0) {
-        setFieldErrors(fieldErrorsMap);
-        setError(Object.values(fieldErrorsMap)[0] || 'Please fill in all required fields');
+      const validation = await validateStep2();
+      if (!validation.isValid) {
+        setError(validation.errors[0] || "Please fill in all required fields");
         return;
       }
 
       try {
         setIsLoading(true);
+        const data = state.data as any;
         await customerService.updateAdditionalPersonalInfo(customerProfileId, {
           fathersName: data.fatherHusbandName || "",
           mothersName: data.motherName || "",
@@ -240,22 +252,9 @@ const CreateCustomerFormContent = () => {
 
     // Step 2 (Building Access): Submit and move to next step
     if (state.currentStep === 2) {
-      const data = state.data as any;
-      const fieldErrorsMap: Record<string, string> = {};
-
-      // Validate building access required fields
-      if (!data.buildingAccessInfo?.ownershipStatus || !data.buildingAccessInfo.ownershipStatus.trim()) {
-        fieldErrorsMap['ownershipStatus'] = 'Ownership Status is required';
-      }
-
-      if (!data.buildingAccessInfo?.deliveryAccessLevel || !data.buildingAccessInfo.deliveryAccessLevel.trim()) {
-        fieldErrorsMap['deliveryAccessLevel'] = 'Delivery Access Level is required';
-      }
-
-      // If there are any field errors, show them and don't proceed
-      if (Object.keys(fieldErrorsMap).length > 0) {
-        setFieldErrors(fieldErrorsMap);
-        setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+      const validation = await validateStep3();
+      if (!validation.isValid) {
+        setError(validation.errors[0] || "Please fill in all required fields");
         return;
       }
 
@@ -268,19 +267,17 @@ const CreateCustomerFormContent = () => {
         }
 
         // Call the API directly to update building info
-        await customerService.updateBuildingInfo(
-          customerProfileId,
-          {
-            mapLocation: data.buildingAccessInfo?.mapLocation || "",
-            ownership: data.buildingAccessInfo?.ownershipStatus || "",
-            accessLevel: data.buildingAccessInfo?.deliveryAccessLevel || "",
-            floorPosition: data.buildingAccessInfo?.floorPosition || "",
-            basementPosition: data.buildingAccessInfo?.basementPosition || "",
-            liftStartTime: data.buildingAccessInfo?.liftServiceStartTime || "",
-            liftEndTime: data.buildingAccessInfo?.liftServiceCloseTime || "",
-            accessNotes: data.buildingAccessInfo?.accessNotes || "",
-          }
-        );
+        const data = state.data as any;
+        await customerService.updateBuildingInfo(customerProfileId, {
+          mapLocation: data.buildingAccessInfo?.mapLocation || "",
+          ownership: data.buildingAccessInfo?.ownershipStatus || "",
+          accessLevel: data.buildingAccessInfo?.deliveryAccessLevel || "",
+          floorPosition: data.buildingAccessInfo?.floorPosition || "",
+          basementPosition: data.buildingAccessInfo?.basementPosition || "",
+          liftStartTime: data.buildingAccessInfo?.liftServiceStartTime || "",
+          liftEndTime: data.buildingAccessInfo?.liftServiceCloseTime || "",
+          accessNotes: data.buildingAccessInfo?.accessNotes || "",
+        });
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
@@ -308,9 +305,7 @@ const CreateCustomerFormContent = () => {
         setCurrentStep(4);
         return;
       } catch (err: any) {
-        setError(
-          err.response?.data?.message || "Failed to save addresses"
-        );
+        setError(err.response?.data?.message || "Failed to save addresses");
         return;
       } finally {
         setIsLoading(false);
@@ -319,30 +314,9 @@ const CreateCustomerFormContent = () => {
 
     // Step 4 (Preferences): Submit and move to next step
     if (state.currentStep === 4) {
-      const data = state.data as any;
-      const fieldErrorsMap: Record<string, string> = {};
-
-      // Validate preferences required fields
-      if (!data.preferences?.preferredDeliveryTime || !data.preferences.preferredDeliveryTime.trim()) {
-        fieldErrorsMap['preferredDeliveryTime'] = 'Preferred Delivery Time is required';
-      }
-
-      if (!data.preferences?.deliveryFrequency || !data.preferences.deliveryFrequency.trim()) {
-        fieldErrorsMap['deliveryFrequency'] = 'Delivery Frequency is required';
-      }
-
-      if (!data.preferences?.billingOption || !data.preferences.billingOption.trim()) {
-        fieldErrorsMap['billingOption'] = 'Billing Option is required';
-      }
-
-      if (!data.preferences?.paymentMode || !data.preferences.paymentMode.trim()) {
-        fieldErrorsMap['paymentMode'] = 'Payment Mode is required';
-      }
-
-      // If there are any field errors, show them and don't proceed
-      if (Object.keys(fieldErrorsMap).length > 0) {
-        setFieldErrors(fieldErrorsMap);
-        setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+      const validation = await validateStep5();
+      if (!validation.isValid) {
+        setError(validation.errors[0] || "Please fill in all required fields");
         return;
       }
 
@@ -355,19 +329,17 @@ const CreateCustomerFormContent = () => {
         }
 
         // Call the API directly to update preferences
-        await customerService.updatePreferences(
-          customerProfileId,
-          {
-            preferredDeliveryTime: data.preferences?.preferredDeliveryTime || "",
-            deliveryFrequency: data.preferences?.deliveryFrequency || "",
-            bottleHandling: data.preferences?.bottleHandlingPreference || "",
-            billingOption: data.preferences?.billingOption || "",
-            paymentMode: data.preferences?.paymentMode || "",
-            expectedConsumption: data.preferences?.monthlyConsumption || "",
-            // securitySummary: data.preferences?.securitySummary || "",
-            additionalRequests: data.preferences?.additionalRequests || "",
-          }
-        );
+        const data = state.data as any;
+        await customerService.updatePreferences(customerProfileId, {
+          preferredDeliveryTime: data.preferences?.preferredDeliveryTime || "",
+          deliveryFrequency: data.preferences?.deliveryFrequency || "",
+          bottleHandling: data.preferences?.bottleHandlingPreference || "",
+          billingOption: data.preferences?.billingOption || "",
+          paymentMode: data.preferences?.paymentMode || "",
+          expectedConsumption: data.preferences?.monthlyConsumption || "",
+          // securitySummary: data.preferences?.securitySummary || "",
+          additionalRequests: data.preferences?.additionalRequests || "",
+        });
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
@@ -381,18 +353,67 @@ const CreateCustomerFormContent = () => {
       }
     }
 
-    // Step 5 (Linked Accounts): Submit and complete
+    // Step 5 (Linked Accounts): Submit and move to next step
     if (state.currentStep === 5) {
       try {
         setIsLoading(true);
         // Linked accounts are handled via the component's internal API calls
-        // Just complete the form and navigate back
-        resetForm();
-        navigate("/dashboard/customer-profiles");
+        // Just move forward to the next step
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
+        setCurrentStep(6);
         return;
       } catch (err: any) {
         setError(
           err.response?.data?.message || "Failed to save linked accounts"
+        );
+        return;
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    // Step 6 (Bottle Management): Submit and complete
+    if (state.currentStep === 6) {
+      const validation = await validateStep7();
+      if (!validation.isValid) {
+        setError(validation.errors[0] || "Please fill in all required fields");
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        if (!customerProfileId) {
+          setError("Customer ID not found");
+          setIsLoading(false);
+          return;
+        }
+
+        // Call the API to update bottle management/security info
+        const data = state.data as any;
+        const bottleManagementPayload = {
+          numberOfBottles: data.security?.numberOfBottles || 0,
+          securityAmount: data.security?.securityAmount || 0,
+          securityPerBottle: data.security?.securityPerBottle || 0,
+          advancePayment: data.security?.advancePayment || 0,
+          emptyWithoutSecurity: data.security?.emptyWithoutSecurity || 0,
+          emptyReceivedWithoutSecurity: data.security?.emptyReceivedWithoutSecurity || 0,
+          bottlesReturn: data.security?.bottlesReturn || 0,
+          refundBottlesSecurity: data.security?.refundBottlesSecurity || 0,
+        };
+
+        // TODO: Add API call to save bottle management data
+        // await customerService.updateBottleManagement(customerProfileId, bottleManagementPayload);
+        console.log('Bottle Management Payload:', bottleManagementPayload);
+
+        // Complete the form and navigate back
+        resetForm();
+        localStorage.removeItem("createCustomerProfileId");
+        navigate("/dashboard/customer-profiles");
+        return;
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message || "Failed to save bottle management information"
         );
         return;
       } finally {
@@ -440,6 +461,8 @@ const CreateCustomerFormContent = () => {
             customerProfileId={customerProfileId || undefined}
           />
         );
+      case 6:
+        return <CustomerBottleManagement />;
       default:
         return (
           <Box sx={{ py: 2 }}>
@@ -449,22 +472,96 @@ const CreateCustomerFormContent = () => {
     }
   };
 
+  if (!state.customerType) {
+    return (
+      <Box sx={{ minHeight: "calc(100vh - 100px)", bgcolor: "#f9fafb" }}>
+        <CustomerTypeSelection onSelectType={handleCustomerTypeSelection} />
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
+    <Box sx={{ 
+      display: "flex", 
+      minHeight: "calc(100vh - 100px)",
+      backgroundColor: colors.background.primary 
+    }}>
       {/* Sidebar */}
       <Box
         sx={{
           width: 280,
-          bgcolor: "white",
+          bgcolor: colors.background.card,
           p: 3,
           pr: 0,
-          borderRight: "1px solid #e0e0e0",
+          borderRight: `1px solid ${colors.border.primary}`,
           overflowY: "auto",
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3 }}>
-          Create Customer
-        </Typography>
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Typography variant="h6">Create Customer</Typography>
+          </Box>
+          <Box
+            sx={{
+              mb: 2,
+              p: 2,
+              mr:2,
+              bgcolor: "#f8fafc",
+              borderRadius: 1,
+              border: "1px solid #e2e8f0",
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{ color: "#64748b", fontWeight: 600 }}
+            >
+              Progress: Step {state.currentStep + 1} of {steps.length}
+            </Typography>
+            <Box
+              sx={{
+                mt: 1,
+                height: 4,
+                bgcolor: "#e2e8f0",
+                borderRadius: 2,
+                overflow: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  height: "100%",
+                  bgcolor: "var(--color-primary-600)",
+                  width: `${((state.currentStep + 1) / steps.length) * 100}%`,
+                  transition: "width 0.3s ease",
+                }}
+              />
+            </Box>
+          </Box>
+          {state.currentStep === 0 && (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+              <Button
+                size="small"
+                variant="text"
+                onClick={() => {
+                  resetForm();
+                }}
+                sx={{
+                  color: "#6b7280",
+                  fontSize: "0.75rem",
+                  textTransform: "none",
+                  p: 0,
+                  minWidth: "auto",
+                  justifyContent: "flex-start",
+                  "&:hover": {
+                    bgcolor: "transparent",
+                    color: "var(--color-primary-600)",
+                  },
+                }}
+              >
+                ← Change Customer Type
+              </Button>
+            </Box>
+          )}
+        </Box>
         <Stepper
           activeStep={state.currentStep}
           orientation="vertical"
@@ -511,7 +608,13 @@ const CreateCustomerFormContent = () => {
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1, height: "auto" }}>
-        <Card sx={{ p: 4, height: "100%", boxShadow: "none" }}>
+        <Card sx={{ 
+          p: 4, 
+          height: "100%", 
+          boxShadow: "none",
+          backgroundColor: colors.background.card,
+          color: colors.text.primary 
+        }}>
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               {steps[state.currentStep].icon}
@@ -557,11 +660,19 @@ const CreateCustomerFormContent = () => {
               Previous
             </Button>
             <PrimaryButton
-              endIcon={isLoading ? <CircularProgress size={20} sx={{ ml: 1 }} /> : <BsArrowRight />}
+              endIcon={
+                isLoading ? (
+                  <CircularProgress size={20} sx={{ ml: 1 }} />
+                ) : (
+                  <BsArrowRight />
+                )
+              }
               onClick={handleNext}
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : state.currentStep === steps.length - 1
+              {isLoading
+                ? "Processing..."
+                : state.currentStep === steps.length - 1
                 ? "Complete & Create Customer"
                 : "Next"}
             </PrimaryButton>

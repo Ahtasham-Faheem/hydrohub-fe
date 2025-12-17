@@ -8,9 +8,11 @@ import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
 import { DataTable } from "../../components/common/DataTable";
 import type { Column } from "../../components/common/DataTable";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const UsersPage = () => {
   const navigate = useNavigate();
+  const { colors } = useTheme();
   const [status, setStatus] = useState("");
   const [role, setRole] = useState("");
   const [dateRange, setDateRange] = useState("");
@@ -82,8 +84,8 @@ export const UsersPage = () => {
       value: staff.filter((u: any) => u?.status === "active").length.toString(),
       change: "+0%",
       desc: "All staff currently authorized in the system",
-      color: "var(--color-status-success)",
-      bgColor: "var(--color-status-success-light)",
+      color: colors.status.success,
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundCheck />,
     },
     {
@@ -91,8 +93,8 @@ export const UsersPage = () => {
       value: staff.length.toString(),
       change: "+0%",
       desc: "Total staff members in the system",
-      color: "var(--color-primary-600)",
-      bgColor: "var(--color-primary-bg-light)",
+      color: colors.primary[600],
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundCheck />,
     },
     {
@@ -100,8 +102,8 @@ export const UsersPage = () => {
       value: staff.filter((u: any) => u?.role === "supervisor").length.toString(),
       change: "0%",
       desc: "Supervisory staff members",
-      color: "var(--color-status-warning)",
-      bgColor: "var(--color-status-warning-light)",
+      color: colors.status.warning,
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundX />,
     },
     {
@@ -109,8 +111,8 @@ export const UsersPage = () => {
       value: staff.filter((u: any) => u?.status === "inactive").length.toString(),
       change: "0%",
       desc: "Users no longer active in operations",
-      color: "var(--color-status-error)",
-      bgColor: "var(--color-status-error-light)",
+      color: colors.status.error,
+      bgColor: colors.background.tertiary,
       icon: <LuUserRoundX />,
     },
   ];
@@ -134,8 +136,8 @@ export const UsersPage = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: 'var(--color-primary-600)',
-                color: 'white',
+                bgcolor: colors.primary[600],
+                color: colors.text.inverse,
                 fontWeight: 600,
                 fontSize: '0.875rem',
               }}
@@ -143,10 +145,10 @@ export const UsersPage = () => {
               {initials}
             </Box>
             <Box>
-              <Box sx={{ fontWeight: 600, fontSize: 14 }}>
+              <Box sx={{ fontWeight: 600, fontSize: 14, color: colors.text.primary }}>
                 {firstName} {lastName}
               </Box>
-              <Box sx={{ fontSize: 12, color: '#6b7280' }}>
+              <Box sx={{ fontSize: 12, color: colors.text.secondary }}>
                 @{item.staffId}
               </Box>
             </Box>
@@ -178,11 +180,12 @@ export const UsersPage = () => {
             px: 1.5,
             py: 0.5,
             borderRadius: 1,
-            bgcolor: item?.status === "active" ? "var(--color-status-success-light)" : "var(--color-status-error-light)",
-            color: item?.status === "active" ? "var(--color-status-success)" : "var(--color-status-error)",
+            bgcolor: colors.background.tertiary,
+            color: item?.status === "active" ? colors.status.success : colors.status.error,
             fontSize: '0.75rem',
             fontWeight: 600,
             textTransform: 'capitalize',
+            border: `1px solid ${item?.status === "active" ? colors.status.success : colors.status.error}`,
           }}
         >
           {item?.status || 'N/A'}
@@ -192,19 +195,20 @@ export const UsersPage = () => {
   ];
 
   return (
-    <Box>
+    <Box sx={{ backgroundColor: colors.background.primary, minHeight: '100vh' }}>
       <UserStatsCards cards={cards} />
       <Card
         sx={{
           mb: 3,
           borderRadius: 3,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          border: "1px solid #e5e7eb",
+          boxShadow: colors.shadow.md,
+          border: `1px solid ${colors.border.primary}`,
+          backgroundColor: colors.background.card,
           p: 3,
           overflow: "visible",
         }}
       >
-        <h2 className="mb-4 text-lg">Filters</h2>
+        <h2 className="mb-4 text-lg" style={{ color: colors.text.primary }}>Filters</h2>
 
         <UserFilters
           status={status}
@@ -219,7 +223,7 @@ export const UsersPage = () => {
           setRole={setRole}
           onFiltersChange={() => setCurrentPage(1)}
         />
-        <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 2, borderColor: colors.border.primary }} />
         <SortAndManageColumns
           {...{
             sortAnchorEl,

@@ -70,10 +70,16 @@ export interface ReferralInfo {
 }
 
 export interface Security {
-  bottlesIssued?: number;
+  numberOfBottles?: number;
   securityAmount?: number;
   securityPerBottle?: number;
   advancePayment?: number;
+  emptyWithoutSecurity?: number;
+  emptyReceivedWithoutSecurity?: number;
+  bottlesReturn?: number;
+  refundBottlesSecurity?: number;
+  // Legacy fields for backward compatibility
+  bottlesIssued?: number;
   emptyBottlesWithoutSecurity?: number;
   emptyReceived?: number;
   emptyBottlesReceived?: number;

@@ -16,7 +16,7 @@ export interface DomesticStep5PreferencesHandle {
 
 export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandle, DomesticStep5PreferencesProps>(
   ({ customerProfileId }: DomesticStep5PreferencesProps, ref) => {
-    const { state, updateFormData } = useCustomerForm();
+    const { state, updateFormData, fieldErrors, setFieldErrors } = useCustomerForm();
     const data = state.data as DomesticCustomer;
     const preferences = data.preferences || {};
     const [submitError, setSubmitError] = useState<string | null>(null);
@@ -79,7 +79,14 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
           <CustomSelect
             label="Delivery Time Preference *"
             value={preferences.preferredDeliveryTime || 'flexible'}
-            onChange={(e) => updateFormData('preferences.preferredDeliveryTime', e.target.value)}
+            onChange={(e) => {
+              updateFormData('preferences.preferredDeliveryTime', e.target.value);
+              // Clear error when user selects
+              if (fieldErrors['preferences.preferredDeliveryTime']) {
+                setFieldErrors({ ...fieldErrors, 'preferences.preferredDeliveryTime': "" });
+              }
+            }}
+            error={fieldErrors['preferences.preferredDeliveryTime']}
             options={[
               { label: 'Morning (9 AM - 12 PM)', value: 'morning' },
               { label: 'Afternoon (12 PM - 3 PM)', value: 'afternoon' },
@@ -98,7 +105,14 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
           <CustomSelect
             label="How often do you need delivery? *"
             value={preferences.deliveryFrequency || 'daily'}
-            onChange={(e) => updateFormData('preferences.deliveryFrequency', e.target.value)}
+            onChange={(e) => {
+              updateFormData('preferences.deliveryFrequency', e.target.value);
+              // Clear error when user selects
+              if (fieldErrors['preferences.deliveryFrequency']) {
+                setFieldErrors({ ...fieldErrors, 'preferences.deliveryFrequency': "" });
+              }
+            }}
+            error={fieldErrors['preferences.deliveryFrequency']}
             options={[
               { label: 'Daily', value: 'daily' },
               { label: 'Alternate Days', value: 'alternate' },
@@ -135,7 +149,14 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
           <CustomSelect
             label="Billing Cycle Preference *"
             value={preferences.billingOption || 'cod'}
-            onChange={(e) => updateFormData('preferences.billingOption', e.target.value)}
+            onChange={(e) => {
+              updateFormData('preferences.billingOption', e.target.value);
+              // Clear error when user selects
+              if (fieldErrors['preferences.billingOption']) {
+                setFieldErrors({ ...fieldErrors, 'preferences.billingOption': "" });
+              }
+            }}
+            error={fieldErrors['preferences.billingOption']}
             options={[
               { label: 'Cash on Delivery', value: 'cod' },
               { label: 'Weekly Invoice', value: 'weekly' },
@@ -153,7 +174,14 @@ export const DomesticStep5Preferences = forwardRef<DomesticStep5PreferencesHandl
           <CustomSelect
             label="Preferred payment method *"
             value={preferences.paymentMode || 'cash'}
-            onChange={(e) => updateFormData('preferences.paymentMode', e.target.value)}
+            onChange={(e) => {
+              updateFormData('preferences.paymentMode', e.target.value);
+              // Clear error when user selects
+              if (fieldErrors['preferences.paymentMode']) {
+                setFieldErrors({ ...fieldErrors, 'preferences.paymentMode': "" });
+              }
+            }}
+            error={fieldErrors['preferences.paymentMode']}
             options={[
               { label: 'Cash on Delivery', value: 'cash' },
               { label: 'Online', value: 'online' },

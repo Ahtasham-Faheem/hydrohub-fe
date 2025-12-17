@@ -1,62 +1,54 @@
-// components/CustomInput.tsx
-import { TextField, InputAdornment } from "@mui/material";
 import React from "react";
+import { TextField, InputAdornment } from "@mui/material";
+import { Badge } from "@mui/icons-material";
+import { formatCNIC } from "../../utils/validationSchemas";
 import type { SxProps, Theme } from "@mui/material/styles";
 import { useTheme } from '../../contexts/ThemeContext';
 
-interface CustomInputProps {
+interface CNICInputProps {
   label: string;
-  type?: string;
   value: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onChange: (value: string) => void;
   onClearError?: () => void;
   error?: string;
-  endAdornment?: React.ReactNode;
-  startAdornment?: React.ReactNode;
   fullWidth?: boolean;
   placeholder?: string;
   size?: "small" | "medium";
   disabled?: boolean;
-  multiline?: boolean;
-  rows?: number;
   required?: boolean;
   sx?: SxProps<Theme>;
 }
 
-export const CustomInput = ({
+export const CNICInput = ({
   label,
-  type = "text",
   value,
   onChange,
   onClearError,
   error,
-  endAdornment,
-  startAdornment,
   fullWidth = true,
-  placeholder,
+  placeholder = "12345-1234567-1",
   size = "medium",
   disabled = false,
-  multiline = false,
-  rows = 1,
-  required,
+  required = false,
   sx,
-}: CustomInputProps) => {
+}: CNICInputProps) => {
   const { colors } = useTheme();
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCNIC(e.target.value);
+    
     // Clear error when user starts typing
     if (onClearError && error) {
       onClearError();
     }
     
-    if (onChange) {
-      onChange(e);
-    }
+    onChange(formatted);
   };
+
   return (
     <TextField
       label={label}
-      type={type}
+      type="text"
       size={size}
       value={value}
       onChange={handleChange}
@@ -90,16 +82,18 @@ export const CustomInput = ({
       placeholder={placeholder}
       variant="outlined"
       disabled={disabled}
-      multiline={multiline}
-      rows={multiline ? rows : undefined}
       required={required}
+      inputProps={{
+        maxLength: 15, // 13 digits + 2 dashes
+        pattern: "[0-9-]*",
+        inputMode: "numeric",
+      }}
       InputProps={{
-        startAdornment: startAdornment ? (
-          <InputAdornment position="start">{startAdornment}</InputAdornment>
-        ) : undefined,
-        endAdornment: endAdornment ? (
-          <InputAdornment position="end">{endAdornment}</InputAdornment>
-        ) : undefined,
+        endAdornment: (
+          <InputAdornment position="end">
+            <Badge sx={{ color: colors.text.secondary, fontSize: 22 }} />
+          </InputAdornment>
+        ),
       }}
     />
   );

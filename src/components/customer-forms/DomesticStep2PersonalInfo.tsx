@@ -2,16 +2,20 @@ import { Box, Typography } from "@mui/material";
 import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
 import { CustomDateInput } from "../common/CustomDateInput";
+import { PhoneInput } from "../common/PhoneInput";
+import { CNICInput } from "../common/CNICInput";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
 import type { DomesticCustomer } from "../../types/customer";
 import dayjs from "dayjs";
-import { useState } from "react";
-import { Phone } from "@mui/icons-material";
 
 export const DomesticStep2PersonalInfo = () => {
-  const { state, updateFormData, fieldErrors } = useCustomerForm();
+  const { state, updateFormData, fieldErrors, setFieldErrors } = useCustomerForm();
   const data = (state?.data || {}) as DomesticCustomer;
-  const [countryCode, setCountryCode] = useState("+92");
+
+  const handlePhoneChange = (field: string, value: string) => {
+    // PhoneInput component already adds +92 prefix, so just use the value as-is
+    updateFormData(field, value);
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -35,6 +39,7 @@ export const DomesticStep2PersonalInfo = () => {
               label="Father's Name"
               placeholder="Enter name"
               value={data.fatherHusbandName || ""}
+              error={fieldErrors['fatherHusbandName']}
               onChange={(e) =>
                 updateFormData("fatherHusbandName", e.target.value)
               }
@@ -43,6 +48,7 @@ export const DomesticStep2PersonalInfo = () => {
               label="Mother's Name"
               placeholder="Enter name"
               value={data.motherName || ""}
+              error={fieldErrors['motherName']}
               onChange={(e) => updateFormData("motherName", e.target.value)}
             />
           </Box>
@@ -78,15 +84,13 @@ export const DomesticStep2PersonalInfo = () => {
               gap: 2,
             }}
           >
-            <CustomInput
+            <CNICInput
               label="National ID Number (CNIC)"
-              placeholder="1234567890123"
               value={data.cnicNumber || ""}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, 13);
-                updateFormData("cnicNumber", value);
-              }}
+              onChange={(value) => updateFormData("cnicNumber", value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, cnicNumber: "" })}
               error={fieldErrors['cnicNumber']}
+              required
             />
             <CustomSelect
               label="Gender *"
@@ -117,26 +121,13 @@ export const DomesticStep2PersonalInfo = () => {
                 { label: "Married", value: "Married" }
               ]}
             />
-            <Box>
-              <CustomInput
-                label="Alternate Contact Number"
-                value={data.alternateContactNumber || ""}
-                onChange={(e) => updateFormData("alternateContactNumber", e.target.value)}
-                startAdornment={
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-                    >
-                      <option value="+92">PK +92</option>
-                    </select>
-                    <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-                  </Box>
-                }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
-              />
-            </Box>
+            <PhoneInput
+              label="Alternate Contact Number"
+              value={data.alternateContactNumber || ""}
+              onChange={(value) => handlePhoneChange("alternateContactNumber", value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, alternateContactNumber: "" })}
+              error={fieldErrors['alternateContactNumber']}
+            />
           </Box>
         </Box>
       </Box>
@@ -189,6 +180,7 @@ export const DomesticStep2PersonalInfo = () => {
               label="Emergency Contact Name"
               placeholder="Enter name"
               value={data.emergencyContactName || ""}
+              error={fieldErrors['emergencyContactName']}
               onChange={(e) =>
                 updateFormData("emergencyContactName", e.target.value)
               }
@@ -213,46 +205,21 @@ export const DomesticStep2PersonalInfo = () => {
               gap: 2,
             }}
           >
-            <Box>
-              <CustomInput
-                label="Emergency Contact Number"
-                value={data.emergencyContactNumber || ""}
-                onChange={(e) => updateFormData("emergencyContactNumber", e.target.value)}
-                startAdornment={
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-                    >
-                      <option value="+92">PK +92</option>
-                    </select>
-                    <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-                  </Box>
-                }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
-              />
-            </Box>
-            <Box>
-              <CustomInput
-                label="Alternate Emergency Contact"
-                value={data.alternateEmergencyContact || ""}
-                onChange={(e) => updateFormData("alternateEmergencyContact", e.target.value)}
-                startAdornment={
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-                    >
-                      <option value="+92">PK +92</option>
-                    </select>
-                    <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-                  </Box>
-                }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
-              />
-            </Box>
+            <PhoneInput
+              label="Emergency Contact Number *"
+              value={data.emergencyContactNumber || ""}
+              onChange={(value) => handlePhoneChange("emergencyContactNumber", value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, emergencyContactNumber: "" })}
+              error={fieldErrors['emergencyContactNumber']}
+              required
+            />
+            <PhoneInput
+              label="Alternate Emergency Contact"
+              value={data.alternateEmergencyContact || ""}
+              onChange={(value) => handlePhoneChange("alternateEmergencyContact", value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, alternateEmergencyContact: "" })}
+              error={fieldErrors['alternateEmergencyContact']}
+            />
           </Box>
 
           <CustomSelect

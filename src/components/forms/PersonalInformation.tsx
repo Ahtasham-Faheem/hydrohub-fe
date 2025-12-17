@@ -1,154 +1,40 @@
-import { Box, Typography, Button, Stack, IconButton } from "@mui/material";
-import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
-import { PrimaryButton } from "../common/PrimaryButton";
+import { Stack, IconButton } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
+import { PhoneInput } from "../common/PhoneInput";
+import { ProfilePhotoUpload } from "../common/ProfilePhotoUpload";
 import { useFormContext } from "../../contexts/FormContext";
-import { useUploadFile } from "../../hooks/useAssets";
-import { buildFullPhone } from "../../utils/phoneValidation";
 import { useState } from "react";
 
 interface PersonalInformationProps {
-  image: string | null;
-  onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onImageReset: () => void;
   isEditMode?: boolean;
 }
 
 export const PersonalInformation = ({
-  image,
-  onImageUpload,
-  onImageReset,
   isEditMode = false,
 }: PersonalInformationProps) => {
   const { formData, updateFormData, fieldErrors, setFieldErrors } =
     useFormContext();
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [countryCode, setCountryCode] = useState("+92");
-
-  // TanStack Query mutation
-  const uploadMutation = useUploadFile();
-
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setUploadError(null);
-
-    uploadMutation.mutate(file, {
-      onSuccess: (uploadResponse) => {
-        updateFormData("profilePictureAssetId", uploadResponse.id);
-        // Clear error when image is uploaded
-        if (fieldErrors["profilePictureAssetId"]) {
-          setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" });
-        }
-        // Create local preview URL
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          onImageUpload({ target: { files: [file] } } as any);
-        };
-        reader.readAsDataURL(file);
-      },
-      onError: (error: any) => {
-        setUploadError(
-          error.response?.data?.message || "Failed to upload image"
-        );
-      },
-    });
-  };
-
-  const handleImageReset = () => {
-    updateFormData("profilePictureAssetId", "");
-    onImageReset();
-    setUploadError(null);
-  };
 
   const handlePhoneChange = (value: string) => {
-    // Store full phone with country code
-    const fullPhone = buildFullPhone(countryCode, value);
-    updateFormData("phone", fullPhone);
+    // PhoneInput component already adds +92 prefix, so just use the value as-is
+    updateFormData("phone", value);
   };
 
   return (
     <Stack spacing={3}>
-      {/* Profile Upload Section */}
-      <Box sx={{ display: "flex", justifyContent: "start" }}>
-        <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
-          <Box
-            sx={{
-              width: 150,
-              height: 150,
-              borderRadius: "5%",
-              border: "2px dashed #ccc",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mb: 1,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            {image ? (
-              <img
-                src={image}
-                alt="Profile"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <Typography color="textSecondary">Profile Photo</Typography>
-            )}
-          </Box>
-
-          <input
-            accept="image/*"
-            style={{ display: "none" }}
-            id="photo-upload"
-            type="file"
-            onChange={handleImageUpload}
-          />
-
-          <div className="flex flex-col gap-2 justify-start">
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <PrimaryButton
-                className="mx-6"
-                onClick={() => document.getElementById("photo-upload")?.click()}
-                disabled={uploadMutation.isPending}
-              >
-                {uploadMutation.isPending ? "Uploading..." : "Upload New Photo"}
-              </PrimaryButton>
-              {image && (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={handleImageReset}
-                >
-                  Reset
-                </Button>
-              )}
-            </Box>
-            {fieldErrors["profilePictureAssetId"] && (
-              <Typography
-                variant="caption"
-                color="error"
-                display="block"
-                sx={{ fontWeight: 600 }}
-              >
-                {fieldErrors["profilePictureAssetId"]}
-              </Typography>
-            )}
-            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-              Allowed JPG, GIF or PNG. Max size 800KB.
-            </Typography>
-            {uploadError && (
-              <Typography variant="caption" color="error" display="block">
-                {uploadError}
-              </Typography>
-            )}
-          </div>
-        </Box>
-      </Box>
+      {/* Profile Photo Upload */}
+      <ProfilePhotoUpload
+        value={formData.profilePictureAssetId}
+        onChange={(assetId) => updateFormData("profilePictureAssetId", assetId)}
+        onClearError={() => setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" })}
+        error={fieldErrors["profilePictureAssetId"]}
+        disabled={isEditMode}
+        maxSize="800KB"
+      />
 
       {/* Employee ID + Employee Creation Date + Title */}
       <Stack direction="row" spacing={2}>
@@ -169,6 +55,7 @@ export const PersonalInformation = ({
           placeholder="John"
           value={formData.firstName}
           onChange={(e) => updateFormData("firstName", e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, firstName: "" })}
           error={fieldErrors["firstName"]}
         />
         <CustomInput
@@ -176,6 +63,7 @@ export const PersonalInformation = ({
           placeholder="Doe"
           value={formData.lastName}
           onChange={(e) => updateFormData("lastName", e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, lastName: "" })}
           error={fieldErrors["lastName"]}
         />
       </Stack>
@@ -188,40 +76,25 @@ export const PersonalInformation = ({
           type="email"
           value={formData.email}
           onChange={(e) => updateFormData("email", e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, email: "" })}
           error={fieldErrors["email"]}
           disabled={isEditMode}
         />
-        <CustomInput
+        <PhoneInput
           label="Phone Number"
-          placeholder="3001234567"
-          value={
-            formData.phone && formData.phone.startsWith("+92")
-              ? formData.phone.substring(3)
-              : formData.phone
-          }
-          onChange={(e) => handlePhoneChange(e.target.value)}
+          value={formData.phone}
+          onChange={handlePhoneChange}
+          onClearError={() => setFieldErrors({ ...fieldErrors, phone: "" })}
           error={fieldErrors["phone"]}
           disabled={isEditMode}
-          startAdornment={
-            <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                disabled={isEditMode}
-                className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none disabled:opacity-50"
-              >
-                <option value="+92">PK +92</option>
-              </select>
-              <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-            </Box>
-          }
-          endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
+          required
         />
         <CustomInput
           label="Login Username *"
           placeholder="johndoe"
           value={formData.username}
           onChange={(e) => updateFormData("username", e.target.value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, username: "" })}
           error={fieldErrors["username"]}
           disabled={isEditMode}
         />
@@ -234,6 +107,7 @@ export const PersonalInformation = ({
             label="Role"
             value={formData.userRole}
             onChange={(e) => updateFormData("userRole", e.target.value)}
+            onClearError={() => setFieldErrors({ ...fieldErrors, userRole: "" })}
             error={fieldErrors["userRole"]}
             options={[
               { value: "supervisor", label: "Supervisor" },
@@ -249,6 +123,7 @@ export const PersonalInformation = ({
             placeholder="********"
             value={formData.password}
             onChange={(e) => updateFormData("password", e.target.value)}
+            onClearError={() => setFieldErrors({ ...fieldErrors, password: "" })}
             error={fieldErrors["password"]}
             endAdornment={
               <IconButton
@@ -266,6 +141,7 @@ export const PersonalInformation = ({
             placeholder="********"
             value={formData.confirmPassword || ""}
             onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+            onClearError={() => setFieldErrors({ ...fieldErrors, confirmPassword: "" })}
             error={fieldErrors["confirmPassword"]}
             endAdornment={
               <IconButton

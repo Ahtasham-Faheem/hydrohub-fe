@@ -13,21 +13,22 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Phone } from "@mui/icons-material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { DEMO_MODE, useAuth } from "../../contexts/AuthContext";
 import WaterLogo from "../../assets/WATER-INN-logo.svg";
 import { LuMail } from "react-icons/lu";
 import { Footer } from "../../components/auth/Footer";
 import { PrimaryButton } from "../../components/common/PrimaryButton";
 import { CustomInput } from "../../components/common/CustomInput";
-import { buildFullPhone } from "../../utils/phoneValidation";
+import { PhoneInput } from "../../components/common/PhoneInput";
 import { authService } from "../../services/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const Login = () => {
+  const { colors } = useTheme();
   const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
   const [useCodeLogin, setUseCodeLogin] = useState(false);
   const [email, setEmail] = useState("");
-  const [countryCode, setCountryCode] = useState("+92");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
@@ -131,7 +132,7 @@ export const Login = () => {
         // Verify login code
         const verifyPayload = loginMode === "email" 
           ? { email, code: otp }
-          : { phone: buildFullPhone(countryCode, phone), code: otp };
+          : { phone: phone.startsWith('+92') ? phone : `+92${phone}`, code: otp };
         
         const response = await authService.verifyLoginCode(verifyPayload);
         
@@ -152,7 +153,7 @@ export const Login = () => {
           loginMode === "email"
             ? { email, password }
             : {
-                phone: buildFullPhone(countryCode, phone),
+                phone: phone.startsWith('+92') ? phone : `+92${phone}`,
                 password,
               };
 
@@ -195,7 +196,7 @@ export const Login = () => {
     try {
       const sendPayload = loginMode === "email"
         ? { email }
-        : { phone: buildFullPhone(countryCode, phone) };
+        : { phone: phone.startsWith('+92') ? phone : `+92${phone}` };
       
       const response = await authService.sendLoginCode(sendPayload);
       
@@ -216,7 +217,10 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between">
+    <div 
+      className="min-h-screen flex flex-col items-center justify-between"
+      style={{ backgroundColor: colors.background.primary }}
+    >
       {/* Header */}
       <div className="flex justify-between items-center w-full px-12 pt-8">
         <Link
@@ -225,13 +229,16 @@ export const Login = () => {
         >
           <img src={WaterLogo} alt="HydroHub Logo" className="w-[190px]" />
         </Link>
-        <div className="text-center font-extrabold text-primary-600 flex items-center cursor-pointer">
+        <div 
+          className="text-center font-extrabold flex items-center cursor-pointer"
+          style={{ color: colors.primary[500] }}
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
             height="20px"
             width="20px"
-            fill="#2092ec"
+            fill={colors.primary[500]}
           >
             <path d="M0 0h24v24H0V0z" fill="none" />
             <path
@@ -258,15 +265,17 @@ export const Login = () => {
         sx={{
           maxWidth: 500,
           width: "90%",
-          boxShadow: 3,
+          boxShadow: colors.shadow.lg,
           borderRadius: 2,
+          backgroundColor: colors.background.card,
+          border: `1px solid ${colors.border.primary}`,
         }}
       >
         <CardContent sx={{ px: 4, py: 5 }}>
           <Typography
             align="center"
             fontWeight="800"
-            className="text-primary-600 text-2xl!"
+            sx={{ fontSize: 24, color: colors.primary[500] }}
           >
             Business Control Center
           </Typography>
@@ -274,15 +283,13 @@ export const Login = () => {
             variant="h4"
             align="center"
             fontWeight="800"
-            color="text.primary"
-            sx={{ mt: 1, mb: 2, fontSize: 26 }}
+            sx={{ mt: 1, mb: 2, fontSize: 26, color: colors.text.primary }}
           >
             Log in
           </Typography>
           <Typography
             align="center"
-            color="text.secondary"
-            sx={{ mt: 1, mb: 3, fontSize: 15 }}
+            sx={{ mt: 1, mb: 3, fontSize: 15, color: colors.text.secondary }}
           >
             Empower your team, enhance performance and grow smarter everyday
           </Typography>
@@ -295,7 +302,7 @@ export const Login = () => {
             {/* Toggle Login Mode */}
             <Typography
               sx={{
-                color: "#2092ec",
+                color: colors.primary[500],
                 textAlign: "right",
                 fontSize: 14,
                 cursor: "pointer",
@@ -330,17 +337,17 @@ export const Login = () => {
                   error={errors.email}
                   sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
                   endAdornment={
-                    <LuMail style={{ color: "#9ca3af", fontSize: 22 }} />
+                    <LuMail style={{ color: colors.text.secondary, fontSize: 22 }} />
                   }
                 />
               </div>
             ) : (
               <div className="mb-4">
-                <CustomInput
+                <PhoneInput
                   label="Phone Number"
                   value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
+                  onChange={(value) => {
+                    setPhone(value);
                     // Clear error styling when user types
                     if (fieldErrors.phone) {
                       setFieldErrors(prev => ({ ...prev, phone: false }));
@@ -348,21 +355,6 @@ export const Login = () => {
                   }}
                   error={errors.phone}
                   sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
-                  startAdornment={
-                    <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-                      >
-                        <option value="+92">PK +92</option>
-                      </select>
-                      <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-                    </Box>
-                  }
-                  endAdornment={
-                    <Phone sx={{ color: "#9ca3af", fontSize: 22 }} />
-                  }
                 />
               </div>
             )}
@@ -375,10 +367,10 @@ export const Login = () => {
                     <Box
                       sx={{
                         p: 1,
-                        backgroundColor: "#fee2e2",
-                        border: "1px solid #fecaca",
+                        backgroundColor: `${colors.status.error}20`,
+                        border: `1px solid ${colors.status.error}40`,
                         borderRadius: 1,
-                        color: "#991b1b",
+                        color: colors.status.error,
                         fontSize: 14,
                       }}
                     >
@@ -389,10 +381,10 @@ export const Login = () => {
                     <Box
                       sx={{
                         p: 1,
-                        backgroundColor: "#dcfce7",
-                        border: "1px solid #bbf7d0",
+                        backgroundColor: `${colors.status.success}20`,
+                        border: `1px solid ${colors.status.success}40`,
                         borderRadius: 1,
-                        color: "#166534",
+                        color: colors.status.success,
                         fontSize: 14,
                       }}
                     >
@@ -425,8 +417,8 @@ export const Login = () => {
                           border: "none",
                           height: "38px",
                           fontSize: 13,
-                          color: codeLoading ? "#9ca3af" : "#4b5563",
-                          borderLeft: "1px solid #D1CFD4",
+                          color: codeLoading ? colors.text.tertiary : colors.text.secondary,
+                          borderLeft: `1px solid ${colors.border.primary}`,
                           borderRadius: 0,
                           paddingRight: 0,
                           display: "flex",
@@ -469,10 +461,10 @@ export const Login = () => {
                     >
                       {showPassword ? (
                         <VisibilityOff
-                          sx={{ color: "#9ca3af", fontSize: 22 }}
+                          sx={{ color: colors.text.secondary, fontSize: 22 }}
                         />
                       ) : (
-                        <Visibility sx={{ color: "#9ca3af", fontSize: 22 }} />
+                        <Visibility sx={{ color: colors.text.secondary, fontSize: 22 }} />
                       )}
                     </IconButton>
                   }
@@ -484,7 +476,7 @@ export const Login = () => {
             {loginMode === "phone" ? (
               <Typography
                 sx={{
-                  color: "#2092ec",
+                  color: colors.primary[500],
                   fontSize: 14,
                   cursor: "pointer",
                   textDecoration: "underline",
@@ -511,8 +503,8 @@ export const Login = () => {
                   control={
                     <Checkbox
                       sx={{
-                        color: "#2092ec",
-                        "&.Mui-checked": { color: "#2092ec" },
+                        color: colors.primary[500],
+                        "&.Mui-checked": { color: colors.primary[500] },
                         padding: 0,
                         paddingX: 1,
                       }}
@@ -521,7 +513,7 @@ export const Login = () => {
                   label="Remember me"
                   sx={{
                     "& .MuiFormControlLabel-label": {
-                      color: "#2092ec",
+                      color: colors.primary[500],
                       fontWeight: 400,
                       fontSize: 14,
                     },
@@ -529,7 +521,8 @@ export const Login = () => {
                 />
                 <Link
                   to="/forgot-password"
-                  className="text-primary-600 hover:underline text-sm"
+                  className="hover:underline text-sm"
+                  style={{ color: colors.primary[500] }}
                 >
                   Forgot password?
                 </Link>
@@ -566,11 +559,11 @@ export const Login = () => {
                 sx={{
                   mt: 2,
                   textTransform: "none",
-                  color: "#2092ec",
-                  borderColor: "#2092ec",
+                  color: colors.primary[500],
+                  borderColor: colors.primary[500],
                   "&:hover": {
-                    borderColor: "#187bcd",
-                    color: "#187bcd",
+                    borderColor: colors.primary[600],
+                    color: colors.primary[600],
                   },
                 }}
               >
@@ -580,7 +573,8 @@ export const Login = () => {
             <Box textAlign="center" mt={3}>
               <Link
                 to="/"
-                className="text-text-600 text-sm flex justify-center items-center hover:text-text-600"
+                className="text-sm flex justify-center items-center"
+                style={{ color: colors.text.secondary }}
               >
                 <span>
                   <svg
@@ -588,7 +582,7 @@ export const Login = () => {
                     height="20px"
                     viewBox="0 0 24 24"
                     width="20px"
-                    fill="#4b5563"
+                    fill={colors.text.secondary}
                   >
                     <path d="M0 0h24v24H0V0z" fill="none" />
                     <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12l4.58-4.59z" />
@@ -603,23 +597,24 @@ export const Login = () => {
 
       {/* Terms */}
       <Typography
-        color="text.secondary"
         align="center"
-        sx={{ mt: 4, mb: 3, maxWidth: 500, px: 4, fontSize: 14 }}
+        sx={{ mt: 4, mb: 3, maxWidth: 500, px: 4, fontSize: 14, color: colors.text.secondary }}
       >
         By continuing, you agree to our{" "}
         <Link
           to="/terms"
-          className="text-primary-600 hover:underline"
+          className="hover:underline"
           target="_blank"
+          style={{ color: colors.primary[500] }}
         >
           Terms of Service
         </Link>{" "}
         and{" "}
         <Link
           to="/privacy"
-          className="text-primary-600 hover:underline"
+          className="hover:underline"
           target="_blank"
+          style={{ color: colors.primary[500] }}
         >
           Privacy Policy
         </Link>{" "}

@@ -1,15 +1,19 @@
-import { Stack, Box } from "@mui/material";
+import { Stack } from "@mui/material";
 import dayjs from "dayjs";
 import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
 import { CustomDateInput } from "../common/CustomDateInput";
+import { PhoneInput } from "../common/PhoneInput";
+import { CNICInput } from "../common/CNICInput";
 import { useFormContext } from "../../contexts/FormContext";
-import { useState } from "react";
-import { Phone } from "@mui/icons-material";
 
 export const AdditionalPersonalInfo = () => {
   const { formData, updateFormData, fieldErrors, setFieldErrors } = useFormContext();
-  const [countryCode, setCountryCode] = useState("+92");
+
+  const handlePhoneChange = (field: keyof typeof formData, value: string) => {
+    // PhoneInput component already adds +92 prefix, so just use the value as-is
+    updateFormData(field, value);
+  };
 
   return (
     <Stack spacing={3}>
@@ -52,15 +56,13 @@ export const AdditionalPersonalInfo = () => {
           onChange={(e) => updateFormData("nationality", e.target.value)}
           error={fieldErrors['nationality']}
         />
-        <CustomInput
+        <CNICInput
           label="National ID"
-          placeholder="12345-6789012-3"
           value={formData.nationalId || ""}
-          onChange={(e) => {
-            const value = e.target.value.replace(/\D/g, '').slice(0, 13);
-            updateFormData("nationalId", value);
-          }}
+          onChange={(value) => updateFormData("nationalId", value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, nationalId: "" })}
           error={fieldErrors['nationalId']}
+          required
         />
         <CustomSelect
           label="Gender"
@@ -98,27 +100,12 @@ export const AdditionalPersonalInfo = () => {
             { value: "Married", label: "Married" },
           ]}
         />
-        <CustomInput
+        <PhoneInput
           label="Alternate Contact Number"
-          placeholder="0555 7938"
           value={formData.alternateContactNumber || ""}
-          onChange={(e) =>
-            updateFormData("alternateContactNumber", e.target.value)
-          }
+          onChange={(value) => handlePhoneChange("alternateContactNumber", value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, alternateContactNumber: "" })}
           error={fieldErrors['alternateContactNumber']}
-          startAdornment={
-            <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-              >
-                <option value="+92">PK +92</option>
-              </select>
-              <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-            </Box>
-          }
-          endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
         />
         <CustomInput
           label="Secondary Email Address"
@@ -174,27 +161,13 @@ export const AdditionalPersonalInfo = () => {
           }
           error={fieldErrors['emergencyContactRelation']}
         />
-        <CustomInput
+        <PhoneInput
           label="Emergency Contact Number"
-          placeholder="+92 345 5678786"
           value={formData.emergencyContactNumber || ""}
-          onChange={(e) =>
-            updateFormData("emergencyContactNumber", e.target.value)
-          }
+          onChange={(value) => handlePhoneChange("emergencyContactNumber", value)}
+          onClearError={() => setFieldErrors({ ...fieldErrors, emergencyContactNumber: "" })}
           error={fieldErrors['emergencyContactNumber']}
-          startAdornment={
-            <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-              <select
-                value={countryCode}
-                onChange={(e) => setCountryCode(e.target.value)}
-                className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none"
-              >
-                <option value="+92">PK +92</option>
-              </select>
-              <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-            </Box>
-          }
-          endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
+          required
         />
       </Stack>
     </Stack>

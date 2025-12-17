@@ -1,174 +1,52 @@
-import { Box, Typography, Button, IconButton } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
 import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
-import { PrimaryButton } from "../common/PrimaryButton";
+import { PhoneInput } from "../common/PhoneInput";
+import { ProfilePhotoUpload } from "../common/ProfilePhotoUpload";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
 import type { DomesticCustomer } from "../../types/customer";
 import { useState } from "react";
-import { Phone, Visibility, VisibilityOff } from "@mui/icons-material";
-import { staffService } from "../../services/api";
-import { handleImageUpload as processImage } from "../../utils/imageCompression";
-import { buildFullPhone } from "../../utils/phoneValidation";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface DomesticStep1BasicProfileProps {
-  image?: string | null;
-  onImageUpload?: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  onImageReset?: () => void;
   isEditMode?: boolean;
 }
 
 export const DomesticStep1BasicProfile = ({
-  image: externalImage,
   isEditMode = false,
 }: DomesticStep1BasicProfileProps = {}) => {
-  const { state, fieldErrors, setFieldErrors } = useCustomerForm();
-  const { updateFormData } = useCustomerForm();
+  const { state, fieldErrors, setFieldErrors, updateFormData } = useCustomerForm();
   
   // Handle null state.data with default empty values
-  const data = (state.data as unknown as DomesticCustomer) || {
-    customerType: 'Domestic Customer',
+  const data = (state.data as DomesticCustomer) || {
+    customerType: '',
     firstName: '',
     lastName: '',
     email: '',
     mobileNumber: '',
     username: '',
     password: '',
+    confirmPassword: '',
     title: 'Mr.',
   };
   
-  const [profileImage, setProfileImage] = useState<string | null>(externalImage || null);
-  const [countryCode, setCountryCode] = useState("+92");
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleImageUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setUploadingImage(true);
-      setUploadError(null);
-
-      // Compress image client-side
-      const result = await processImage(file);
-      if (!result.success || !result.file) {
-        setUploadError(result.error || 'Failed to process image');
-        return;
-      }
-
-      // Preview the image
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const resultData = reader.result as string;
-        setProfileImage(resultData);
-      };
-      reader.readAsDataURL(result.file);
-
-      // Upload the compressed file to assets/upload
-      const uploadResponse = await staffService.uploadDocument(result.file);
-      const profilePictureAssetId = uploadResponse.id;
-
-      // Store the asset ID
-      updateFormData("profilePictureAssetId", profilePictureAssetId);
-      // Clear error when image is uploaded
-      if (fieldErrors['profilePictureAssetId']) {
-        setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" });
-      }
-    } catch (err: any) {
-      console.error("Failed to upload profile picture:", err);
-      setUploadError(err.message || 'Failed to upload image');
-      setProfileImage(null);
-      updateFormData("profilePictureAssetId", "");
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
-  const handleImageReset = () => {
-    setProfileImage(null);
-    setUploadError(null);
-    updateFormData("profilePictureAssetId", "");
+  const handlePhoneChange = (value: string) => {
+    updateFormData("mobileNumber", value);
   };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {/* Profile Photo */}
-      <Box sx={{ display: "flex", justifyContent: "start" }}>
-        <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
-          <Box
-            sx={{
-              width: 150,
-              height: 150,
-              borderRadius: "5%",
-              border: "2px dashed #ccc",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mb: 1,
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            {profileImage ? (
-              <img
-                src={profileImage}
-                alt="Profile"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <Typography color="textSecondary">Profile Photo</Typography>
-            )}
-          </Box>
-
-          <input
-            accept="image/*"
-            style={{ display: "none" }}
-            id="profile-photo-upload"
-            type="file"
-            onChange={handleImageUpload}
-          />
-
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <PrimaryButton
-                onClick={() =>
-                  document.getElementById("profile-photo-upload")?.click()
-                }
-                disabled={uploadingImage}
-              >
-                {uploadingImage ? "Uploading..." : "Upload Photo"}
-              </PrimaryButton>
-              {profileImage && (
-                <Button
-                  variant="outlined"
-                  color="error"
-                  onClick={handleImageReset}
-                  disabled={uploadingImage}
-                >
-                  Reset
-                </Button>
-              )}
-            </Box>
-            {uploadError && (
-              <Typography variant="caption" color="error" display="block">
-                {uploadError}
-              </Typography>
-            )}
-            {fieldErrors['profilePictureAssetId'] && (
-              <Typography variant="caption" color="error" display="block" sx={{ fontWeight: 600 }}>
-                {fieldErrors['profilePictureAssetId']}
-              </Typography>
-            )}
-            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-              Allowed JPG, GIF or PNG. Max size 10MB (will be auto-compressed).
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+      {/* Profile Photo Upload */}
+      <ProfilePhotoUpload
+        value={data.profilePictureAssetId}
+        onChange={(assetId) => updateFormData("profilePictureAssetId", assetId)}
+        onClearError={() => setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" })}
+        error={fieldErrors['profilePictureAssetId']}
+        disabled={isEditMode}
+      />
 
       {/* Basic Information */}
       <Box>
@@ -179,28 +57,25 @@ export const DomesticStep1BasicProfile = ({
           Basic Information
         </Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Customer Type Display */}
+          <Box sx={{ mb: 2, p: 2, bgcolor: '#f0f9ff', borderRadius: 1, border: '1px solid #bfdbfe' }}>
+            <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 600 }}>
+              Customer Type: {data.customerType || 'Not Selected'}
+            </Typography>
+          </Box>
+
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              gridTemplateColumns: { xs: "1fr", sm: "1fr 2fr 2fr" },
               gap: 2,
             }}
           >
             <CustomSelect
-              label="Customer Type *"
-              value={data.customerType || ""}
-              onChange={(e) => updateFormData("customerType", e.target.value)}
-              error={fieldErrors['customerType']}
-              options={[
-                { label: "Domestic Customer", value: "Domestic Customer" },
-                { label: "Business Customer", value: "Business Customer" },
-                { label: "Commercial Customer", value: "Commercial Customer" },
-              ]}
-            />
-            <CustomSelect
               label="Title"
               value={data.title}
               onChange={(e) => updateFormData("title", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, title: "" })}
               error={fieldErrors['title']}
               options={[
                 { label: "Mr", value: "Mr." },
@@ -210,20 +85,12 @@ export const DomesticStep1BasicProfile = ({
                 { label: "Mx", value: "Mx." },
               ]}
             />
-          </Box>
-
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr 1fr", sm: "1fr 1fr" },
-              gap: 2,
-            }}
-          >
             <CustomInput
               label="First Name *"
               placeholder="Enter first name"
               value={data.firstName}
               onChange={(e) => updateFormData("firstName", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, firstName: "" })}
               error={fieldErrors['firstName']}
             />
             <CustomInput
@@ -231,6 +98,7 @@ export const DomesticStep1BasicProfile = ({
               placeholder="Enter last name"
               value={data.lastName}
               onChange={(e) => updateFormData("lastName", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, lastName: "" })}
               error={fieldErrors['lastName']}
             />
           </Box>
@@ -248,35 +116,19 @@ export const DomesticStep1BasicProfile = ({
               type="email"
               value={data.email}
               onChange={(e) => updateFormData("email", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, email: "" })}
               error={fieldErrors['email']}
               disabled={isEditMode}
             />
-            <Box>
-              <CustomInput
-                label="Phone Number"
-                value={data.mobileNumber && data.mobileNumber.startsWith('+92') ? data.mobileNumber.substring(3) : data.mobileNumber}
-                onChange={(e) => {
-                  const fullPhone = buildFullPhone(countryCode, e.target.value);
-                  updateFormData("mobileNumber", fullPhone);
-                }}
-                error={fieldErrors['mobileNumber']}
-                disabled={isEditMode}
-                startAdornment={
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      disabled={isEditMode}
-                      className="border-none bg-transparent text-sm text-gray-600 cursor-pointer pr-2 focus:outline-none disabled:opacity-50"
-                    >
-                      <option value="+92">PK +92</option>
-                    </select>
-                    <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
-                  </Box>
-                }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
-              />
-            </Box>
+            <PhoneInput
+              label="Phone Number"
+              value={data.mobileNumber}
+              onChange={handlePhoneChange}
+              onClearError={() => setFieldErrors({ ...fieldErrors, mobileNumber: "" })}
+              error={fieldErrors['mobileNumber']}
+              disabled={isEditMode}
+              required
+            />
           </Box>
           <Box
             sx={{
@@ -290,6 +142,7 @@ export const DomesticStep1BasicProfile = ({
               placeholder="Enter username"
               value={data.username}
               onChange={(e) => updateFormData("username", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, username: "" })}
               error={fieldErrors['username']}
               disabled={isEditMode}
             />
@@ -300,6 +153,7 @@ export const DomesticStep1BasicProfile = ({
               type={showPassword ? "text" : "password"}
               value={data.password}
               onChange={(e) => updateFormData("password", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, password: "" })}
               error={fieldErrors['password']}
               endAdornment={
                 <IconButton
@@ -329,6 +183,7 @@ export const DomesticStep1BasicProfile = ({
               type={showConfirmPassword ? "text" : "password"}
               value={data.confirmPassword || ""}
               onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+              onClearError={() => setFieldErrors({ ...fieldErrors, confirmPassword: "" })}
               error={fieldErrors['confirmPassword']}
               endAdornment={
                 <IconButton

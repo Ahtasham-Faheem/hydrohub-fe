@@ -57,7 +57,7 @@ export const SortAndManageColumns = ({
   const navigate = useNavigate();
   return (
     <Box
-      sx={{ display: "flex", justifyContent: "space-between", gap: 1, mb: 2 }}
+      sx={{ display: "flex", justifyContent: "space-between",alignItems: 'center', gap: 1, mb: 2 }}
     >
       <Box sx={{ flexGrow: 1, maxWidth: 400 }}>
         <CustomInput
@@ -65,6 +65,7 @@ export const SortAndManageColumns = ({
           placeholder="Search User"
           startAdornment={<LuSearch />}
           value={search}
+          size="small"
           onChange={(e) => setSearch(e.target.value)}
         />
       </Box>
@@ -159,10 +160,12 @@ export const SortAndManageColumns = ({
           </Box>
         </Popover>
         <PrimaryButton
-          className="px-16! font-medium!"
+          className="px-6! font-medium!"
           onClick={() => {
             navigate(addButtonPath);
-            // localStorage.removeItem("createUserCurrentStep");
+            localStorage.removeItem("createUserCurrentStep");
+            localStorage.removeItem("createCustomerFormState");
+            localStorage.removeItem("createCustomerProfileId");
             localStorage.removeItem("createUserFormData");
           }}
         >

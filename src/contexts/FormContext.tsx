@@ -1,5 +1,13 @@
 import React, { createContext, useContext, useState } from "react";
 import type { ReactNode } from "react";
+import {
+  userStep1Schema,
+  userStep2Schema,
+  userStep3Schema,
+  userStep4Schema,
+  userStep5Schema,
+  validateFormStep,
+} from "../utils/validationSchemas";
 
 export interface FormData {
   // Required fields
@@ -110,11 +118,11 @@ interface FormContextType {
   setCurrentStep: (step: number) => void;
   setFieldErrors: (errors: Record<string, string>) => void;
   resetForm: () => void;
-  validateRequiredFields: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
-  validateStep1: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
-  validateStep2: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
-  validateStep3: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
-  validateStep4: () => { isValid: boolean; errors: string[]; fieldErrors: Record<string, string> };
+  validateRequiredFields: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
+  validateStep1: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
+  validateStep2: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
+  validateStep3: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
+  validateStep4: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
 }
 
 const initialFormData: FormData = {
@@ -243,208 +251,123 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     localStorage.removeItem("createUserCurrentStep");
   };
 
-  const validateRequiredFields = () => {
-    const requiredFields: (keyof FormData)[] = [
-      "username",
-      "firstName",
-      "lastName",
-      "email",
-      "password",
-      "phone",
-    ];
-    const errors: string[] = [];
-    const fieldErrorsMap: Record<string, string> = {};
+  const validateRequiredFields = async () => {
+    const validationData = {
+      username: formData.username,
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      phone: formData.phone,
+      title: formData.title,
+      profilePictureAssetId: formData.profilePictureAssetId,
+      userRole: formData.userRole,
+    };
 
-    requiredFields.forEach((field) => {
-      const value = formData[field];
-      if (typeof value === "string" && !value.trim()) {
-        const fieldLabel = field.charAt(0).toUpperCase() + field.slice(1);
-        const errorMsg = `${fieldLabel} is required`;
-        errors.push(errorMsg);
-        fieldErrorsMap[field] = errorMsg;
-      }
-    });
-
-    // Email validation
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      const emailError = "Please enter a valid email address";
-      errors.push(emailError);
-      fieldErrorsMap["email"] = emailError;
-    }
-
-    // Password validation
-    if (formData.password && formData.password.length < 6) {
-      const passwordError = "Password must be at least 6 characters";
-      errors.push(passwordError);
-      fieldErrorsMap["password"] = passwordError;
-    }
-
-    setFieldErrors(fieldErrorsMap);
-    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+    const result = await validateFormStep(userStep1Schema, validationData);
+    setFieldErrors(result.errors);
+    
+    return {
+      isValid: result.isValid,
+      errors: Object.values(result.errors),
+      fieldErrors: result.errors,
+    };
   };
 
-  const validateStep1 = () => {
-    const errors: string[] = [];
-    const fieldErrorsMap: Record<string, string> = {};
+  const validateStep1 = async () => {
+    const validationData = {
+      fathersName: formData.fathersName,
+      mothersName: formData.mothersName,
+      dateOfBirth: formData.dateOfBirth,
+      nationality: formData.nationality,
+      nationalId: formData.nationalId,
+      gender: formData.gender,
+      maritalStatus: formData.maritalStatus,
+      alternateContactNumber: formData.alternateContactNumber,
+      secondaryEmailAddress: formData.secondaryEmailAddress,
+      presentAddress: formData.presentAddress,
+      permanentAddress: formData.permanentAddress,
+      emergencyContactName: formData.emergencyContactName,
+      emergencyContactRelation: formData.emergencyContactRelation,
+      emergencyContactNumber: formData.emergencyContactNumber,
+      alternateEmergencyContact: formData.alternateEmergencyContact,
+    };
 
-    // Date of Birth validation - must be ISO 8601 format
-    if (!formData.dateOfBirth || !formData.dateOfBirth.trim()) {
-      const dateError = "Date of Birth is required";
-      errors.push(dateError);
-      fieldErrorsMap["dateOfBirth"] = dateError;
-    } else {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(formData.dateOfBirth)) {
-        const dateError = "Date of Birth must be in YYYY-MM-DD format";
-        errors.push(dateError);
-        fieldErrorsMap["dateOfBirth"] = dateError;
-      }
-    }
-
-    // Gender validation - required
-    if (!formData.gender || !formData.gender.trim()) {
-      const genderError = "Please select a Gender";
-      errors.push(genderError);
-      fieldErrorsMap["gender"] = genderError;
-    }
-
-    // Marital Status validation - required
-    if (!formData.maritalStatus || !formData.maritalStatus.trim()) {
-      const maritalStatusError = "Please select Marital Status";
-      errors.push(maritalStatusError);
-      fieldErrorsMap["maritalStatus"] = maritalStatusError;
-    }
-
-    // Secondary Email validation - if provided, must be valid email
-    if (!formData.secondaryEmailAddress || !formData.secondaryEmailAddress.trim()) {
-      const secondaryEmailError = "Secondary Email Address is required";
-      errors.push(secondaryEmailError);
-      fieldErrorsMap["secondaryEmailAddress"] = secondaryEmailError;
-    } else if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
-      const secondaryEmailError = "Secondary Email must be a valid email address";
-      errors.push(secondaryEmailError);
-      fieldErrorsMap["secondaryEmailAddress"] = secondaryEmailError;
-    }
-
-    setFieldErrors(fieldErrorsMap);
-    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+    const result = await validateFormStep(userStep2Schema, validationData);
+    setFieldErrors(result.errors);
+    
+    return {
+      isValid: result.isValid,
+      errors: Object.values(result.errors),
+      fieldErrors: result.errors,
+    };
   };
 
-  const validateStep2 = () => {
-    const errors: string[] = [];
-    const fieldErrorsMap: Record<string, string> = {};
+  const validateStep2 = async () => {
+    const validationData = {
+      jobTitle: formData.jobTitle,
+      department: formData.department,
+      employmentType: formData.employmentType,
+      supervisorId: formData.supervisorId,
+      workLocation: formData.workLocation,
+      shiftType: formData.shiftType,
+      employmentStatus: formData.employmentStatus,
+    };
 
-    // Employment Details validation
-    if (!formData.employmentType || !formData.employmentType.trim()) {
-      const employmentTypeError = "Please select Employment Type";
-      errors.push(employmentTypeError);
-      fieldErrorsMap["employmentType"] = employmentTypeError;
-    }
-
-    if (!formData.supervisorId || !formData.supervisorId.trim()) {
-      const supervisorIdError = "Please select a Supervisor";
-      errors.push(supervisorIdError);
-      fieldErrorsMap["supervisorId"] = supervisorIdError;
-    }
-
-    if (!formData.shiftType || !formData.shiftType.trim()) {
-      const shiftTypeError = "Please select Shift Type";
-      errors.push(shiftTypeError);
-      fieldErrorsMap["shiftType"] = shiftTypeError;
-    }
-
-    if (!formData.employmentStatus || !formData.employmentStatus.trim()) {
-      const employmentStatusError = "Please select Status";
-      errors.push(employmentStatusError);
-      fieldErrorsMap["employmentStatus"] = employmentStatusError;
-    }
-
-    setFieldErrors(fieldErrorsMap);
-    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+    const result = await validateFormStep(userStep3Schema, validationData);
+    setFieldErrors(result.errors);
+    
+    return {
+      isValid: result.isValid,
+      errors: Object.values(result.errors),
+      fieldErrors: result.errors,
+    };
   };
 
-  const validateStep3 = () => {
-    const errors: string[] = [];
-    const fieldErrorsMap: Record<string, string> = {};
+  const validateStep3 = async () => {
+    const validationData = {
+      basicSalary: formData.basicSalary ? Number(formData.basicSalary) : null,
+      allowances: formData.allowances,
+      providentFund: formData.providentFund ? Number(formData.providentFund) : null,
+      salaryPaymentMode: formData.salaryPaymentMode,
+      bankName: formData.bankName,
+      bankAccountTitle: formData.bankAccountTitle,
+      bankAccountNumber: formData.bankAccountNumber,
+      taxStatus: formData.taxStatus,
+    };
 
-    // Salary Payment Mode validation
-    if (!formData.salaryPaymentMode || !formData.salaryPaymentMode.trim()) {
-      const salaryPaymentModeError = "Please select Salary Payment Mode";
-      errors.push(salaryPaymentModeError);
-      fieldErrorsMap["salaryPaymentMode"] = salaryPaymentModeError;
-    }
-
-    // Salary & Benefits validation
-    if (!formData.taxStatus || !formData.taxStatus.trim()) {
-      const taxStatusError = "Please select Tax Status";
-      errors.push(taxStatusError);
-      fieldErrorsMap["taxStatus"] = taxStatusError;
-    }
-
-    // Bank Account Number validation - max 16 digits, numeric only if provided
-    if (formData.bankAccountNumber && formData.bankAccountNumber.trim()) {
-      if (!/^\d+$/.test(formData.bankAccountNumber)) {
-        const bankAccountError = "Bank Account Number must contain only numbers";
-        errors.push(bankAccountError);
-        fieldErrorsMap["bankAccountNumber"] = bankAccountError;
-      } else if (formData.bankAccountNumber.length > 16) {
-        const bankAccountError = "Bank Account Number must be maximum 16 digits";
-        errors.push(bankAccountError);
-        fieldErrorsMap["bankAccountNumber"] = bankAccountError;
-      }
-    }
-
-    // Provident Fund validation - must be 0-99 if provided
-    if (formData.providentFund && formData.providentFund.trim()) {
-      const pfValue = parseInt(formData.providentFund);
-      if (isNaN(pfValue)) {
-        const pfError = "Provident Fund must be a number";
-        errors.push(pfError);
-        fieldErrorsMap["providentFund"] = pfError;
-      } else if (pfValue < 0 || pfValue > 99) {
-        const pfError = "Provident Fund must be between 0 and 99";
-        errors.push(pfError);
-        fieldErrorsMap["providentFund"] = pfError;
-      }
-    }
-
-    setFieldErrors(fieldErrorsMap);
-    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+    const result = await validateFormStep(userStep4Schema, validationData);
+    setFieldErrors(result.errors);
+    
+    return {
+      isValid: result.isValid,
+      errors: Object.values(result.errors),
+      fieldErrors: result.errors,
+    };
   };
 
-  const validateStep4 = () => {
-    const errors: string[] = [];
-    const fieldErrorsMap: Record<string, string> = {};
+  const validateStep4 = async () => {
+    const validationData = {
+      identityDocumentName: formData.identityDocumentName,
+      idCardNumber: formData.idCardNumber,
+      idCardIssuanceDate: formData.idCardIssuanceDate,
+      idCardExpiryDate: formData.idCardExpiryDate,
+      referralPersonName: formData.referralPersonName,
+      referralRelation: formData.referralRelation,
+      referralContact: formData.referralContact,
+      policeVerification: formData.policeVerification,
+      remarks: formData.remarks,
+    };
 
-    // Identification & Verification validation
-    if (!formData.idCardIssuanceDate || !formData.idCardIssuanceDate.trim()) {
-      const idCardIssuanceDateError = "ID Card Issuance Date is required";
-      errors.push(idCardIssuanceDateError);
-      fieldErrorsMap["idCardIssuanceDate"] = idCardIssuanceDateError;
-    } else {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(formData.idCardIssuanceDate)) {
-        const idCardIssuanceDateError = "ID Card Issuance Date must be in YYYY-MM-DD format";
-        errors.push(idCardIssuanceDateError);
-        fieldErrorsMap["idCardIssuanceDate"] = idCardIssuanceDateError;
-      }
-    }
-
-    if (!formData.idCardExpiryDate || !formData.idCardExpiryDate.trim()) {
-      const idCardExpiryDateError = "ID Card Expiry Date is required";
-      errors.push(idCardExpiryDateError);
-      fieldErrorsMap["idCardExpiryDate"] = idCardExpiryDateError;
-    } else {
-      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!dateRegex.test(formData.idCardExpiryDate)) {
-        const idCardExpiryDateError = "ID Card Expiry Date must be in YYYY-MM-DD format";
-        errors.push(idCardExpiryDateError);
-        fieldErrorsMap["idCardExpiryDate"] = idCardExpiryDateError;
-      }
-    }
-
-    setFieldErrors(fieldErrorsMap);
-    return { isValid: errors.length === 0, errors, fieldErrors: fieldErrorsMap };
+    const result = await validateFormStep(userStep5Schema, validationData);
+    setFieldErrors(result.errors);
+    
+    return {
+      isValid: result.isValid,
+      errors: Object.values(result.errors),
+      fieldErrors: result.errors,
+    };
   };
 
   return (

@@ -393,6 +393,10 @@ export const assetsService = {
     });
     return response.data;
   },
+
+  deleteAsset: async (assetId: string): Promise<void> => {
+    await api.delete(`/assets/${assetId}`);
+  },
 };
 
 export const usersService = {

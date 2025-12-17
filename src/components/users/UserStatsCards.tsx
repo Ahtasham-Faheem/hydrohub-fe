@@ -1,6 +1,7 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { BsThreeDots } from "react-icons/bs";
 import type { ReactNode } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface StatsCard {
   title: string;
@@ -17,6 +18,8 @@ interface UserStatsCardsProps {
 }
 
 export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
+  const { colors } = useTheme();
+
   return (
     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mb: 4 }}>
       {cards.map((card: StatsCard, idx: number) => (
@@ -30,13 +33,14 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
           <Card
             sx={{
               borderRadius: 3,
-              boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-              border: "1px solid #f1f5f9",
+              boxShadow: colors.shadow.sm,
+              border: `1px solid ${colors.border.primary}`,
+              backgroundColor: colors.background.card,
               transition: "transform 0.2s, box-shadow 0.2s",
               height: "100%",
               "&:hover": {
                 transform: "translateY(-2px)",
-                boxShadow: "0 4px 14px rgba(0,0,0,0.1)",
+                boxShadow: colors.shadow.md,
               },
             }}
           >
@@ -69,18 +73,49 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
                   </Box>
                   <Typography
                     variant="subtitle1"
-                    sx={{ fontWeight: 600, color: "#374151" }}
+                    sx={{
+                      fontWeight: 600,
+                      color: colors.text.primary,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      fontSize: 24
+                    }}
                   >
-                    {card.title}
+                    {/* {card.title} */}
+                    {card.value}
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: card.change.startsWith("-")
+                          ? colors.status.error
+                          : colors.status.success,
+                        fontWeight: 600,
+                      }}
+                    >
+                      ({card.change})
+                    </Typography>
                   </Typography>
                 </Box>
-                <BsThreeDots className="p-2 text-4xl rounded-lg hover:shadow" />
+                <Box
+                  sx={{
+                    p: 1,
+                    borderRadius: 1,
+                    color: colors.text.tertiary,
+                    "&:hover": {
+                      backgroundColor: colors.background.tertiary,
+                      color: colors.text.primary,
+                    },
+                  }}
+                >
+                  <BsThreeDots />
+                </Box>
               </Box>
 
-              <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              {/* <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
                 <Typography
                   variant="h5"
-                  sx={{ fontWeight: 400, color: "#111827", mr: 1 }}
+                  sx={{ fontWeight: 400, color: colors.text.primary, mr: 1 }}
                 >
                   {card.value}
                 </Typography>
@@ -88,19 +123,19 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
                   variant="body2"
                   sx={{
                     color: card.change.startsWith("-")
-                      ? "#ef4444"
-                      : "#22c55e",
+                      ? colors.status.error
+                      : colors.status.success,
                     fontWeight: 600,
                   }}
                 >
                   ({card.change})
                 </Typography>
-              </Box>
+              </Box> */}
 
               <Typography
                 variant="body2"
                 sx={{
-                  color: "var(--color-text-600)",
+                  color: colors.text.secondary,
                   lineHeight: 1.5,
                   fontSize: 14,
                 }}
