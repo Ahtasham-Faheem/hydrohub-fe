@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, MenuItem } from "@mui/material";
+import { Menu, MenuItem, Box } from "@mui/material";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export const Footer = () => {
@@ -46,19 +46,21 @@ export const Footer = () => {
               "Locations",
               "Supports",
             ].map((item) => (
-              <a
+              <Box
                 key={item}
+                component="a"
                 href="/"
                 className="text-center text-sm font-normal whitespace-nowrap transition-colors"
-                style={{ 
+                sx={{ 
                   color: colors.text.secondary,
-                  ':hover': { color: colors.primary[500] }
+                  textDecoration: 'none',
+                  '&:hover': { 
+                    color: colors.primary[500] 
+                  }
                 }}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = colors.primary[500]}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = colors.text.secondary}
               >
                 {item}
-              </a>
+              </Box>
             ))}
           </div>
         </nav>
