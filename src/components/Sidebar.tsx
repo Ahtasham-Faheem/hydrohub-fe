@@ -43,7 +43,7 @@ export const Sidebar = ({
   // Determine if sidebar should be expanded
   const shouldExpand = collapsed && isHovered;
   const effectiveCollapsed = collapsed && !shouldExpand;
-  const drawerWidth = effectiveCollapsed ? 80 : 250;
+  const drawerWidth = effectiveCollapsed ? 80 : 270;
 
   // Auto-open parents when navigating into nested pages
   useEffect(() => {
@@ -133,13 +133,13 @@ export const Sidebar = ({
 
     return (
       <Box sx={{ my: 2, mx: 2 }}>
-        <Divider 
+        <Divider
           textAlign="left"
           sx={{
             color: colors.text.secondary,
-            fontSize: '14px',
+            fontSize: "14px",
             fontWeight: 500,
-            '&::before, &::after': {
+            "&::before, &::after": {
               borderColor: colors.border.secondary,
             },
           }}
@@ -203,11 +203,11 @@ export const Sidebar = ({
                 sx={{
                   "& .MuiListItemText-primary": {
                     color: getTextColor(item),
-                    whiteSpace: 'nowrap',
-                    maxWidth: '175px',
-                    overflow: 'hidden',
+                    whiteSpace: "nowrap",
+                    maxWidth: "175px",
+                    overflow: "hidden",
                     paddingRight: 1,
-                    textOverflow: 'ellipsis',
+                    textOverflow: "ellipsis",
                     fontSize: 14,
                     fontWeight:
                       activeSection === item.id ||
@@ -245,7 +245,7 @@ export const Sidebar = ({
   };
 
   return (
-    <div 
+    <div
       className="sidebar pr-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -263,7 +263,7 @@ export const Sidebar = ({
             backgroundColor: colors.background.primary,
             transition: "width 0.3s ease, background-color 0.3s ease",
             overflowX: "hidden",
-            zIndex: shouldExpand ? 1300 : 'auto',
+            zIndex: shouldExpand ? 1300 : "auto",
           },
         }}
       >
@@ -293,7 +293,7 @@ export const Sidebar = ({
                 } h-auto transition-all duration-300`}
               />
             </Link>
-            
+
             {/* Collapse/Expand Button - positioned in top right when expanded */}
             {!effectiveCollapsed && (
               <IconButton
@@ -306,7 +306,7 @@ export const Sidebar = ({
                   padding: "2px !important",
                   minWidth: "20px",
                   minHeight: "20px",
-                  position: 'absolute',
+                  position: "absolute",
                   top: 0,
                   right: -10,
                   boxShadow: colors.shadow.sm,
@@ -326,7 +326,7 @@ export const Sidebar = ({
           <List
             component="nav"
             disablePadding
-            sx={{ backgroundColor: colors.background.primary }}
+            sx={{ backgroundColor: colors.background.primary, paddingRight: 2 }}
           >
             {menuConfig.map((item) => renderMenuItem(item))}
           </List>
