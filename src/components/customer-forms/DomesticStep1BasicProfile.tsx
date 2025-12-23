@@ -4,18 +4,22 @@ import { CustomSelect } from "../common/CustomSelect";
 import { PhoneInput } from "../common/PhoneInput";
 import { ProfilePhotoUpload } from "../common/ProfilePhotoUpload";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { DomesticCustomer } from "../../types/customer";
 import { useState } from "react";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 interface DomesticStep1BasicProfileProps {
   isEditMode?: boolean;
+  existingImageUrl?: string;
 }
 
 export const DomesticStep1BasicProfile = ({
   isEditMode = false,
+  existingImageUrl,
 }: DomesticStep1BasicProfileProps = {}) => {
   const { state, fieldErrors, setFieldErrors, updateFormData } = useCustomerForm();
+  const { colors } = useTheme();
   
   // Handle null state.data with default empty values
   const data = (state.data as DomesticCustomer) || {
@@ -45,21 +49,28 @@ export const DomesticStep1BasicProfile = ({
         onChange={(assetId) => updateFormData("profilePictureAssetId", assetId)}
         onClearError={() => setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" })}
         error={fieldErrors['profilePictureAssetId']}
-        disabled={isEditMode}
+        disabled={false}
+        existingImageUrl={existingImageUrl}
       />
 
       {/* Basic Information */}
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Basic Information
         </Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           {/* Customer Type Display */}
-          <Box sx={{ mb: 2, p: 2, bgcolor: '#f0f9ff', borderRadius: 1, border: '1px solid #bfdbfe' }}>
-            <Typography variant="caption" sx={{ color: '#0369a1', fontWeight: 600 }}>
+          <Box sx={{ 
+            mb: 2, 
+            p: 2, 
+            bgcolor: colors.primary[50], 
+            borderRadius: 1, 
+            border: `1px solid ${colors.primary[200]}` 
+          }}>
+            <Typography variant="caption" sx={{ color: colors.primary[600], fontWeight: 600 }}>
               Customer Type: {data.customerType || 'Not Selected'}
             </Typography>
           </Box>

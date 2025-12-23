@@ -1,5 +1,6 @@
 import { Box, Button } from "@mui/material";
 import { Dayjs } from "dayjs";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface DateCalendarGridProps {
   month: Dayjs;
@@ -14,6 +15,7 @@ export const DateCalendarGrid = ({
   endDate,
   onDateClick,
 }: DateCalendarGridProps) => {
+  const { colors } = useTheme();
   const daysInMonth = month.daysInMonth();
   const firstDay = month.startOf("month").day();
   const days = [];
@@ -62,7 +64,7 @@ export const DateCalendarGrid = ({
               textAlign: "center",
               fontSize: "0.75rem",
               fontWeight: 600,
-              color: "#6b7280",
+              color: colors.text.tertiary,
               py: 0.5,
             }}
           >
@@ -109,20 +111,24 @@ export const DateCalendarGrid = ({
                 fontSize: "0.875rem",
                 bgcolor:
                   isStart || isEnd
-                    ? "#3b82f6"
+                    ? colors.primary[600]
                     : inRange
-                    ? "#dbeafe"
+                    ? colors.primary[100]
                     : "transparent",
                 color:
                   isStart || isEnd
-                    ? "white"
+                    ? colors.text.inverse
                     : inRange
-                    ? "#1e40af"
-                    : "#374151",
+                    ? colors.primary[700]
+                    : colors.text.primary,
                 borderRadius: 1,
                 "&:hover": {
                   bgcolor:
-                    isStart || isEnd ? "#2563eb" : inRange ? "#dbeafe" : "#f3f4f6",
+                    isStart || isEnd 
+                      ? colors.primary[700] 
+                      : inRange 
+                      ? colors.primary[200] 
+                      : colors.background.secondary,
                 },
               }}
             >

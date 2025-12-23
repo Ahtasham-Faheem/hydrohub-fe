@@ -12,6 +12,7 @@ import { CustomInput } from "../common/CustomInput";
 import { CustomSelect } from "../common/CustomSelect";
 import { FileUploadField } from "../common/FileUploadField";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { DomesticCustomer, LinkedAccount } from "../../types/customer";
 import { MdAdd, MdDelete, MdEdit } from "react-icons/md";
 import { useState, useEffect } from "react";
@@ -37,6 +38,7 @@ export const DomesticStep6LinkedAccounts = ({
 }: DomesticStep6LinkedAccountsProps) => {
   const { state, addLinkedAccount, removeLinkedAccount, updateLinkedAccount } =
     useCustomerForm();
+  const { colors } = useTheme();
   const data = state.data as DomesticCustomer;
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -268,7 +270,7 @@ export const DomesticStep6LinkedAccounts = ({
       >
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, color: "#374151" }}
+          sx={{ fontWeight: 600, color: colors.text.primary }}
         >
           Linked Accounts / Family Members
         </Typography>
@@ -320,7 +322,7 @@ export const DomesticStep6LinkedAccounts = ({
                   <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
                     {account.title}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#6b7280" }}>
+                  <Typography variant="caption" sx={{ color: colors.text.secondary }}>
                     {account.contactNumber}
                   </Typography>
                 </Box>
@@ -347,7 +349,7 @@ export const DomesticStep6LinkedAccounts = ({
                           handleRemoveAccount(index);
                         }}
                       >
-                        <MdDelete size={18} style={{ color: "#ef4444" }} />
+                        <MdDelete size={18} style={{ color: colors.status.error }} />
                       </IconButton>
                     </>
                   )}
@@ -377,7 +379,7 @@ export const DomesticStep6LinkedAccounts = ({
                       <Box>
                         <Typography
                           variant="caption"
-                          sx={{ color: "#6b7280", fontWeight: 600 }}
+                          sx={{ color: colors.text.secondary, fontWeight: 600 }}
                         >
                           Account Title
                         </Typography>
@@ -388,7 +390,7 @@ export const DomesticStep6LinkedAccounts = ({
                       <Box>
                         <Typography
                           variant="caption"
-                          sx={{ color: "#6b7280", fontWeight: 600 }}
+                          sx={{ color: colors.text.secondary, fontWeight: 600 }}
                         >
                           Contact Number
                         </Typography>
@@ -408,7 +410,7 @@ export const DomesticStep6LinkedAccounts = ({
                       <Box>
                         <Typography
                           variant="caption"
-                          sx={{ color: "#6b7280", fontWeight: 600 }}
+                          sx={{ color: colors.text.secondary, fontWeight: 600 }}
                         >
                           Account Visibility
                         </Typography>
@@ -422,7 +424,7 @@ export const DomesticStep6LinkedAccounts = ({
                       <Box>
                         <Typography
                           variant="caption"
-                          sx={{ color: "#6b7280", fontWeight: 600 }}
+                          sx={{ color: colors.text.secondary, fontWeight: 600 }}
                         >
                           Account Status
                         </Typography>
@@ -438,7 +440,7 @@ export const DomesticStep6LinkedAccounts = ({
                     <Box>
                       <Typography
                         variant="caption"
-                        sx={{ color: "#6b7280", fontWeight: 600 }}
+                        sx={{ color: colors.text.secondary, fontWeight: 600 }}
                       >
                         Authorized Address
                       </Typography>
@@ -503,7 +505,7 @@ export const DomesticStep6LinkedAccounts = ({
                           </Box>
                         }
                         endAdornment={
-                          <Phone sx={{ color: "#9ca3af", fontSize: 22 }} />
+                          <Phone sx={{ color: colors.text.tertiary, fontSize: 22 }} />
                         }
                       />
                     </Box>
@@ -606,13 +608,13 @@ export const DomesticStep6LinkedAccounts = ({
         <Card
           sx={{
             p: 2.5,
-            backgroundColor: "#f0f9ff",
-            border: "2px solid var(--color-primary-600)",
+            backgroundColor: colors.primary[50],
+            border: `2px solid ${colors.primary[600]}`,
           }}
         >
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+            sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
           >
             Add New Linked Account
           </Typography>
@@ -656,7 +658,7 @@ export const DomesticStep6LinkedAccounts = ({
                     <span className="ml-2 text-gray-400 border-r border-text-300 h-6"></span>
                   </Box>
                 }
-                endAdornment={<Phone sx={{ color: "#9ca3af", fontSize: 22 }} />}
+                endAdornment={<Phone sx={{ color: colors.text.tertiary, fontSize: 22 }} />}
               />
             </Box>
 
@@ -742,9 +744,9 @@ export const DomesticStep6LinkedAccounts = ({
       {/* Info Card */}
       {linkedAccounts.length === 0 && !newAccountMode && (
         <Card
-          sx={{ p: 2, backgroundColor: "#fef3c7", border: "1px solid #fde68a" }}
+          sx={{ p: 2, backgroundColor: colors.status.warningLight, border: `1px solid ${colors.status.warning}` }}
         >
-          <Typography variant="caption" sx={{ color: "#92400e" }}>
+          <Typography variant="caption" sx={{ color: colors.status.warning }}>
             Linked accounts allow family members or authorized persons to also
             receive deliveries on behalf of the main customer.
           </Typography>

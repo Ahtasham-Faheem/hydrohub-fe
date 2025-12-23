@@ -8,6 +8,7 @@ import {
   Collapse,
   Tooltip,
   IconButton,
+  Divider,
 } from "@mui/material";
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import { Link } from "react-router-dom";
@@ -42,7 +43,7 @@ export const Sidebar = ({
   // Determine if sidebar should be expanded
   const shouldExpand = collapsed && isHovered;
   const effectiveCollapsed = collapsed && !shouldExpand;
-  const drawerWidth = effectiveCollapsed ? 80 : 309;
+  const drawerWidth = effectiveCollapsed ? 80 : 250;
 
   // Auto-open parents when navigating into nested pages
   useEffect(() => {
@@ -131,25 +132,21 @@ export const Sidebar = ({
     if (effectiveCollapsed) return null;
 
     return (
-      <div
-        className="flex gap-2 items-center text-sm font-medium rounded-none mb-3 mt-2 px-2"
-        style={{ color: colors.text.tertiary }}
-      >
-        <div
-          className="shrink-0 self-stretch my-auto h-px border-solid w-[15px]"
-          style={{ borderColor: colors.border.secondary }}
-        />
-        <h2
-          className="self-stretch basis-auto whitespace-nowrap"
-          style={{ color: colors.text.secondary }}
+      <Box sx={{ my: 2, mx: 2 }}>
+        <Divider 
+          textAlign="left"
+          sx={{
+            color: colors.text.secondary,
+            fontSize: '14px',
+            fontWeight: 500,
+            '&::before, &::after': {
+              borderColor: colors.border.secondary,
+            },
+          }}
         >
           {label}
-        </h2>
-        <div
-          className="shrink-0 self-stretch my-auto h-px border-solid w-full"
-          style={{ borderColor: colors.border.secondary }}
-        />
-      </div>
+        </Divider>
+      </Box>
     );
   };
 
@@ -186,7 +183,7 @@ export const Sidebar = ({
               ...(!getActiveClass(item) && {
                 "&:hover": {
                   backgroundColor: colors.background.secondary,
-                  borderRadius: "60px",
+                  borderRadius: "50px",
                 },
               }),
             }}
@@ -206,6 +203,12 @@ export const Sidebar = ({
                 sx={{
                   "& .MuiListItemText-primary": {
                     color: getTextColor(item),
+                    whiteSpace: 'nowrap',
+                    maxWidth: '175px',
+                    overflow: 'hidden',
+                    paddingRight: 1,
+                    textOverflow: 'ellipsis',
+                    fontSize: 14,
                     fontWeight:
                       activeSection === item.id ||
                       (isItemOrChildActive(item) && activeSection !== item.id)
@@ -243,7 +246,7 @@ export const Sidebar = ({
 
   return (
     <div 
-      className="sidebar"
+      className="sidebar pr-4"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
@@ -258,10 +261,9 @@ export const Sidebar = ({
             width: drawerWidth,
             boxSizing: "border-box",
             backgroundColor: colors.background.primary,
-            borderRight: 0,
             transition: "width 0.3s ease, background-color 0.3s ease",
             overflowX: "hidden",
-            zIndex: shouldExpand ? 1300 : 'auto', // Higher z-index when expanded on hover
+            zIndex: shouldExpand ? 1300 : 'auto',
           },
         }}
       >

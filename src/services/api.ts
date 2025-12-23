@@ -1,6 +1,11 @@
 import axios from 'axios';
 import type { UsersResponse, StaffResponse } from '../types/user';
 import type { CustomersResponse } from '../types/customer';
+import type { 
+  CatalogueItem, 
+  Category, 
+  Collection 
+} from '../types/catalogue';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const API_VERSION = import.meta.env.VITE_API_VERSION;
@@ -380,6 +385,72 @@ export interface UploadResponse {
   fileType: string;
 }
 
+// Catalog Types
+export interface CreateCatalogueItemData {
+  name: string;
+  subHeading?: string;
+  description?: string;
+  type: 'product' | 'service';
+  categoryId?: string;
+  collectionId?: string;
+  costPrice: number;
+  sellingPrice: number;
+  discountPercent: number;
+  discountAmount: number;
+  salePrice: number;
+  markSale: boolean;
+  stockManaged: boolean;
+  openingStock: number;
+  emptiesTrackable?: boolean;
+  sku?: string;
+  productId?: string;
+  barcode?: string;
+  countryOrigin?: string;
+  link?: string;
+  images?: string[];
+  tags: string[];
+  rating: number;
+}
+
+export interface UpdateCatalogueItemData extends Partial<CreateCatalogueItemData> {}
+
+export interface CatalogueItemsResponse {
+  data: CatalogueItem[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CreateCategoryData {
+  name: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateCategoryData extends Partial<CreateCategoryData> {}
+
+export interface CategoriesResponse {
+  data: Category[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CreateCollectionData {
+  name: string;
+  description?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateCollectionData extends Partial<CreateCollectionData> {}
+
+export interface CollectionsResponse {
+  data: Collection[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export const assetsService = {
   uploadFile: async (file: File): Promise<UploadResponse> => {
     const formData = new FormData();
@@ -521,6 +592,7 @@ export const staffService = {
     lastName?: string;
     profilePictureAssetId?: string;
     status?: string;
+    role?: string;
   }): Promise<any> => {
     const response = await api.patch(`/staff/${staffId}`, data);
     return response.data;
@@ -633,6 +705,246 @@ export const customerService = {
   deleteCustomer: async (customerId: string): Promise<any> => {
     const response = await api.delete(`/customers/${customerId}`);
     return response.data;
+  },
+};
+
+// Catalog Service - Products API (Full CRUD)
+export const catalogService = {
+  // Products CRUD
+  getProducts: async (page = 1, limit = 10, filters?: any): Promise<CatalogueItemsResponse> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.get('/catalog/products', {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+      params: {
+        page,
+        limit,
+        ...filters,
+      },
+    });
+    return response.data;
+  },
+
+  getProductById: async (productId: string): Promise<CatalogueItem> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.get(`/catalog/products/${productId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  createProduct: async (productData: CreateCatalogueItemData): Promise<CatalogueItem> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.post('/catalog/products', productData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  updateProduct: async (productId: string, productData: UpdateCatalogueItemData): Promise<CatalogueItem> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.patch(`/catalog/products/${productId}`, productData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  deleteProduct: async (productId: string): Promise<void> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    await api.delete(`/catalog/products/${productId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+  },
+
+  toggleProductStatus: async (productId: string): Promise<CatalogueItem> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.patch(`/catalog/products/${productId}/toggle-status`, {}, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  // Categories CRUD
+  getCategories: async (page = 1, limit = 100): Promise<CategoriesResponse> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.get('/catalog/categories', {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+      params: {
+        page,
+        limit,
+      },
+    });
+    
+    return response.data;
+  },
+
+  getCategoryById: async (categoryId: string): Promise<Category> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.get(`/catalog/categories/${categoryId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  createCategory: async (categoryData: CreateCategoryData): Promise<Category> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.post('/catalog/categories', categoryData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  updateCategory: async (categoryId: string, categoryData: UpdateCategoryData): Promise<Category> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.patch(`/catalog/categories/${categoryId}`, categoryData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  deleteCategory: async (categoryId: string): Promise<void> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    await api.delete(`/catalog/categories/${categoryId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+  },
+
+  // Collections CRUD
+  getCollections: async (page = 1, limit = 100): Promise<CollectionsResponse> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.get('/catalog/collections', {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+      params: {
+        page,
+        limit,
+      },
+    });
+    
+    return response.data;
+  },
+
+  getCollectionById: async (collectionId: string): Promise<Collection> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.get(`/catalog/collections/${collectionId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  createCollection: async (collectionData: CreateCollectionData): Promise<Collection> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.post('/catalog/collections', collectionData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  updateCollection: async (collectionId: string, collectionData: UpdateCollectionData): Promise<Collection> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    const response = await api.patch(`/catalog/collections/${collectionId}`, collectionData, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  deleteCollection: async (collectionId: string): Promise<void> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    await api.delete(`/catalog/collections/${collectionId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+  },
+
+  // Bulk operations
+  bulkUpdateProducts: async (productIds: string[], updateData: Partial<CatalogueItem>): Promise<CatalogueItem[]> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    // Use individual PATCH requests since there's no bulk-update API
+    const updatePromises = productIds.map(productId => 
+      api.patch(`/catalog/products/${productId}`, updateData, {
+        headers: {
+          'x-vendorId': vendorId,
+        },
+      })
+    );
+    
+    const responses = await Promise.all(updatePromises);
+    return responses.map(response => response.data);
+  },
+
+  bulkDeleteProducts: async (productIds: string[]): Promise<void> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    
+    await api.delete('/catalog/products/bulk-delete', {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+      data: { productIds },
+    });
   },
 };
 

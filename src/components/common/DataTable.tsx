@@ -15,6 +15,7 @@ import {
   DialogActions,
   Skeleton,
   Typography,
+  TableSortLabel,
 } from "@mui/material";
 import { Visibility, Edit, Delete, FolderOpen } from "@mui/icons-material";
 import { IoMdClose } from "react-icons/io";
@@ -34,7 +35,16 @@ const useFormContextSafe = () => {
 export interface Column {
   key: string;
   label: string;
+  sortable?: boolean;
+  visible?: boolean;
   render?: (value: any, item: any) => React.ReactNode;
+}
+
+export type SortOrder = 'asc' | 'desc';
+
+export interface SortConfig {
+  key: string;
+  direction: SortOrder;
 }
 
 interface DataTableProps {
@@ -49,6 +59,9 @@ interface DataTableProps {
   onView?: (item: any) => void;
   onEdit?: (item: any) => void;
   onDelete?: (item: any) => void;
+  sortConfig?: SortConfig | null;
+  onSort?: (key: string) => void;
+  visibleColumns?: string[];
 }
 
 export const DataTable = ({
@@ -63,6 +76,9 @@ export const DataTable = ({
   onView,
   onEdit,
   onDelete,
+  sortConfig,
+  onSort,
+  visibleColumns,
 }: DataTableProps) => {
   const formContext = useFormContextSafe();
   const { colors } = useTheme();
@@ -71,6 +87,18 @@ export const DataTable = ({
   const [openModal, setOpenModal] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<any>(null);
+
+  // Filter columns based on visibility
+  const displayColumns = visibleColumns 
+    ? columns.filter(col => visibleColumns.includes(col.key) || col.visible !== false)
+    : columns.filter(col => col.visible !== false);
+
+  // Handle sort click
+  const handleSort = (columnKey: string) => {
+    if (onSort) {
+      onSort(columnKey);
+    }
+  };
 
   // Safely get nested value from object using dot notation
   const getNestedValue = (obj: any, path: string) => {
@@ -134,7 +162,7 @@ export const DataTable = ({
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: colors.background.secondary }}>
-                {columns.map((column) => (
+                {displayColumns.map((column) => (
                   <TableCell key={column.key} sx={{ color: colors.text.primary }}>
                     <Skeleton variant="text" width={80} />
                   </TableCell>
@@ -145,7 +173,7 @@ export const DataTable = ({
             <TableBody>
               {[...Array(5)].map((_, index) => (
                 <TableRow key={index}>
-                  {columns.map((column) => (
+                  {displayColumns.map((column) => (
                     <TableCell key={column.key}>
                       <Skeleton variant="text" width={Math.random() * 100 + 50} />
                     </TableCell>
@@ -186,9 +214,31 @@ export const DataTable = ({
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: colors.background.secondary }}>
-                {columns.map((column) => (
+                {displayColumns.map((column) => (
                   <TableCell key={column.key} sx={{ color: colors.text.primary, fontWeight: 600 }}>
-                    {column.label}
+                    {column.sortable !== false && onSort ? (
+                      <TableSortLabel
+                        active={sortConfig?.key === column.key}
+                        direction={sortConfig?.key === column.key ? sortConfig.direction : 'asc'}
+                        onClick={() => handleSort(column.key)}
+                        sx={{
+                          color: colors.text.primary,
+                          '&.Mui-active': {
+                            color: colors.primary[600],
+                          },
+                          '&:hover': {
+                            color: colors.primary[600],
+                          },
+                          '& .MuiTableSortLabel-icon': {
+                            color: `${colors.primary[600]} !important`,
+                          },
+                        }}
+                      >
+                        {column.label}
+                      </TableSortLabel>
+                    ) : (
+                      column.label
+                    )}
                   </TableCell>
                 ))}
                 {showActions && <TableCell align="center" sx={{ color: colors.text.primary, fontWeight: 600 }}>Actions</TableCell>}
@@ -205,7 +255,7 @@ export const DataTable = ({
                     }
                   }}
                 >
-                  {columns.map((column) => (
+                  {displayColumns.map((column) => (
                     <TableCell
                       key={`${getNestedValue(item, keyField)}-${column.key}`}
                       sx={{ color: colors.text.primary }}

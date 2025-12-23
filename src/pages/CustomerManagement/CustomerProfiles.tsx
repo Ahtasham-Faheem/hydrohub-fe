@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Box, Card, Divider } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
@@ -6,7 +6,7 @@ import { UserStatsCards } from "../../components/users/UserStatsCards";
 import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
 import { DataTable } from "../../components/common/DataTable";
-import type { Column } from "../../components/common/DataTable";
+import type { Column, SortConfig } from "../../components/common/DataTable";
 import { useGetCustomers } from "../../hooks/useCustomer";
 import { customerService } from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
@@ -21,6 +21,7 @@ export const CustomerProfiles = () => {
   const [endDate, setEndDate] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(
     null
@@ -35,8 +36,8 @@ export const CustomerProfiles = () => {
     const filters: any = {};
     if (status) filters.status = status;
     if (customerType) filters.customerType = customerType;
-    if (startDate) filters.dateFrom = startDate.format('YYYY-MM-DD');
-    if (endDate) filters.dateTo = endDate.format('YYYY-MM-DD');
+    if (startDate) filters.dateFrom = startDate.format("YYYY-MM-DD");
+    if (endDate) filters.dateTo = endDate.format("YYYY-MM-DD");
     if (search) filters.search = search;
     return Object.keys(filters).length > 0 ? filters : undefined;
   };
@@ -51,7 +52,6 @@ export const CustomerProfiles = () => {
 
   const customers = customerData?.data || [];
   const totalPages = customerData?.pagination?.totalPages || 1;
-  console.log('Customers Data:', customers);
 
   const handleDeleteCustomer = async (item: any) => {
     try {
@@ -59,18 +59,93 @@ export const CustomerProfiles = () => {
       // Refetch customers list after deletion
       // refetch();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Failed to delete customer');
+      alert(err.response?.data?.message || "Failed to delete customer");
     }
   };
 
   const [columns, setColumns] = useState([
-    { id: 1, label: "User", enabled: true },
-    { id: 2, label: "Email", enabled: true },
-    { id: 3, label: "Role", enabled: true },
-    { id: 4, label: "Status", enabled: true },
-    { id: 5, label: "Verified", enabled: true },
-    { id: 6, label: "Actions", enabled: true },
+    { id: 1, key: "firstName", label: "Customer Name", enabled: true },
+    { id: 2, key: "email", label: "Email", enabled: true },
+    { id: 3, key: "customerType", label: "Type", enabled: true },
+    { id: 4, key: "status", label: "Status", enabled: true },
   ]);
+
+  // Handle sorting
+  const handleSort = (key: string) => {
+    setSortConfig((prevSort) => {
+      if (prevSort?.key === key) {
+        // Toggle direction if same key
+        return {
+          key,
+          direction: prevSort.direction === "asc" ? "desc" : "asc",
+        };
+      } else {
+        // New key, default to ascending
+        return { key, direction: "asc" };
+      }
+    });
+  };
+
+  // Helper function to get nested values
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split(".").reduce((acc, part) => acc?.[part], obj);
+  };
+
+  // Sort and filter data based on sortConfig and search
+  const sortedAndFilteredCustomers = useMemo(() => {
+    let filteredData = customers;
+
+    // Apply search filter
+    if (search.trim()) {
+      const searchTerm = search.toLowerCase().trim();
+      filteredData = customers.filter((item: any) => {
+        const firstName = (item?.firstName || "").toLowerCase();
+        const lastName = (item?.lastName || "").toLowerCase();
+        const email = (item?.email || "").toLowerCase();
+        const customerType = (item?.customerType || "").toLowerCase();
+        const status = (item?.status || "").toLowerCase();
+        const customerId = (item?.customerId || "").toLowerCase();
+
+        return (
+          firstName.includes(searchTerm) ||
+          lastName.includes(searchTerm) ||
+          email.includes(searchTerm) ||
+          customerType.includes(searchTerm) ||
+          status.includes(searchTerm) ||
+          customerId.includes(searchTerm) ||
+          `${firstName} ${lastName}`.includes(searchTerm)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (!sortConfig) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const aValue = getNestedValue(a, sortConfig.key);
+      const bValue = getNestedValue(b, sortConfig.key);
+
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      // Convert to strings for comparison
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+
+      if (aStr < bStr) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aStr > bStr) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [customers, sortConfig, search]);
+
+  // Get visible columns based on enabled state
+  const visibleColumns = columns
+    .filter((col) => col.enabled)
+    .map((col) => col.key);
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -88,7 +163,7 @@ export const CustomerProfiles = () => {
   const cards = [
     {
       title: "Total Customers",
-      value: customers.length.toString(),
+      value: sortedAndFilteredCustomers.length.toString(),
       change: "0%",
       desc: "Total customers in the system",
       color: colors.status.success,
@@ -97,7 +172,7 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Active Customers",
-      value: customers
+      value: sortedAndFilteredCustomers
         .filter((c: any) => c.status === "active")
         .length.toString(),
       change: "+0%",
@@ -108,7 +183,7 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Verified Customers",
-      value: customers
+      value: sortedAndFilteredCustomers
         .filter((c: any) => c.personalInfo !== null)
         .length.toString(),
       change: "+0%",
@@ -119,7 +194,7 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Inactive Customers",
-      value: customers
+      value: sortedAndFilteredCustomers
         .filter((c: any) => c.status === "inactive")
         .length.toString(),
       change: "0%",
@@ -134,30 +209,56 @@ export const CustomerProfiles = () => {
     {
       key: "firstName",
       label: "Customer Name",
+      sortable: true,
+      visible: columns.find((c) => c.key === "firstName")?.enabled,
       render: (_: any, item: any) => {
         const firstName = item?.firstName || "N/A";
         const lastName = item?.lastName || "N/A";
-        const initials = (firstName?.[0] || "C") + (lastName?.[0] || "U");
+        const initials = (firstName?.[0] || "U") + (lastName?.[0] || "S");
         return (
           <Box display="flex" alignItems="center" gap={2}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: colors.primary[600],
-                color: colors.text.inverse,
-                fontWeight: 600,
-                fontSize: "0.875rem",
-              }}
-            >
-              {initials}
-            </Box>
+            {item?.profilePictureAsset?.fileUrl ? (
+              <img
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: colors.primary[600],
+                  color: colors.text.inverse,
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                }}
+                src={item?.profilePictureAsset?.fileUrl}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: colors.primary[600],
+                  color: colors.text.inverse,
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                }}
+              >
+                {initials}
+              </Box>
+            )}
             <Box>
-              <Box sx={{ fontWeight: 600, fontSize: 14, color: colors.text.primary }}>
+              <Box
+                sx={{
+                  fontWeight: 600,
+                  fontSize: 14,
+                  color: colors.text.primary,
+                }}
+              >
                 {firstName} {lastName}
               </Box>
               <Box sx={{ fontSize: 12, color: colors.text.secondary }}>
@@ -171,6 +272,8 @@ export const CustomerProfiles = () => {
     {
       key: "email",
       label: "Email",
+      sortable: true,
+      visible: columns.find((c) => c.key === "email")?.enabled,
       render: (_: any, item: any) => {
         return item?.email || "N/A";
       },
@@ -178,13 +281,17 @@ export const CustomerProfiles = () => {
     {
       key: "customerType",
       label: "Type",
+      sortable: true,
+      visible: columns.find((c) => c.key === "customerType")?.enabled,
       render: (_: any, item: any) => {
         return item?.customerType || "N/A";
       },
     },
     {
-      key: "customerStatus",
+      key: "status",
       label: "Status",
+      sortable: true,
+      visible: columns.find((c) => c.key === "status")?.enabled,
       render: (_: any, item: any) => {
         return (
           <Box
@@ -204,7 +311,11 @@ export const CustomerProfiles = () => {
               fontSize: "0.75rem",
               fontWeight: 600,
               textTransform: "capitalize",
-              border: `1px solid ${item?.status === "active" ? colors.status.success : colors.status.error}`,
+              border: `1px solid ${
+                item?.status === "active"
+                  ? colors.status.success
+                  : colors.status.error
+              }`,
             }}
           >
             {item?.status || "N/A"}
@@ -215,7 +326,9 @@ export const CustomerProfiles = () => {
   ];
 
   return (
-    <Box sx={{ backgroundColor: colors.background.primary, minHeight: '100vh' }}>
+    <Box
+      sx={{ backgroundColor: colors.background.primary, minHeight: "100vh" }}
+    >
       <UserStatsCards cards={cards} />
       <Card
         sx={{
@@ -236,7 +349,9 @@ export const CustomerProfiles = () => {
             mb: 2,
           }}
         >
-          <h2 className="text-lg" style={{ color: colors.text.primary }}>Filters</h2>
+          <h2 className="text-lg" style={{ color: colors.text.primary }}>
+            Filters
+          </h2>
         </Box>
 
         <UserFilters
@@ -267,12 +382,22 @@ export const CustomerProfiles = () => {
             setSearch,
             addButtonLabel: "Add New Customer",
             addButtonPath: "/dashboard/customer-profiles/create",
+            currentSort: sortConfig,
+            onSort: handleSort,
+            searchPlaceholder: "Search Customer",
+            sortOptions: [
+              { key: "firstName", label: "Name" },
+              { key: "email", label: "Email" },
+              { key: "customerType", label: "Type" },
+              { key: "status", label: "Status" },
+              { key: "createdAt", label: "Created Date" },
+            ],
           }}
         />
       </Card>
       <DataTable
         columns={tableColumns}
-        data={customers}
+        data={sortedAndFilteredCustomers}
         isLoading={isLoading}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
@@ -280,8 +405,13 @@ export const CustomerProfiles = () => {
         keyField="id"
         showActions={true}
         onView={(item) => console.log("View customer", item)}
-        onEdit={(item) => navigate(`/dashboard/customer-profiles/edit/${item.id}`)}
+        onEdit={(item) =>
+          navigate(`/dashboard/customer-profiles/edit/${item.id}`)
+        }
         onDelete={(item) => handleDeleteCustomer(item)}
+        sortConfig={sortConfig}
+        onSort={handleSort}
+        visibleColumns={visibleColumns}
       />
     </Box>
   );

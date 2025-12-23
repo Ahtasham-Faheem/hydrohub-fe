@@ -1,62 +1,46 @@
-import { useState, useEffect } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Button,
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Alert,
-  ToggleButton,
-  ToggleButtonGroup,
-  TableContainer,
-  Table,
-  TableHead,
-  TableBody,
-  TableRow,
-  TableCell,
-  TablePagination,
-  IconButton,
-  Menu,
-  MenuItem,
-} from "@mui/material";
-import {
-  MdAdd,
-  MdFileDownload,
-  MdPrint,
-  MdViewAgenda,
-  MdGridView,
-  MdEdit,
-  MdVisibility,
-  MdMoreVert,
-} from "react-icons/md";
-import {
-  TextField,
-  Checkbox,
-  FormGroup,
-  FormControlLabel,
-} from "@mui/material";
-import { theme } from "../../theme/colors";
-import { CatalogueService } from "../../services/catalogueService";
+import { useState, useEffect, useMemo } from "react";
+import { Box, CircularProgress, Alert, Typography } from "@mui/material";
 import { CatalogueFilters } from "../../components/catalogue/CatalogueFilters";
 import { CatalogueCard } from "../../components/catalogue/CatalogueCard";
 import { CatalogueForm } from "../../components/catalogue/CatalogueForm";
-import type {
-  CatalogueItem,
-  CatalogueFilterParams,
-} from "../../types/catalogue";
-import { PrimaryButton } from "../../components/common/PrimaryButton";
-import { SecondaryButton } from "../../components/common/SecondaryButton";
+import { ExportActionBar } from "../../components/catalogue/ExportActionBar";
+import { CatalogueToolbar } from "../../components/catalogue/CatalogueToolbar";
+import { BulkAssignModal } from "../../components/catalogue/BulkAssignModal";
+import { ProductViewDialog } from "../../components/catalogue/ProductViewDialog";
+import { DeleteConfirmDialog } from "../../components/catalogue/DeleteConfirmDialog";
+import { DataTable, type Column } from "../../components/common/DataTable";
+import { useTheme } from "../../contexts/ThemeContext";
+import { useExportData } from "../../hooks/useExportData";
+import type { CatalogueItem, CatalogueFilterParams } from "../../types/catalogue";
+import { 
+  useGetProducts, 
+  useCreateProduct, 
+  useUpdateProduct, 
+  useDeleteProduct, 
+  useToggleProductStatus,
+  useGetCategories,
+  useCreateCategory,
+  useGetCollections,
+  useCreateCollection,
+  useBulkUpdateProducts
+} from "../../hooks/useCatalog";
 
 export const CatalogueManagement = () => {
-  const [items, setItems] = useState<CatalogueItem[]>([]);
+  const { colors } = useTheme();
+  const { exportToJSON, exportToCSV } = useExportData();
+  
+  // Type guard for category objects
+  const isCategoryObject = (category: any): category is { name: string } => {
+    return typeof category === 'object' && category !== null && 'name' in category;
+  };
+
+  // Type guard for collection objects
+  const isCollectionObject = (collection: any): collection is { name: string } => {
+    return typeof collection === 'object' && collection !== null && 'name' in collection;
+  };
+  
+  // State
   const [filteredItems, setFilteredItems] = useState<CatalogueItem[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [collections, setCollections] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<CatalogueItem | null>(null);
@@ -64,74 +48,205 @@ export const CatalogueManagement = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteItemId, setDeleteItemId] = useState<string | null>(null);
-  const [currentFilters, setCurrentFilters] = useState<CatalogueFilterParams>(
-    {}
-  );
+  const [currentFilters, setCurrentFilters] = useState<CatalogueFilterParams>({});
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [menuItemId, setMenuItemId] = useState<string | null>(null);
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
-  const [bulkMode, setBulkMode] = useState<"category" | "collection">(
-    "category"
-  );
-  const [bulkStep, setBulkStep] = useState(1); // 1: enter name, 2: select items
+  const [bulkMode, setBulkMode] = useState<"category" | "collection">("category");
+  const [bulkStep, setBulkStep] = useState(1);
   const [bulkNewName, setBulkNewName] = useState("");
-  const [bulkSelectedItems, setBulkSelectedItems] = useState<Set<string>>(
-    new Set()
-  );
+  const [bulkSelectedItems, setBulkSelectedItems] = useState<Set<string>>(new Set());
+  const [bulkCreatedItemId, setBulkCreatedItemId] = useState("");
 
-  // Initialize
-  useEffect(() => {
-    CatalogueService.seedIfEmpty();
-    loadData();
-  }, []);
+  // API Hooks
+  const { data: productsData, isLoading: productsLoading, refetch: refetchProducts } = useGetProducts(page + 1, 10, currentFilters);
+  const { data: categoriesData } = useGetCategories();
+  const { data: collectionsData } = useGetCollections();
+  const createProductMutation = useCreateProduct();
+  const updateProductMutation = useUpdateProduct();
+  const deleteProductMutation = useDeleteProduct();
+  const toggleStatusMutation = useToggleProductStatus();
+  const createCategoryMutation = useCreateCategory();
+  const createCollectionMutation = useCreateCollection();
+  const bulkUpdateMutation = useBulkUpdateProducts();
 
-  const loadData = () => {
-    const allItems = CatalogueService.getAll();
-    setItems(allItems);
-    setCategories(CatalogueService.getCategories());
-    setCollections(CatalogueService.getCollections());
-    filterItems(allItems, currentFilters);
+  const items = productsData?.data || [];
+  const totalItems = productsData?.total || 0;
+  const categories = categoriesData?.data || [];
+  const collections = collectionsData?.data || [];
+  const isLoading = productsLoading || createProductMutation.isPending || updateProductMutation.isPending || deleteProductMutation.isPending;
+
+  // Helper function to get image URL from asset ID or base64
+  const getImageUrl = (imageData: string | undefined): string => {
+    if (!imageData || typeof imageData !== 'string') return '';
+    // If it's already a base64 string or full URL, return as is
+    if (imageData.startsWith('data:') || imageData.startsWith('http')) {
+      return imageData;
+    }
+    // If it's an asset ID, construct the URL
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    return `${API_BASE_URL}/assets/${imageData}`;
   };
 
-  const filterItems = (
-    itemsList: CatalogueItem[],
-    filters: CatalogueFilterParams
-  ) => {
-    let result = itemsList;
+  // Define columns for DataTable
+  const columns: Column[] = [
+    {
+      key: 'images',
+      label: 'Image',
+      sortable: false,
+      render: (images: string[], item: CatalogueItem) => {
+        const firstImage = images && Array.isArray(images) && images.length > 0 ? images[0] : undefined;
+        const imageUrl = firstImage ? getImageUrl(firstImage) : getImageUrl(item.mainImage);
+        return imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={item.name}
+            style={{
+              width: 50,
+              height: 50,
+              objectFit: "cover",
+              borderRadius: 4,
+            }}
+          />
+        ) : (
+          <Box
+            sx={{
+              width: 50,
+              height: 50,
+              backgroundColor: colors.background.tertiary,
+              borderRadius: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography variant="caption" sx={{ color: colors.text.tertiary }}>
+              No Image
+            </Typography>
+          </Box>
+        );
+      }
+    },
+    {
+      key: 'name',
+      label: 'Name',
+      sortable: true,
+      render: (name: string) => (
+        <Typography variant="body2" sx={{ fontWeight: 600, color: colors.text.primary }}>
+          {name}
+        </Typography>
+      )
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      sortable: true,
+      render: (category: any) => {
+        // Handle both string and object category values
+        if (isCategoryObject(category)) {
+          return category.name;
+        }
+        return category || 'N/A';
+      }
+    },
+    {
+      key: 'sku',
+      label: 'SKU',
+      sortable: true,
+    },
+    {
+      key: 'sellingPrice',
+      label: 'Price',
+      sortable: true,
+      render: (sellingPrice: number, item: CatalogueItem) => (
+        <Typography sx={{ textAlign: "left", color: colors.text.primary }}>
+          {Number(item.salePrice || sellingPrice).toLocaleString()} PKR
+        </Typography>
+      )
+    },
+    {
+      key: 'currentStock',
+      label: 'Stock',
+      sortable: true,
+      render: (stock: number) => stock || "-"
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      sortable: true,
+      render: (status: string) => (
+        <span
+          style={{
+            backgroundColor: status === "active" ? colors.status.successLight : colors.background.tertiary,
+            color: status === "active" ? colors.status.success : colors.text.secondary,
+            padding: "4px 8px",
+            borderRadius: "4px",
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            border: `1px solid ${status === "active" ? colors.status.success : colors.border.primary}`,
+          }}
+        >
+          {status}
+        </span>
+      )
+    }
+  ];
 
-    if (filters.search) {
-      const q = filters.search.toLowerCase();
+  // Filter items based on current filters
+  const filteredAndPaginatedItems = useMemo(() => {
+    let result = items;
+
+    if (currentFilters.search) {
+      const q = currentFilters.search.toLowerCase();
       result = result.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          (item.sku || "").toLowerCase().includes(q) ||
-          (item.barcode || "").toLowerCase().includes(q) ||
-          (item.category || "").toLowerCase().includes(q)
+        (item) => {
+          const categoryName = isCategoryObject(item.category) ? item.category.name : (item.category || '');
+          const collectionName = isCollectionObject(item.collection) ? item.collection.name : (item.collection || '');
+          return (
+            item.name.toLowerCase().includes(q) ||
+            (item.sku || "").toLowerCase().includes(q) ||
+            (item.barcode || "").toLowerCase().includes(q) ||
+            categoryName.toLowerCase().includes(q) ||
+            collectionName.toLowerCase().includes(q)
+          );
+        }
       );
     }
 
-    if (filters.type && filters.type !== "all") {
-      result = result.filter((item) => item.type === filters.type);
+    if (currentFilters.collection) {
+      result = result.filter((item) => {
+        // Compare by collection ID, not name
+        if (isCollectionObject(item.collection)) {
+          return item.collection.id === currentFilters.collection;
+        }
+        return item.collectionId === currentFilters.collection;
+      });
     }
 
-    if (filters.status && filters.status !== "all") {
-      result = result.filter((item) => item.status === filters.status);
+    if (currentFilters.status && currentFilters.status !== "all") {
+      result = result.filter((item) => item.status === currentFilters.status);
     }
 
-    if (filters.category) {
-      result = result.filter((item) => item.category === filters.category);
+    if (currentFilters.category) {
+      result = result.filter((item) => {
+        // Compare by category ID, not name
+        if (isCategoryObject(item.category)) {
+          return item.category.id === currentFilters.category;
+        }
+        return item.categoryId === currentFilters.category;
+      });
     }
 
-    setFilteredItems(result);
-    setPage(0);
-  };
+    return result;
+  }, [items, currentFilters]);
+
+  // Update filtered items when data changes
+  useEffect(() => {
+    setFilteredItems(filteredAndPaginatedItems);
+  }, [filteredAndPaginatedItems]);
 
   const handleFiltersChange = (filters: CatalogueFilterParams) => {
     setCurrentFilters(filters);
-    filterItems(items, filters);
+    setPage(0); // Reset to first page when filters change
   };
 
   const handleAddItem = () => {
@@ -145,21 +260,21 @@ export const CatalogueManagement = () => {
     setViewDialogOpen(false);
   };
 
-  const handleSaveItem = (data: any) => {
-    setLoading(true);
+  const handleSaveItem = async (data: any) => {
     try {
       if (editingItem) {
-        CatalogueService.update(editingItem.id, data);
+        await updateProductMutation.mutateAsync({
+          productId: editingItem.id,
+          productData: data,
+        });
       } else {
-        CatalogueService.create(data);
+        await createProductMutation.mutateAsync(data);
       }
-      loadData();
       setShowForm(false);
       setEditingItem(null);
+      refetchProducts();
     } catch (error) {
       console.error("Error saving item:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -168,39 +283,48 @@ export const CatalogueManagement = () => {
     setViewDialogOpen(true);
   };
 
-  const handleToggleStatus = (id: string) => {
-    setLoading(true);
+  const handleToggleStatus = async (id: string) => {
     try {
-      CatalogueService.toggleStatus(id);
-      loadData();
-    } finally {
-      setLoading(false);
+      await toggleStatusMutation.mutateAsync(id);
+      refetchProducts();
+    } catch (error) {
+      console.error("Error toggling status:", error);
     }
-    setMenuAnchor(null);
   };
 
-  const handleDeleteItem = () => {
+  const handleDeleteItem = async () => {
     if (deleteItemId) {
-      setLoading(true);
       try {
-        CatalogueService.delete(deleteItemId);
-        loadData();
-      } finally {
-        setLoading(false);
+        await deleteProductMutation.mutateAsync(deleteItemId);
+        refetchProducts();
+      } catch (error) {
+        console.error("Error deleting item:", error);
       }
     }
     setDeleteConfirmOpen(false);
     setDeleteItemId(null);
   };
 
-  const handleAddCategory = (category: string) => {
-    CatalogueService.addCategory(category);
-    setCategories(CatalogueService.getCategories());
+  const handleAddCategory = async (category: string) => {
+    try {
+      await createCategoryMutation.mutateAsync({
+        name: category,
+        isActive: true,
+      });
+    } catch (error) {
+      console.error("Error adding category:", error);
+    }
   };
 
-  const handleAddCollection = (collection: string) => {
-    CatalogueService.addCollection(collection);
-    setCollections(CatalogueService.getCollections());
+  const handleAddCollection = async (collection: string) => {
+    try {
+      await createCollectionMutation.mutateAsync({
+        name: collection,
+        isActive: true,
+      });
+    } catch (error) {
+      console.error("Error adding collection:", error);
+    }
   };
 
   const openBulkCreateFlow = (mode: "category" | "collection") => {
@@ -208,24 +332,63 @@ export const CatalogueManagement = () => {
     setBulkStep(1);
     setBulkNewName("");
     setBulkSelectedItems(new Set());
+    setBulkCreatedItemId("");
     setBulkModalOpen(true);
   };
 
-  const handleBulkNext = () => {
+  const handleBulkNext = async () => {
     if (!bulkNewName.trim()) {
       alert("Please enter a name");
       return;
     }
-    if (bulkMode === "category") {
-      if (!categories.includes(bulkNewName)) {
-        setCategories([bulkNewName, ...categories]);
+    
+    try {
+      let createdItem;
+      if (bulkMode === "category") {
+        createdItem = await createCategoryMutation.mutateAsync({
+          name: bulkNewName,
+          isActive: true,
+        });
+      } else {
+        createdItem = await createCollectionMutation.mutateAsync({
+          name: bulkNewName,
+          isActive: true,
+        });
       }
-    } else {
-      if (!collections.includes(bulkNewName)) {
-        setCollections([bulkNewName, ...collections]);
-      }
+      
+      // Store the created item ID for later use
+      setBulkCreatedItemId(createdItem.id);
+      setBulkStep(2);
+    } catch (error) {
+      console.error("Error creating category/collection:", error);
     }
-    setBulkStep(2);
+  };
+
+  const handleBulkApply = async () => {
+    if (bulkSelectedItems.size === 0) {
+      alert("Please select at least one item");
+      return;
+    }
+
+    try {
+      const updateData: Partial<CatalogueItem> = bulkMode === "category"
+        ? { categoryId: bulkCreatedItemId }
+        : { collectionId: bulkCreatedItemId };
+      
+      await bulkUpdateMutation.mutateAsync({
+        productIds: Array.from(bulkSelectedItems),
+        updateData,
+      });
+      
+      refetchProducts();
+      setBulkModalOpen(false);
+      setBulkStep(1);
+      setBulkNewName("");
+      setBulkSelectedItems(new Set());
+      setBulkCreatedItemId("");
+    } catch (error) {
+      console.error("Error applying bulk update:", error);
+    }
   };
 
   const handleBulkBack = () => {
@@ -251,174 +414,47 @@ export const CatalogueManagement = () => {
     setBulkSelectedItems(new Set());
   };
 
-  const handleBulkApply = () => {
-    if (bulkSelectedItems.size === 0) {
-      alert("Please select at least one item");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      bulkSelectedItems.forEach((itemId) => {
-        const updateData =
-          bulkMode === "category"
-            ? { category: bulkNewName }
-            : { collection: bulkNewName };
-        CatalogueService.update(itemId, updateData);
-      });
-      loadData();
-      setBulkModalOpen(false);
-      setBulkStep(1);
-      setBulkNewName("");
-      setBulkSelectedItems(new Set());
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const exportToJSON = () => {
-    const json = JSON.stringify(filteredItems, null, 2);
-    downloadFile("catalogue.json", json, "application/json");
-  };
-
-  const exportToCSV = () => {
-    if (!filteredItems.length) return;
-    const headers = [
-      "Name",
-      "Category",
-      "SKU",
-      "Selling Price",
-      "Sale Price",
-      "Stock",
-      "Status",
-    ];
-    const rows = filteredItems.map((item) => [
-      item.name,
-      item.category || "",
-      item.sku || "",
-      item.sellingPrice,
-      item.salePrice,
-      item.currentStock,
-      item.status,
-    ]);
-    const csv = [headers, ...rows]
-      .map((row) => row.map((cell) => `"${cell}"`).join(","))
-      .join("\n");
-    downloadFile("catalogue.csv", csv, "text/csv");
-  };
-
-  const downloadFile = (filename: string, content: string, mime: string) => {
-    const blob = new Blob([content], { type: mime });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   const paginatedItems = filteredItems.slice(
-    page * rowsPerPage,
-    (page + 1) * rowsPerPage
+    page * 10,
+    (page + 1) * 10
   );
 
   return (
-    <Container maxWidth="xl" sx={{ py: 3 }}>
-      {/* Top Actions */}
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{
-          mb: 3,
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 0,
-        }}
-      >
-        <PrimaryButton
-          startIcon={<MdAdd />}
-          onClick={handleAddItem}
-          sx={{
-            backgroundColor: theme.colors.primary[600],
-            "&:hover": { backgroundColor: theme.colors.primary[700] },
-          }}
-        >
-          Add Item
-        </PrimaryButton>
-        <Box sx={{
-          mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: 2,
-        }}>
-          <Stack direction="row" spacing={1}>
-            <SecondaryButton
-              size="small"
-              onClick={() => openBulkCreateFlow("category")}
-            >
-              + Category
-            </SecondaryButton>
-            <SecondaryButton
-              size="small"
-              onClick={() => openBulkCreateFlow("collection")}
-            >
-              + Collection
-            </SecondaryButton>
-          </Stack>
-          <Stack direction="row" spacing={1}>
-            <SecondaryButton
-              size="small"
-              startIcon={<MdFileDownload />}
-              onClick={exportToJSON}
-            >
-              JSON
-            </SecondaryButton>
-            <SecondaryButton
-              size="small"
-              startIcon={<MdFileDownload />}
-              onClick={exportToCSV}
-            >
-              CSV
-            </SecondaryButton>
-            <SecondaryButton size="small" startIcon={<MdPrint />}>
-              Print
-            </SecondaryButton>
-          </Stack>
+    <Box 
+      sx={{ 
+        pb: 3,
+        backgroundColor: colors.background.primary,
+        minHeight: '100vh',
+        width: '100%'
+      }}
+    >
+      {/* Export Action Bar */}
+      <ExportActionBar
+        onExportCSV={() => exportToCSV(filteredItems)}
+        onExportJSON={() => exportToJSON(filteredItems)}
+      />
 
-          <ToggleButtonGroup
-            value={viewMode}
-            exclusive
-            onChange={(_, newValue) => {
-              if (newValue) setViewMode(newValue);
-            }}
-            size="small"
-          >
-            <ToggleButton value="grid" aria-label="grid view">
-              <MdGridView size={20} />
-            </ToggleButton>
-            <ToggleButton value="list" aria-label="list view">
-              <MdViewAgenda size={20} />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
-      </Stack>
+      {/* Toolbar */}
+      <CatalogueToolbar
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onAddItem={handleAddItem}
+        onAddCategory={() => openBulkCreateFlow("category")}
+        onAddCollection={() => openBulkCreateFlow("collection")}
+      />
 
       {/* Filters */}
       <CatalogueFilters
         onFiltersChange={handleFiltersChange}
         categories={categories}
+        collections={collections}
         itemCount={filteredItems.length}
       />
 
       {/* Loading State */}
-      {loading && (
+      {isLoading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress />
+          <CircularProgress sx={{ color: colors.primary[600] }} />
         </Box>
       )}
 
@@ -472,112 +508,35 @@ export const CatalogueManagement = () => {
 
           {/* List View */}
           {viewMode === "list" && (
-            <TableContainer>
-              <Table>
-                <TableHead sx={{ backgroundColor: theme.colors.primary[50] }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Image</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>SKU</TableCell>
-                    <TableCell sx={{ fontWeight: 700, textAlign: "right" }}>
-                      Price
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Stock</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                    <TableCell sx={{ fontWeight: 700, textAlign: "center" }}>
-                      Actions
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {paginatedItems.map((item) => (
-                    <TableRow key={item.id} hover>
-                      <TableCell>
-                        {item.mainImage && (
-                          <img
-                            src={item.mainImage}
-                            alt={item.name}
-                            style={{
-                              width: 50,
-                              height: 50,
-                              objectFit: "cover",
-                              borderRadius: 4,
-                            }}
-                          />
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {item.name}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{item.category}</TableCell>
-                      <TableCell>{item.sku}</TableCell>
-                      <TableCell sx={{ textAlign: "right" }}>
-                        {Number(
-                          item.salePrice || item.sellingPrice
-                        ).toLocaleString()}{" "}
-                        PKR
-                      </TableCell>
-                      <TableCell>{item.currentStock || "-"}</TableCell>
-                      <TableCell>
-                        <span
-                          style={{
-                            backgroundColor:
-                              item.status === "active" ? "#ecfdf5" : "#f1f5f9",
-                            color:
-                              item.status === "active" ? "#065f46" : "#475569",
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.75rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {item.status}
-                        </span>
-                      </TableCell>
-                      <TableCell sx={{ textAlign: "center" }}>
-                        <IconButton
-                          size="small"
-                          onClick={(e) => {
-                            setMenuAnchor(e.currentTarget);
-                            setMenuItemId(item.id);
-                          }}
-                        >
-                          <MdMoreVert />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* Pagination */}
-          {filteredItems.length > 0 && (
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={filteredItems.length}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={(_, newPage) => setPage(newPage)}
-              onRowsPerPageChange={(e) => {
-                setRowsPerPage(parseInt(e.target.value, 10));
-                setPage(0);
-              }}
-              sx={{
-                borderTop: `1px solid ${theme.colors.primary[100]}`,
-                mt: 2,
+            <DataTable
+              columns={columns}
+              data={paginatedItems}
+              isLoading={isLoading}
+              currentPage={page}
+              setCurrentPage={setPage}
+              totalPages={Math.ceil(totalItems / 10)}
+              keyField="id"
+              showActions={true}
+              onView={handleViewItem}
+              onEdit={handleEditItem}
+              onDelete={(item) => {
+                setDeleteItemId(item.id);
+                setDeleteConfirmOpen(true);
               }}
             />
           )}
 
           {/* Empty State */}
-          {filteredItems.length === 0 && !loading && (
-            <Alert severity="info" sx={{ mt: 3 }}>
+          {filteredItems.length === 0 && !isLoading && (
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mt: 3,
+                backgroundColor: colors.status.infoLight,
+                color: colors.text.primary,
+                border: `1px solid ${colors.status.info}`,
+              }}
+            >
               No items found. Try adjusting your filters or add a new item to
               get started.
             </Alert>
@@ -585,237 +544,38 @@ export const CatalogueManagement = () => {
         </>
       )}
 
-      {/* Context Menu */}
-      <Menu
-        anchorEl={menuAnchor}
-        open={!!menuAnchor}
-        onClose={() => setMenuAnchor(null)}
-      >
-        <MenuItem
-          onClick={() => {
-            const item = items.find((i) => i.id === menuItemId);
-            if (item) handleViewItem(item);
-            setMenuAnchor(null);
-          }}
-        >
-          <MdVisibility style={{ marginRight: 8 }} /> View
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            const item = items.find((i) => i.id === menuItemId);
-            if (item) handleEditItem(item);
-            setMenuAnchor(null);
-          }}
-        >
-          <MdEdit style={{ marginRight: 8 }} /> Edit
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (menuItemId) handleToggleStatus(menuItemId);
-            setMenuAnchor(null);
-          }}
-        >
-          Toggle Status
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            setDeleteItemId(menuItemId);
-            setDeleteConfirmOpen(true);
-            setMenuAnchor(null);
-          }}
-          sx={{ color: theme.colors.danger[600] }}
-        >
-          Delete
-        </MenuItem>
-      </Menu>
+      {/* Product View Dialog */}
+      <ProductViewDialog
+        open={viewDialogOpen}
+        onClose={() => setViewDialogOpen(false)}
+        item={selectedItem}
+        onEdit={handleEditItem}
+      />
 
-      {/* View Dialog */}
-      {selectedItem && (
-        <Dialog
-          open={viewDialogOpen}
-          onClose={() => setViewDialogOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle sx={{ fontWeight: 700 }}>
-            {selectedItem.name}
-          </DialogTitle>
-          <DialogContent dividers>
-            {selectedItem.mainImage && (
-              <Box
-                component="img"
-                src={selectedItem.mainImage}
-                sx={{
-                  width: "100%",
-                  height: 300,
-                  objectFit: "cover",
-                  borderRadius: 1,
-                  mb: 2,
-                }}
-              />
-            )}
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Category:</strong> {selectedItem.category}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>SKU:</strong> {selectedItem.sku}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Price:</strong>{" "}
-              {Number(
-                selectedItem.salePrice || selectedItem.sellingPrice
-              ).toLocaleString()}{" "}
-              PKR
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Stock:</strong> {selectedItem.currentStock}
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Description:</strong> {selectedItem.description}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
-            <Button
-              onClick={() => handleEditItem(selectedItem)}
-              variant="contained"
-            >
-              Edit
-            </Button>
-          </DialogActions>
-        </Dialog>
-      )}
-
-      {/* Delete Confirmation */}
-      <Dialog
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
         open={deleteConfirmOpen}
         onClose={() => setDeleteConfirmOpen(false)}
-      >
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          Are you sure you want to delete this item? This action cannot be
-          undone.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteItem} color="error" variant="contained">
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleDeleteItem}
+      />
 
-      {/* Bulk Assign Modal - Step 1: Enter Name */}
-      <Dialog
-        open={bulkModalOpen && bulkStep === 1}
+      {/* Bulk Assign Modal */}
+      <BulkAssignModal
+        open={bulkModalOpen}
         onClose={() => setBulkModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {bulkMode === "category"
-            ? "Create New Category"
-            : "Create New Collection"}
-        </DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" sx={{ mb: 2 }}>
-            Enter a new {bulkMode} name and proceed to assign it to existing
-            items.
-          </Typography>
-          <TextField
-            fullWidth
-            label={
-              bulkMode === "category" ? "Category Name" : "Collection Name"
-            }
-            value={bulkNewName}
-            onChange={(e) => setBulkNewName(e.target.value)}
-            placeholder={
-              bulkMode === "category"
-                ? "e.g., Alkaline Water"
-                : "e.g., Premium Pack"
-            }
-            sx={{ mt: 2 }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setBulkModalOpen(false)}>Cancel</Button>
-          <Button onClick={handleBulkNext} variant="contained">
-            Next
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Bulk Assign Modal - Step 2: Select Items */}
-      <Dialog
-        open={bulkModalOpen && bulkStep === 2}
-        onClose={() => setBulkModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          Select Items to Assign{" "}
-          {bulkMode === "category" ? "Category" : "Collection"}: {bulkNewName}
-        </DialogTitle>
-        <DialogContent dividers>
-          <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handleBulkSelectAll}
-            >
-              Select All
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              onClick={handleBulkClearAll}
-            >
-              Clear All
-            </Button>
-            <Typography variant="body2" sx={{ ml: "auto" }}>
-              {bulkSelectedItems.size} selected
-            </Typography>
-          </Stack>
-
-          <FormGroup>
-            {items.map((item) => (
-              <FormControlLabel
-                key={item.id}
-                control={
-                  <Checkbox
-                    checked={bulkSelectedItems.has(item.id)}
-                    onChange={() => handleToggleBulkItem(item.id)}
-                  />
-                }
-                label={
-                  <Box>
-                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                      {item.name}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ color: theme.colors.text300 }}
-                    >
-                      SKU: {item.sku} • {item.category}
-                    </Typography>
-                  </Box>
-                }
-              />
-            ))}
-          </FormGroup>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleBulkBack}>Back</Button>
-          <Button onClick={() => setBulkModalOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleBulkApply}
-            variant="contained"
-            disabled={bulkSelectedItems.size === 0}
-          >
-            Assign to {bulkSelectedItems.size} Item
-            {bulkSelectedItems.size !== 1 ? "s" : ""}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+        mode={bulkMode}
+        step={bulkStep}
+        newName={bulkNewName}
+        onNameChange={setBulkNewName}
+        selectedItems={bulkSelectedItems}
+        onToggleItem={handleToggleBulkItem}
+        onSelectAll={handleBulkSelectAll}
+        onClearAll={handleBulkClearAll}
+        items={items}
+        onNext={handleBulkNext}
+        onBack={handleBulkBack}
+        onApply={handleBulkApply}
+      />
+    </Box>
   );
 };

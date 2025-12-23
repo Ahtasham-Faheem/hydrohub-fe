@@ -26,7 +26,7 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
         <Box
           key={idx}
           sx={{
-            flex: "1 1 calc(25% - 24px)",
+            flex: "1 1 calc(25% - 25px)",
             minWidth: "250px",
           }}
         >
@@ -44,104 +44,108 @@ export const UserStatsCards = ({ cards }: UserStatsCardsProps) => {
               },
             }}
           >
-            <CardContent sx={{ p: 2.5 }}>
+            <CardContent sx={{ p: 2, px: 3, position: "relative" }}>
+              {/* Header with title and icon */}
               <Box
                 display="flex"
                 justifyContent="space-between"
-                alignItems="center"
-                mb={2}
+                alignItems="flex-start"
               >
-                <Box display="flex" alignItems="center" gap={1.5}>
-                  <Box
-                    sx={{
-                      bgcolor: card.bgColor,
-                      borderRadius: "5px",
-                      p: 2,
-                      width: 50,
-                      height: 50,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Box
-                      component="span"
-                      sx={{ fontSize: 26, color: card.color }}
-                    >
-                      {card.icon}
-                    </Box>
-                  </Box>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 600,
-                      color: colors.text.primary,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      fontSize: 24
-                    }}
-                  >
-                    {/* {card.title} */}
-                    {card.value}
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: card.change.startsWith("-")
-                          ? colors.status.error
-                          : colors.status.success,
-                        fontWeight: 600,
-                      }}
-                    >
-                      ({card.change})
-                    </Typography>
-                  </Typography>
-                </Box>
-                <Box
+                <Typography
+                  variant="h6"
                   sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    color: colors.text.tertiary,
-                    "&:hover": {
-                      backgroundColor: colors.background.tertiary,
-                      color: colors.text.primary,
-                    },
+                    fontWeight: 600,
+                    color: colors.text.primary,
+                    fontSize: 18,
                   }}
                 >
-                  <BsThreeDots />
+                  {card.title}
+                </Typography>
+                <Box
+                  sx={{
+                    bgcolor: card.bgColor,
+                    borderRadius: 2,
+                    p: 1.5,
+                    width: 38,
+                    height: 38,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Box
+                    component="span"
+                    sx={{ fontSize: 18, color: card.color }}
+                  >
+                    {card.icon}
+                  </Box>
                 </Box>
               </Box>
 
-              {/* <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+              {/* Value and change */}
+              <Box
+                sx={{ display: "flex", alignItems: "baseline", gap: 1, mb: 1 }}
+              >
                 <Typography
-                  variant="h5"
-                  sx={{ fontWeight: 400, color: colors.text.primary, mr: 1 }}
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    color: colors.text.primary,
+                    fontSize: 28,
+                    lineHeight: 1,
+                  }}
                 >
                   {card.value}
                 </Typography>
                 <Typography
-                  variant="body2"
+                  variant="body1"
                   sx={{
                     color: card.change.startsWith("-")
                       ? colors.status.error
                       : colors.status.success,
                     fontWeight: 600,
+                    fontSize: 16,
                   }}
                 >
                   ({card.change})
                 </Typography>
-              </Box> */}
+              </Box>
 
+              {/* Description */}
               <Typography
                 variant="body2"
                 sx={{
                   color: colors.text.secondary,
-                  lineHeight: 1.5,
+                  lineHeight: 1.4,
                   fontSize: 14,
+                  mb: 1,
+                  whiteSpace: "nowrap",
+                  maxWidth: "max-content",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {card.desc}
               </Typography>
+
+              {/* Three dots menu - bottom right */}
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 10,
+                  right: 16,
+                  p: 0.5,
+                  borderRadius: 1,
+                  color: colors.text.tertiary,
+                  cursor: "pointer",
+                  "&:hover": {
+                    backgroundColor: colors.background.tertiary,
+                    color: colors.text.primary,
+                  },
+                }}
+              >
+                <BsThreeDots size={16} />
+              </Box>
             </CardContent>
           </Card>
         </Box>

@@ -16,6 +16,7 @@ import { BsArrowLeft, BsArrowRight } from "react-icons/bs";
 import { FaCircle } from "react-icons/fa";
 import { FormProvider, useFormContext } from "../../contexts/FormContext";
 import { staffService } from "../../services/api";
+import { useTheme } from "../../contexts/ThemeContext";
 
 import {
   MdContactMail,
@@ -35,7 +36,13 @@ import { SalaryBenefits } from "../../components/forms/SalaryBenefits";
 import { IdentificationVerification } from "../../components/forms/IdentificationVerification";
 
 // Custom Step Icon Component
-const CustomStepIcon = ({ active }: { active: boolean }) => (
+const CustomStepIcon = ({
+  active,
+  colors,
+}: {
+  active: boolean;
+  colors: any;
+}) => (
   <Box
     sx={{
       display: "flex",
@@ -44,7 +51,7 @@ const CustomStepIcon = ({ active }: { active: boolean }) => (
       width: 22,
       height: 22,
       borderRadius: "50%",
-      bgcolor: active ? "var(--color-primary-600)" : "#e5e7eb",
+      bgcolor: active ? colors.primary[600] : colors.border.primary,
       color: "white",
     }}
   >
@@ -70,11 +77,12 @@ const steps = [
 const EditUserForm = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { colors } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [image, setImage] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [staffProfileId, setStaffProfileId] = useState<string | null>(null);
   const {
     formData,
@@ -96,12 +104,12 @@ const EditUserForm = () => {
       try {
         setIsLoadingData(true);
         const staffData = await staffService.getStaffById(id);
-        
+
         setStaffProfileId(staffData.id);
-        
+
         // Set profile picture URL from API response if available
         if (staffData.profilePictureAsset?.fileUrl) {
-          setImage(staffData.profilePictureAsset.fileUrl);
+          setExistingImageUrl(staffData.profilePictureAsset.fileUrl);
         }
 
         // Populate form with user data
@@ -118,19 +126,31 @@ const EditUserForm = () => {
           // Additional personal info (from nested object)
           fathersName: staffData.additionalPersonalInfo?.fathersName || "",
           mothersName: staffData.additionalPersonalInfo?.mothersName || "",
-          dateOfBirth: staffData.additionalPersonalInfo?.dateOfBirth ? new Date(staffData.additionalPersonalInfo.dateOfBirth).toISOString().split('T')[0] : "",
+          dateOfBirth: staffData.additionalPersonalInfo?.dateOfBirth
+            ? new Date(staffData.additionalPersonalInfo.dateOfBirth)
+                .toISOString()
+                .split("T")[0]
+            : "",
           nationality: staffData.additionalPersonalInfo?.nationality || "",
           nationalId: staffData.additionalPersonalInfo?.nationalId || "",
           gender: staffData.additionalPersonalInfo?.gender || "",
           maritalStatus: staffData.additionalPersonalInfo?.maritalStatus || "",
-          alternateContactNumber: staffData.additionalPersonalInfo?.alternateContactNumber || "",
-          secondaryEmailAddress: staffData.additionalPersonalInfo?.secondaryEmailAddress || "",
-          presentAddress: staffData.additionalPersonalInfo?.presentAddress || "",
-          permanentAddress: staffData.additionalPersonalInfo?.permanentAddress || "",
-          emergencyContactName: staffData.additionalPersonalInfo?.emergencyContactName || "",
-          emergencyContactRelation: staffData.additionalPersonalInfo?.emergencyContactRelation || "",
-          emergencyContactNumber: staffData.additionalPersonalInfo?.emergencyContactNumber || "",
-          alternateEmergencyContact: staffData.additionalPersonalInfo?.alternateEmergencyContact || "",
+          alternateContactNumber:
+            staffData.additionalPersonalInfo?.alternateContactNumber || "",
+          secondaryEmailAddress:
+            staffData.additionalPersonalInfo?.secondaryEmailAddress || "",
+          presentAddress:
+            staffData.additionalPersonalInfo?.presentAddress || "",
+          permanentAddress:
+            staffData.additionalPersonalInfo?.permanentAddress || "",
+          emergencyContactName:
+            staffData.additionalPersonalInfo?.emergencyContactName || "",
+          emergencyContactRelation:
+            staffData.additionalPersonalInfo?.emergencyContactRelation || "",
+          emergencyContactNumber:
+            staffData.additionalPersonalInfo?.emergencyContactNumber || "",
+          alternateEmergencyContact:
+            staffData.additionalPersonalInfo?.alternateEmergencyContact || "",
           // Employment details (from nested object)
           jobTitle: staffData.employmentDetails?.jobTitle || "",
           department: staffData.employmentDetails?.department || "",
@@ -150,10 +170,19 @@ const EditUserForm = () => {
           bankAccountNumber: staffData.salaryBenefits?.bankAccountNumber || "",
           taxStatus: staffData.salaryBenefits?.taxStatus || "",
           // Identification & verification (from referralInfo nested object)
-          identityDocumentName: staffData.referralInfo?.identityDocumentName || "",
+          identityDocumentName:
+            staffData.referralInfo?.identityDocumentName || "",
           idCardNumber: staffData.referralInfo?.idCardNumber || "",
-          idCardIssuanceDate: staffData.referralInfo?.idCardIssuanceDate ? new Date(staffData.referralInfo.idCardIssuanceDate).toISOString().split('T')[0] : "",
-          idCardExpiryDate: staffData.referralInfo?.idCardExpiryDate ? new Date(staffData.referralInfo.idCardExpiryDate).toISOString().split('T')[0] : "",
+          idCardIssuanceDate: staffData.referralInfo?.idCardIssuanceDate
+            ? new Date(staffData.referralInfo.idCardIssuanceDate)
+                .toISOString()
+                .split("T")[0]
+            : "",
+          idCardExpiryDate: staffData.referralInfo?.idCardExpiryDate
+            ? new Date(staffData.referralInfo.idCardExpiryDate)
+                .toISOString()
+                .split("T")[0]
+            : "",
           referralPersonName: staffData.referralInfo?.referralPersonName || "",
           referralRelation: staffData.referralInfo?.referralRelation || "",
           referralContact: staffData.referralInfo?.referralContact || "",
@@ -179,21 +208,31 @@ const EditUserForm = () => {
       // Step 0: Update basic profile info via PATCH /staff/{id}
       if (currentStep === 0) {
         // Validate only step 0 fields
-        const validation: { isValid: boolean; fieldErrors: Record<string, string>; errors: string[] } = {
+        const validation: {
+          isValid: boolean;
+          fieldErrors: Record<string, string>;
+          errors: string[];
+        } = {
           isValid: true,
           fieldErrors: {},
-          errors: []
+          errors: [],
         };
 
         if (!formData.firstName || !formData.firstName.trim()) {
-          validation.fieldErrors['firstName'] = 'First Name is required';
-          validation.errors.push('First Name is required');
+          validation.fieldErrors["firstName"] = "First Name is required";
+          validation.errors.push("First Name is required");
           validation.isValid = false;
         }
 
         if (!formData.lastName || !formData.lastName.trim()) {
-          validation.fieldErrors['lastName'] = 'Last Name is required';
-          validation.errors.push('Last Name is required');
+          validation.fieldErrors["lastName"] = "Last Name is required";
+          validation.errors.push("Last Name is required");
+          validation.isValid = false;
+        }
+
+        if (!formData.userRole || !formData.userRole.trim()) {
+          validation.fieldErrors["userRole"] = "User Role is required";
+          validation.errors.push("User Role is required");
           validation.isValid = false;
         }
 
@@ -215,6 +254,7 @@ const EditUserForm = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
           profilePictureAssetId: formData.profilePictureAssetId,
+          role: formData.userRole,
         });
 
         setSuccess(true);
@@ -227,23 +267,44 @@ const EditUserForm = () => {
 
         // Validate dateOfBirth on the frontend
         if (!formData.dateOfBirth || !formData.dateOfBirth.toString().trim()) {
-          fieldErrorsMap['dateOfBirth'] = 'Date of Birth is required';
+          fieldErrorsMap["dateOfBirth"] = "Date of Birth is required";
         } else {
           const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
           if (!dateRegex.test(formData.dateOfBirth)) {
-            fieldErrorsMap['dateOfBirth'] = 'Date of Birth must be in YYYY-MM-DD format';
+            fieldErrorsMap["dateOfBirth"] =
+              "Date of Birth must be in YYYY-MM-DD format";
           }
         }
 
-        if (!formData.secondaryEmailAddress || !formData.secondaryEmailAddress.trim()) {
-          fieldErrorsMap['secondaryEmailAddress'] = 'Secondary Email Address is required';
+        if (!formData.gender || !formData.gender.trim()) {
+          fieldErrorsMap["gender"] = "Gender is required";
+        }
+
+        if (!formData.nationalId || !formData.nationalId.trim()) {
+          fieldErrorsMap["nationalId"] = "National ID is required";
+        }
+
+        if (!formData.maritalStatus || !formData.maritalStatus.trim()) {
+          fieldErrorsMap["maritalStatus"] = "Marital Status is required";
+        }
+
+        if (
+          !formData.secondaryEmailAddress ||
+          !formData.secondaryEmailAddress.trim()
+        ) {
+          fieldErrorsMap["secondaryEmailAddress"] =
+            "Secondary Email Address is required";
         } else if (!/\S+@\S+\.\S+/.test(formData.secondaryEmailAddress)) {
-          fieldErrorsMap['secondaryEmailAddress'] = 'Secondary Email Address must be a valid email';
+          fieldErrorsMap["secondaryEmailAddress"] =
+            "Secondary Email Address must be a valid email";
         }
 
         if (Object.keys(fieldErrorsMap).length > 0) {
           setFieldErrors(fieldErrorsMap);
-          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+          setError(
+            Object.values(fieldErrorsMap)[0] ||
+              "Please fill in all required fields"
+          );
           setIsLoading(false);
           return;
         }
@@ -254,26 +315,23 @@ const EditUserForm = () => {
           return;
         }
 
-        await staffService.updateAdditionalPersonalInfo(
-          staffProfileId,
-          {
-            fathersName: formData.fathersName,
-            mothersName: formData.mothersName,
-            dateOfBirth: formData.dateOfBirth,
-            nationality: formData.nationality,
-            nationalId: formData.nationalId,
-            gender: formData.gender,
-            maritalStatus: formData.maritalStatus,
-            alternateContactNumber: formData.alternateContactNumber,
-            secondaryEmailAddress: formData.secondaryEmailAddress,
-            presentAddress: formData.presentAddress,
-            permanentAddress: formData.permanentAddress,
-            emergencyContactName: formData.emergencyContactName,
-            emergencyContactRelation: formData.emergencyContactRelation,
-            emergencyContactNumber: formData.emergencyContactNumber,
-            alternateEmergencyContact: formData.alternateEmergencyContact,
-          }
-        );
+        await staffService.updateAdditionalPersonalInfo(staffProfileId, {
+          fathersName: formData.fathersName,
+          mothersName: formData.mothersName,
+          dateOfBirth: formData.dateOfBirth,
+          nationality: formData.nationality,
+          nationalId: formData.nationalId,
+          gender: formData.gender,
+          maritalStatus: formData.maritalStatus,
+          alternateContactNumber: formData.alternateContactNumber,
+          secondaryEmailAddress: formData.secondaryEmailAddress,
+          presentAddress: formData.presentAddress,
+          permanentAddress: formData.permanentAddress,
+          emergencyContactName: formData.emergencyContactName,
+          emergencyContactRelation: formData.emergencyContactRelation,
+          emergencyContactNumber: formData.emergencyContactNumber,
+          alternateEmergencyContact: formData.alternateEmergencyContact,
+        });
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
@@ -282,26 +340,29 @@ const EditUserForm = () => {
       // Step 2: Update employment details
       else if (currentStep === 2) {
         const fieldErrorsMap: Record<string, string> = {};
-        
+
         if (!formData.employmentType || !formData.employmentType.trim()) {
-          fieldErrorsMap['employmentType'] = 'Please select Employment Type';
+          fieldErrorsMap["employmentType"] = "Please select Employment Type";
         }
 
         if (!formData.supervisorId || !formData.supervisorId.trim()) {
-          fieldErrorsMap['supervisorId'] = 'Please select a Supervisor';
+          fieldErrorsMap["supervisorId"] = "Please select a Supervisor";
         }
 
         if (!formData.shiftType || !formData.shiftType.trim()) {
-          fieldErrorsMap['shiftType'] = 'Please select Shift Type';
+          fieldErrorsMap["shiftType"] = "Please select Shift Type";
         }
 
         if (!formData.employmentStatus || !formData.employmentStatus.trim()) {
-          fieldErrorsMap['employmentStatus'] = 'Please select Status';
+          fieldErrorsMap["employmentStatus"] = "Please select Status";
         }
 
         if (Object.keys(fieldErrorsMap).length > 0) {
           setFieldErrors(fieldErrorsMap);
-          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+          setError(
+            Object.values(fieldErrorsMap)[0] ||
+              "Please fill in all required fields"
+          );
           setIsLoading(false);
           return;
         }
@@ -312,52 +373,54 @@ const EditUserForm = () => {
           return;
         }
 
-        await staffService.updateEmploymentDetails(
-          staffProfileId,
-          {
-            jobTitle: formData.jobTitle,
-            department: formData.department,
-            employmentType: formData.employmentType,
-            supervisorId: formData.supervisorId,
-            workLocation: formData.workLocation,
-            shiftType: formData.shiftType,
-            status: formData.employmentStatus,
-          }
-        );
+        await staffService.updateEmploymentDetails(staffProfileId, {
+          jobTitle: formData.jobTitle,
+          department: formData.department,
+          employmentType: formData.employmentType,
+          supervisorId: formData.supervisorId,
+          workLocation: formData.workLocation,
+          shiftType: formData.shiftType,
+          status: formData.employmentStatus,
+        });
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(3);
       }
       // Step 3: Update salary & benefits
-
       else if (currentStep === 3) {
         const fieldErrorsMap: Record<string, string> = {};
-        
+
         if (!formData.taxStatus || !formData.taxStatus.trim()) {
-          fieldErrorsMap['taxStatus'] = 'Please select Tax Status';
+          fieldErrorsMap["taxStatus"] = "Please select Tax Status";
         }
 
         if (formData.bankAccountNumber && formData.bankAccountNumber.trim()) {
           if (!/^\d+$/.test(formData.bankAccountNumber)) {
-            fieldErrorsMap['bankAccountNumber'] = 'Bank Account Number must contain only numbers';
+            fieldErrorsMap["bankAccountNumber"] =
+              "Bank Account Number must contain only numbers";
           } else if (formData.bankAccountNumber.length > 16) {
-            fieldErrorsMap['bankAccountNumber'] = 'Bank Account Number must be maximum 16 digits';
+            fieldErrorsMap["bankAccountNumber"] =
+              "Bank Account Number must be maximum 16 digits";
           }
         }
 
         if (formData.providentFund && formData.providentFund.trim()) {
           const pfValue = parseInt(formData.providentFund);
           if (isNaN(pfValue)) {
-            fieldErrorsMap['providentFund'] = 'Provident Fund must be a number';
+            fieldErrorsMap["providentFund"] = "Provident Fund must be a number";
           } else if (pfValue < 0 || pfValue > 99) {
-            fieldErrorsMap['providentFund'] = 'Provident Fund must be between 0 and 99';
+            fieldErrorsMap["providentFund"] =
+              "Provident Fund must be between 0 and 99";
           }
         }
 
         if (Object.keys(fieldErrorsMap).length > 0) {
           setFieldErrors(fieldErrorsMap);
-          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+          setError(
+            Object.values(fieldErrorsMap)[0] ||
+              "Please fill in all required fields"
+          );
           setIsLoading(false);
           return;
         }
@@ -368,19 +431,18 @@ const EditUserForm = () => {
           return;
         }
 
-        await staffService.updateSalaryBenefits(
-          staffProfileId,
-          {
-            basicSalary: formData.basicSalary ? Number(formData.basicSalary) : undefined,
-            allowances: formData.allowances,
-            providentFund: formData.providentFund,
-            salaryPaymentMode: formData.salaryPaymentMode,
-            bankName: formData.bankName,
-            bankAccountTitle: formData.bankAccountTitle,
-            bankAccountNumber: formData.bankAccountNumber,
-            taxStatus: formData.taxStatus,
-          }
-        );
+        await staffService.updateSalaryBenefits(staffProfileId, {
+          basicSalary: formData.basicSalary
+            ? Number(formData.basicSalary)
+            : undefined,
+          allowances: formData.allowances,
+          providentFund: formData.providentFund,
+          salaryPaymentMode: formData.salaryPaymentMode,
+          bankName: formData.bankName,
+          bankAccountTitle: formData.bankAccountTitle,
+          bankAccountNumber: formData.bankAccountNumber,
+          taxStatus: formData.taxStatus,
+        });
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
@@ -389,28 +451,38 @@ const EditUserForm = () => {
       // Step 4: Update identification & verification
       else if (currentStep === 4) {
         const fieldErrorsMap: Record<string, string> = {};
-        
-        if (!formData.idCardIssuanceDate || !formData.idCardIssuanceDate.trim()) {
-          fieldErrorsMap['idCardIssuanceDate'] = 'ID Card Issuance Date is required';
+
+        if (
+          !formData.idCardIssuanceDate ||
+          !formData.idCardIssuanceDate.trim()
+        ) {
+          fieldErrorsMap["idCardIssuanceDate"] =
+            "ID Card Issuance Date is required";
         } else {
           const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
           if (!dateRegex.test(formData.idCardIssuanceDate)) {
-            fieldErrorsMap['idCardIssuanceDate'] = 'ID Card Issuance Date must be in YYYY-MM-DD format';
+            fieldErrorsMap["idCardIssuanceDate"] =
+              "ID Card Issuance Date must be in YYYY-MM-DD format";
           }
         }
 
         if (!formData.idCardExpiryDate || !formData.idCardExpiryDate.trim()) {
-          fieldErrorsMap['idCardExpiryDate'] = 'ID Card Expiry Date is required';
+          fieldErrorsMap["idCardExpiryDate"] =
+            "ID Card Expiry Date is required";
         } else {
           const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
           if (!dateRegex.test(formData.idCardExpiryDate)) {
-            fieldErrorsMap['idCardExpiryDate'] = 'ID Card Expiry Date must be in YYYY-MM-DD format';
+            fieldErrorsMap["idCardExpiryDate"] =
+              "ID Card Expiry Date must be in YYYY-MM-DD format";
           }
         }
 
         if (Object.keys(fieldErrorsMap).length > 0) {
           setFieldErrors(fieldErrorsMap);
-          setError(Object.values(fieldErrorsMap)[0] || "Please fill in all required fields");
+          setError(
+            Object.values(fieldErrorsMap)[0] ||
+              "Please fill in all required fields"
+          );
           setIsLoading(false);
           return;
         }
@@ -421,20 +493,17 @@ const EditUserForm = () => {
           return;
         }
 
-        await staffService.updateIdentificationVerification(
-          staffProfileId,
-          {
-            identityDocumentName: formData.identityDocumentName,
-            idCardNumber: formData.idCardNumber,
-            idCardIssuanceDate: formData.idCardIssuanceDate,
-            idCardExpiryDate: formData.idCardExpiryDate,
-            referralPersonName: formData.referralPersonName,
-            referralRelation: formData.referralRelation,
-            referralContact: formData.referralContact,
-            policeVerification: formData.policeVerification,
-            remarks: formData.remarks,
-          }
-        );
+        await staffService.updateIdentificationVerification(staffProfileId, {
+          identityDocumentName: formData.identityDocumentName,
+          idCardNumber: formData.idCardNumber,
+          idCardIssuanceDate: formData.idCardIssuanceDate,
+          idCardExpiryDate: formData.idCardExpiryDate,
+          referralPersonName: formData.referralPersonName,
+          referralRelation: formData.referralRelation,
+          referralContact: formData.referralContact,
+          policeVerification: formData.policeVerification,
+          remarks: formData.remarks,
+        });
 
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
@@ -443,7 +512,7 @@ const EditUserForm = () => {
       // Step 5: Documents Upload - just move forward
       else if (currentStep === 5) {
         resetForm();
-        navigate('/dashboard/users');
+        navigate("/dashboard/users");
         return;
       }
       // Other steps: just move forward
@@ -461,26 +530,13 @@ const EditUserForm = () => {
     setCurrentStep(Math.max(currentStep - 1, 0));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
         return (
           <PersonalInformation
-            image={image}
-            onImageUpload={handleImageUpload}
-            onImageReset={() => setImage(null)}
             isEditMode={true}
+            existingImageUrl={existingImageUrl || undefined}
           />
         );
       case 1:
@@ -496,10 +552,8 @@ const EditUserForm = () => {
       default:
         return (
           <PersonalInformation
-            image={image}
-            onImageUpload={handleImageUpload}
-            onImageReset={() => setImage(null)}
             isEditMode={true}
+            existingImageUrl={existingImageUrl || undefined}
           />
         );
     }
@@ -513,6 +567,7 @@ const EditUserForm = () => {
           alignItems: "center",
           justifyContent: "center",
           minHeight: "calc(100vh - 100px)",
+          backgroundColor: colors.background.primary,
         }}
       >
         <CircularProgress />
@@ -521,20 +576,26 @@ const EditUserForm = () => {
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "calc(100vh - 100px)",
+        backgroundColor: colors.background.primary,
+      }}
+    >
       {/* Sidebar */}
       <Box
         sx={{
           width: 320,
-          bgcolor: "white",
+          bgcolor: colors.background.card,
           p: 4,
           pr: 0,
-          borderRight: "1px solid #e0e0e0",
+          borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3 }}>
+        {/* <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
           Edit User
-        </Typography>
+        </Typography> */}
         <Stepper
           activeStep={currentStep}
           orientation="vertical"
@@ -549,7 +610,10 @@ const EditUserForm = () => {
             <Step key={step.label}>
               <StepLabel
                 StepIconComponent={() => (
-                  <CustomStepIcon active={index === currentStep} />
+                  <CustomStepIcon
+                    active={index === currentStep}
+                    colors={colors}
+                  />
                 )}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -557,8 +621,8 @@ const EditUserForm = () => {
                     sx={{
                       color:
                         index === currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                     }}
                   >
                     {step.icon}
@@ -568,8 +632,8 @@ const EditUserForm = () => {
                     sx={{
                       color:
                         index === currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                       fontWeight: index === currentStep ? 600 : 400,
                     }}
                   >
@@ -584,11 +648,22 @@ const EditUserForm = () => {
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1, height: "auto" }}>
-        <Card sx={{ p: 3, height: "100%", boxShadow: "none" }}>
+        <Card
+          sx={{
+            p: 3,
+            height: "100%",
+            boxShadow: "none",
+            backgroundColor: colors.background.card,
+            color: colors.text.primary,
+          }}
+        >
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {steps[currentStep].icon}
-              <Typography variant="h6" sx={{ my: 1 }}>
+              <Typography
+                variant="h6"
+                sx={{ my: 1, color: colors.text.primary }}
+              >
                 {steps[currentStep].label}
               </Typography>
             </Box>
@@ -629,11 +704,19 @@ const EditUserForm = () => {
               Previous
             </Button>
             <PrimaryButton
-              endIcon={isLoading ? <CircularProgress size={20} sx={{ ml: 1 }} /> : <BsArrowRight />}
+              endIcon={
+                isLoading ? (
+                  <CircularProgress size={20} sx={{ ml: 1 }} />
+                ) : (
+                  <BsArrowRight />
+                )
+              }
               onClick={handleNext}
               disabled={isLoading}
             >
-              {isLoading ? "Processing..." : currentStep === steps.length - 1
+              {isLoading
+                ? "Processing..."
+                : currentStep === steps.length - 1
                 ? "Complete & Save"
                 : "Next"}
             </PrimaryButton>

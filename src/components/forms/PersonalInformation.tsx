@@ -9,10 +9,12 @@ import { useState } from "react";
 
 interface PersonalInformationProps {
   isEditMode?: boolean;
+  existingImageUrl?: string;
 }
 
 export const PersonalInformation = ({
   isEditMode = false,
+  existingImageUrl,
 }: PersonalInformationProps) => {
   const { formData, updateFormData, fieldErrors, setFieldErrors } =
     useFormContext();
@@ -32,8 +34,9 @@ export const PersonalInformation = ({
         onChange={(assetId) => updateFormData("profilePictureAssetId", assetId)}
         onClearError={() => setFieldErrors({ ...fieldErrors, profilePictureAssetId: "" })}
         error={fieldErrors["profilePictureAssetId"]}
-        disabled={isEditMode}
+        disabled={false}
         maxSize="800KB"
+        existingImageUrl={existingImageUrl}
       />
 
       {/* Employee ID + Employee Creation Date + Title */}
@@ -161,6 +164,7 @@ export const PersonalInformation = ({
             label="Role"
             value={formData.userRole}
             onChange={(e) => updateFormData("userRole", e.target.value)}
+            onClearError={() => setFieldErrors({ ...fieldErrors, userRole: "" })}
             error={fieldErrors["userRole"]}
             options={[
               { value: "supervisor", label: "Supervisor" },

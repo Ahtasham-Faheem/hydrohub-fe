@@ -39,7 +39,7 @@ import { useCreateCustomer } from "../../hooks/useCreateCustomer";
 import type { CustomerType } from "../../types/customer";
 
 // Custom Step Icon Component
-const CustomStepIcon = ({ active }: { active: boolean }) => (
+const CustomStepIcon = ({ active, colors }: { active: boolean; colors: any }) => (
   <Box
     sx={{
       display: "flex",
@@ -48,7 +48,7 @@ const CustomStepIcon = ({ active }: { active: boolean }) => (
       width: 22,
       height: 22,
       borderRadius: "50%",
-      bgcolor: active ? "var(--color-primary-600)" : "#e5e7eb",
+      bgcolor: active ? colors.primary[600] : colors.border.primary,
       color: "white",
     }}
   >
@@ -498,22 +498,19 @@ const CreateCustomerFormContent = () => {
         }}
       >
         <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-            <Typography variant="h6">Create Customer</Typography>
-          </Box>
           <Box
             sx={{
               mb: 2,
               p: 2,
               mr:2,
-              bgcolor: "#f8fafc",
+              bgcolor: colors.background.secondary,
               borderRadius: 1,
-              border: "1px solid #e2e8f0",
+              border: `1px solid ${colors.border.primary}`,
             }}
           >
             <Typography
               variant="caption"
-              sx={{ color: "#64748b", fontWeight: 600 }}
+              sx={{ color: colors.text.secondary, fontWeight: 600 }}
             >
               Progress: Step {state.currentStep + 1} of {steps.length}
             </Typography>
@@ -521,7 +518,7 @@ const CreateCustomerFormContent = () => {
               sx={{
                 mt: 1,
                 height: 4,
-                bgcolor: "#e2e8f0",
+                bgcolor: colors.border.primary,
                 borderRadius: 2,
                 overflow: "hidden",
               }}
@@ -529,7 +526,7 @@ const CreateCustomerFormContent = () => {
               <Box
                 sx={{
                   height: "100%",
-                  bgcolor: "var(--color-primary-600)",
+                  bgcolor: colors.primary[600],
                   width: `${((state.currentStep + 1) / steps.length) * 100}%`,
                   transition: "width 0.3s ease",
                 }}
@@ -573,7 +570,7 @@ const CreateCustomerFormContent = () => {
             <Step key={step.label}>
               <StepLabel
                 StepIconComponent={() => (
-                  <CustomStepIcon active={index === state.currentStep} />
+                  <CustomStepIcon active={index === state.currentStep} colors={colors} />
                 )}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -581,8 +578,8 @@ const CreateCustomerFormContent = () => {
                     sx={{
                       color:
                         index === state.currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                     }}
                   >
                     {step.icon}
@@ -592,8 +589,8 @@ const CreateCustomerFormContent = () => {
                     sx={{
                       color:
                         index === state.currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                       fontWeight: index === state.currentStep ? 600 : 400,
                     }}
                   >

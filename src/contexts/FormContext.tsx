@@ -192,7 +192,7 @@ const initialFormData: FormData = {
   documentRemarks: "",
   profilePictureAssetId: "",
   status: "active",
-  userRole: "vendor_admin",
+  userRole: "",
   accessLevel: "Limited",
   accessExpiry: "2025-12-31",
   branchAssignment: "Lahore Head Office",

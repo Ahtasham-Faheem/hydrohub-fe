@@ -2,89 +2,98 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Typography,
 } from '@mui/material';
-import { theme } from '../../theme/colors';
 import type { CatalogueFilterParams } from '../../types/catalogue';
+import type { Category, Collection } from '../../types/catalogue';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CatalogueFiltersProps {
   onFiltersChange: (filters: CatalogueFilterParams) => void;
-  categories: string[];
+  categories: Category[];
+  collections: Collection[];
   itemCount: number;
 }
 
 export const CatalogueFilters: React.FC<CatalogueFiltersProps> = ({
   onFiltersChange,
   categories,
+  collections,
   itemCount,
 }) => {
+  const { colors } = useTheme();
   const [search, setSearch] = useState('');
-  const [type, setType] = useState<'all' | 'product' | 'service'>('all');
+  const [collection, setCollection] = useState('');
   const [status, setStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [category, setCategory] = useState('');
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      onFiltersChange({ search, type, status, category });
+      onFiltersChange({ search, collection, status, category });
     }, 300);
     return () => clearTimeout(timer);
-  }, [search, type, status, category, onFiltersChange]);
+  }, [search, collection, status, category, onFiltersChange]);
 
   return (
     <Card
       sx={{
         p: 2.5,
         mb: 3,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        border: `1px solid ${theme.colors.primary[100]}`,
+        boxShadow: colors.shadow.md,
+        border: `1px solid ${colors.border.primary}`,
+        backgroundColor: colors.background.card,
       }}
     >
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '2fr 1fr 1fr 1fr auto' }, gap: 2, alignItems: 'center' }}>
-        <TextField
+        <CustomInput
           fullWidth
           size="small"
+          label="Search"
           placeholder="Search by name, SKU, barcode..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          variant="outlined"
         />
 
-        <FormControl fullWidth size="small">
-          <InputLabel>Type</InputLabel>
-          <Select value={type} label="Type" onChange={(e) => setType(e.target.value as any)}>
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="product">Product</MenuItem>
-            <MenuItem value="service">Service</MenuItem>
-          </Select>
-        </FormControl>
+        <CustomSelect
+          fullWidth
+          size="small"
+          label="Status"
+          value={status}
+          onChange={(e) => setStatus(e.target.value as any)}
+          options={[
+            { label: "All Status", value: "all" },
+            { label: "Active", value: "active" },
+            { label: "Inactive", value: "inactive" },
+          ]}
+        />
 
-        <FormControl fullWidth size="small">
-          <InputLabel>Status</InputLabel>
-          <Select value={status} label="Status" onChange={(e) => setStatus(e.target.value as any)}>
-            <MenuItem value="all">All Status</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
-          </Select>
-        </FormControl>
+          <CustomSelect
+            fullWidth
+            size="small"
+            label="Collection"
+            value={collection}
+            onChange={(e) => setCollection(e.target.value)}
+            options={[
+              { label: "All Collections", value: "" },
+              ...collections.map((col) => ({ label: col.name, value: col.id })),
+            ]}
+          />
 
-        <FormControl fullWidth size="small">
-          <InputLabel>Category</InputLabel>
-          <Select value={category} label="Category" onChange={(e) => setCategory(e.target.value)}>
-            <MenuItem value="">All Categories</MenuItem>
-            {categories.map((cat) => (
-              <MenuItem key={cat} value={cat}>
-                {cat}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <CustomSelect
+          fullWidth
+          size="small"
+          label="Category"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          options={[
+            { label: "All Categories", value: "" },
+            ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
+          ]}
+        />
 
-        <Typography variant="caption" sx={{ color: theme.colors.text300, whiteSpace: 'nowrap' }}>
+        <Typography variant="caption" sx={{ color: colors.text.tertiary, whiteSpace: 'nowrap' }}>
           Results: <strong>{itemCount}</strong>
         </Typography>
       </Box>

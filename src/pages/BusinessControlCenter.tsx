@@ -17,7 +17,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { initialModules } from "../utils/utils";
 import { useTheme } from "../contexts/ThemeContext";
-import Isolation from "../assets/ControlIcons/isolation.svg";
 
 // Map card titles to their corresponding routes
 const cardToRouteMap: { [key: string]: string } = {
@@ -57,13 +56,7 @@ const cardToRouteMap: { [key: string]: string } = {
   "Logistics Management": "/logistics-management",
 };
 
-interface BusinessControlCenterProps {
-  onHideHeader?: () => void;
-}
-
-export default function BusinessControlCenter({
-  onHideHeader,
-}: BusinessControlCenterProps) {
+export default function BusinessControlCenter() {
   const [modules, setModules] = useState(initialModules);
   const [isDraggable, setIsDraggable] = useState(true);
   const { colors } = useTheme();
@@ -81,38 +74,21 @@ export default function BusinessControlCenter({
     }
   };
 
-  const handleIsolationClick = () => {
-    onHideHeader?.();
-  };
-
   return (
     <div style={{ backgroundColor: colors.background.primary }}>
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1
-            className="text-2xl font-semibold"
+            className="text-2xl font-semibold mb-1"
             style={{ color: colors.text.primary }}
           >
             Business Control Center
           </h1>
-          <p className="text-semibold" style={{ color: colors.text.primary }}>Dashboard</p>
+          <p className="text-semibold hover:underline cursor-pointer w-max font-semibold" style={{ color: colors.text.primary }}>Dashboard</p>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="mr-1">
-            <img
-              onClick={handleIsolationClick}
-              src={Isolation}
-              className="p-1 rounded shadow-md cursor-pointer transition-shadow"
-              style={{
-                backgroundColor: colors.background.card,
-                boxShadow: colors.shadow.sm,
-              }}
-              alt="Isolation Mode"
-            />
-          </div>
-
           <label className="relative cursor-pointer">
             <input
               type="checkbox"

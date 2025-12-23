@@ -11,9 +11,9 @@ import {
   Tooltip,
 } from '@mui/material';
 import { MdEdit, MdVisibility, MdToggleOff, MdToggleOn, MdDelete } from 'react-icons/md';
-import { theme } from '../../theme/colors';
 import type { CatalogueItem } from '../../types/catalogue';
 import WaterInn from '../../assets/waterinn.png';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface CatalogueCardProps {
   item: CatalogueItem;
@@ -30,6 +30,7 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
   onToggle,
   onDelete,
 }) => {
+  const { colors } = useTheme();
   const isActive = item.status === 'active';
 
   return (
@@ -41,9 +42,13 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.3s ease',
+        backgroundColor: colors.background.card,
+        border: `1px solid ${colors.border.primary}`,
+        boxShadow: colors.shadow.sm,
         '&:hover': {
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          boxShadow: colors.shadow.lg,
           transform: 'translateY(-4px)',
+          borderColor: colors.primary[300],
         },
       }}
     >
@@ -54,14 +59,14 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
             position: 'absolute',
             top: 10,
             left: -25,
-            backgroundColor: theme.colors.danger[600],
-            color: 'white',
+            backgroundColor: colors.status.error,
+            color: colors.text.inverse,
             padding: '6px 40px',
             transform: 'rotate(-12deg)',
             fontSize: '0.75rem',
             fontWeight: 700,
             zIndex: 10,
-            boxShadow: '0 3px 10px rgba(0,0,0,0.15)',
+            boxShadow: colors.shadow.md,
           }}
         >
           SALE
@@ -83,23 +88,23 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
 
       {/* Content */}
       <CardContent sx={{ flexGrow: 1, pb: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, color: '#0f172a' }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5, color: colors.text.primary }}>
           {item.name}
         </Typography>
 
         {item.subHeading && (
-          <Typography variant="caption" sx={{ color: theme.colors.text300, display: 'block', mb: 1 }}>
+          <Typography variant="caption" sx={{ color: colors.text.tertiary, display: 'block', mb: 1 }}>
             {item.subHeading}
           </Typography>
         )}
 
-        <Typography variant="caption" sx={{ color: theme.colors.text300, display: 'block', mb: 1.5 }}>
-          {item.category}
+        <Typography variant="caption" sx={{ color: colors.text.tertiary, display: 'block', mb: 1.5 }}>
+          {typeof item.category === 'object' && item.category && 'name' in item.category ? item.category.name : item.category}
         </Typography>
 
         <Typography
           variant="subtitle1"
-          sx={{ fontWeight: 700, color: '#0f172a', mb: 1.5 }}
+          sx={{ fontWeight: 700, color: colors.text.primary, mb: 1.5 }}
         >
           {Number(item.salePrice || item.sellingPrice).toLocaleString()} PKR
         </Typography>
@@ -110,35 +115,36 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
             label={isActive ? 'Active' : 'Inactive'}
             size="small"
             sx={{
-              backgroundColor: isActive ? '#ecfdf5' : '#f1f5f9',
-              color: isActive ? '#065f46' : '#475569',
+              backgroundColor: isActive ? colors.status.successLight : colors.background.tertiary,
+              color: isActive ? colors.status.success : colors.text.secondary,
               fontWeight: 600,
               fontSize: '0.75rem',
+              border: `1px solid ${isActive ? colors.status.success : colors.border.primary}`,
             }}
           />
           <div>
             <Tooltip title="View">
-              <IconButton size="small" onClick={() => onView(item)}>
+              <IconButton size="small" onClick={() => onView(item)} sx={{ color: colors.text.secondary }}>
                 <MdVisibility size={16} />
               </IconButton>
             </Tooltip>
             <Tooltip title="Edit">
-              <IconButton size="small" onClick={() => onEdit(item)}>
+              <IconButton size="small" onClick={() => onEdit(item)} sx={{ color: colors.text.secondary }}>
                 <MdEdit size={16} />
               </IconButton>
             </Tooltip>
             <Tooltip title={isActive ? 'Disable' : 'Enable'}>
               <IconButton size="small" onClick={() => onToggle(item.id)}>
                 {isActive ? (
-                  <MdToggleOn size={16} color={theme.colors.success[600]} />
+                  <MdToggleOn size={16} color={colors.status.success} />
                 ) : (
-                  <MdToggleOff size={16} color={theme.colors.text300} />
+                  <MdToggleOff size={16} color={colors.text.tertiary} />
                 )}
               </IconButton>
             </Tooltip>
             <Tooltip title="Delete">
               <IconButton size="small" onClick={() => onDelete(item.id)}>
-                <MdDelete size={16} color={theme.colors.danger[600]} />
+                <MdDelete size={16} color={colors.status.error} />
               </IconButton>
             </Tooltip>
           </div>
@@ -148,9 +154,34 @@ export const CatalogueCard: React.FC<CatalogueCardProps> = ({
         {item.tags && item.tags.length > 0 && (
           <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap', gap: 0.5 }}>
             {item.tags.slice(0, 2).map((tag) => (
-              <Chip key={tag} label={tag} size="small" variant="outlined" />
+              <Chip 
+                key={tag} 
+                label={tag} 
+                size="small" 
+                variant="outlined" 
+                sx={{
+                  borderColor: colors.border.primary,
+                  color: colors.text.secondary,
+                  '&:hover': {
+                    backgroundColor: colors.background.secondary,
+                  },
+                }}
+              />
             ))}
-            {item.tags.length > 2 && <Chip label={`+${item.tags.length - 2}`} size="small" variant="outlined" />}
+            {item.tags.length > 2 && (
+              <Chip 
+                label={`+${item.tags.length - 2}`} 
+                size="small" 
+                variant="outlined"
+                sx={{
+                  borderColor: colors.border.primary,
+                  color: colors.text.secondary,
+                  '&:hover': {
+                    backgroundColor: colors.background.secondary,
+                  },
+                }}
+              />
+            )}
           </Stack>
         )}
       </CardContent>

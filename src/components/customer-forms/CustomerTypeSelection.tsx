@@ -1,6 +1,7 @@
 import { Box, Typography, Card, CardContent } from '@mui/material';
 import { LuBuilding2, LuFactory } from 'react-icons/lu';
 import { GoHome } from "react-icons/go";
+import { useTheme } from '../../contexts/ThemeContext';
 
 import type { CustomerType } from '../../types/customer';
 
@@ -9,6 +10,8 @@ interface CustomerTypeSelectionProps {
 }
 
 export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionProps) => {
+  const { colors } = useTheme();
+  
   const customerTypes = [
     {
       type: 'Domestic Customer' as CustomerType,
@@ -49,13 +52,28 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
   ];
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, p: 4 }}>
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: 4, 
+      p: 4,
+      backgroundColor: colors.background.primary,
+      minHeight: '100vh'
+    }}>
       {/* Header */}
       <Box sx={{ textAlign: 'center', mb: 2 }}>
-        <Typography variant="h4" sx={{ fontWeight: 600, mb: 2, color: '#1f2937' }}>
+        <Typography variant="h4" sx={{ 
+          fontWeight: 600, 
+          mb: 2, 
+          color: colors.text.primary 
+        }}>
           Choose Customer Type
         </Typography>
-        <Typography variant="body1" sx={{ color: '#6b7280', maxWidth: 600, mx: 'auto' }}>
+        <Typography variant="body1" sx={{ 
+          color: colors.text.secondary, 
+          maxWidth: 600, 
+          mx: 'auto' 
+        }}>
           Select the type of customer account you want to create. Each type has different features and pricing options tailored to specific needs.
         </Typography>
       </Box>
@@ -75,12 +93,13 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
             sx={{
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              border: '2px solid #e5e7eb',
+              border: `2px solid ${colors.border.primary}`,
               borderRadius: 2,
+              backgroundColor: colors.background.card,
               '&:hover': {
-                borderColor: 'var(--color-primary-600)',
+                borderColor: colors.primary[600],
                 transform: 'translateY(-4px)',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                boxShadow: colors.shadow.lg,
               },
               '&:active': {
                 transform: 'translateY(-2px)',
@@ -98,8 +117,8 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
                   width: 80,
                   height: 80,
                   borderRadius: '50%',
-                  bgcolor: 'var(--color-primary-50)',
-                  color: 'var(--color-primary-600)',
+                  bgcolor: colors.primary[50],
+                  color: colors.primary[600],
                   mx: 'auto',
                   mb: 3,
                 }}
@@ -113,7 +132,7 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
                 sx={{ 
                   fontWeight: 600, 
                   mb: 2, 
-                  color: '#1f2937' 
+                  color: colors.text.primary 
                 }}
               >
                 {customerType.title}
@@ -123,7 +142,7 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
               <Typography 
                 variant="body2" 
                 sx={{ 
-                  color: '#6b7280', 
+                  color: colors.text.secondary, 
                   mb: 3,
                   lineHeight: 1.6
                 }}
@@ -148,14 +167,14 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        bgcolor: 'var(--color-primary-600)',
+                        bgcolor: colors.primary[600],
                         flexShrink: 0,
                       }}
                     />
                     <Typography 
                       variant="caption" 
                       sx={{ 
-                        color: '#4b5563',
+                        color: colors.text.secondary,
                         fontSize: '0.875rem'
                       }}
                     >
@@ -170,13 +189,13 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
                 sx={{
                   mt: 3,
                   pt: 3,
-                  borderTop: '1px solid #f3f4f6',
+                  borderTop: `1px solid ${colors.border.primary}`,
                 }}
               >
                 <Typography
                   variant="body2"
                   sx={{
-                    color: 'var(--color-primary-600)',
+                    color: colors.primary[600],
                     fontWeight: 600,
                     fontSize: '0.875rem',
                   }}
@@ -191,7 +210,7 @@ export const CustomerTypeSelection = ({ onSelectType }: CustomerTypeSelectionPro
 
       {/* Help Text */}
       <Box sx={{ textAlign: 'center', mt: 2 }}>
-        <Typography variant="caption" sx={{ color: '#9ca3af' }}>
+        <Typography variant="caption" sx={{ color: colors.text.tertiary }}>
           You can change the customer type later if needed. Click on any card above to continue.
         </Typography>
       </Box>

@@ -106,7 +106,7 @@ export const LoginAccess = () => {
           <Button
             variant="outlined"
             fullWidth
-            onClick={() => (window.location.href = "/#")}
+            onClick={() => navigate("/qr-login")}
             sx={{
               borderWidth: 2,
               borderRadius: 2,

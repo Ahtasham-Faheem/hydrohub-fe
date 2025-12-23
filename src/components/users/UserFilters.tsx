@@ -12,6 +12,7 @@ import { DateCalendarGrid } from "../common/DateCalendarGrid";
 import dayjs, { Dayjs } from "dayjs";
 import { useState, useRef, useEffect } from "react";
 import { CustomSelect } from "../common/CustomSelect";
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface UserFiltersProps {
   status: string;
@@ -51,6 +52,7 @@ export const UserFilters = ({
   setRole,
   onFiltersChange,
 }: UserFiltersProps) => {
+  const { colors } = useTheme();
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [leftMonth, setLeftMonth] = useState<Dayjs>(dayjs());
   const [rightMonth, setRightMonth] = useState<Dayjs>(dayjs().add(1, "month"));
@@ -206,14 +208,19 @@ export const UserFilters = ({
             variant="outlined"
             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
             sx={{
-              borderColor: "#d1d5db",
+              borderColor: colors.border.primary,
               textTransform: "none",
-              color: "#374151",
+              color: colors.text.primary,
               fontWeight: 500,
               width: "100%",
               py: 1,
               height: "40px",
               justifyContent: "flex-start",
+              backgroundColor: colors.background.primary,
+              '&:hover': {
+                borderColor: colors.primary[600],
+                backgroundColor: colors.background.secondary,
+              },
             }}
           >
             {startDate && endDate
@@ -237,7 +244,9 @@ export const UserFilters = ({
                 flexDirection: "column",
                 gap: 2,
                 width: 740,
-                boxShadow: "0px 0px 10px rgba(0,0,0,0.15)",
+                boxShadow: colors.shadow.lg,
+                backgroundColor: colors.background.card,
+                border: `1px solid ${colors.border.primary}`,
               }}
             >
               {/* Quick Select Options */}
@@ -251,12 +260,13 @@ export const UserFilters = ({
                       py: 1,
                       px: 2,
                       textTransform: "none",
-                      backgroundColor: "#ef4444",
-                      color: "white",
+                      backgroundColor: colors.status.error,
+                      color: colors.text.inverse,
                       fontWeight: 600,
                       mb: 1,
                       "&:hover": {
-                        bgcolor: "#dc2626",
+                        bgcolor: colors.status.error,
+                        opacity: 0.8,
                       },
                     }}
                   >
@@ -269,18 +279,21 @@ export const UserFilters = ({
                       sx={{
                         width: "100%",
                         justifyContent: "flex-start",
-                        // py: 1,
                         px: 2,
                         textTransform: "none",
                         backgroundColor:
                           dateRange === option.value
-                            ? "#3b82f6"
+                            ? colors.primary[600]
                             : "transparent",
                         color:
-                          dateRange === option.value ? "white" : "text.primary",
+                          dateRange === option.value 
+                            ? colors.text.inverse 
+                            : colors.text.primary,
                         "&:hover": {
                           bgcolor:
-                            dateRange === option.value ? "#3b82f6" : "#f3f4f6",
+                            dateRange === option.value 
+                              ? colors.primary[700] 
+                              : colors.background.secondary,
                         },
                       }}
                     >
@@ -306,6 +319,12 @@ export const UserFilters = ({
                         onClick={() =>
                           setLeftMonth(leftMonth.subtract(1, "month"))
                         }
+                        sx={{
+                          color: colors.text.primary,
+                          '&:hover': {
+                            backgroundColor: colors.background.secondary,
+                          },
+                        }}
                       >
                         ←
                       </Button>
@@ -315,6 +334,7 @@ export const UserFilters = ({
                           fontWeight: 600,
                           minWidth: "100px",
                           textAlign: "center",
+                          color: colors.text.primary,
                         }}
                       >
                         {leftMonth.format("MMM YYYY")}
@@ -322,6 +342,12 @@ export const UserFilters = ({
                       <Button
                         size="small"
                         onClick={() => setLeftMonth(leftMonth.add(1, "month"))}
+                        sx={{
+                          color: colors.text.primary,
+                          '&:hover': {
+                            backgroundColor: colors.background.secondary,
+                          },
+                        }}
                       >
                         →
                       </Button>
@@ -349,6 +375,12 @@ export const UserFilters = ({
                         onClick={() =>
                           setRightMonth(rightMonth.subtract(1, "month"))
                         }
+                        sx={{
+                          color: colors.text.primary,
+                          '&:hover': {
+                            backgroundColor: colors.background.secondary,
+                          },
+                        }}
                       >
                         ←
                       </Button>
@@ -358,6 +390,7 @@ export const UserFilters = ({
                           fontWeight: 600,
                           minWidth: "100px",
                           textAlign: "center",
+                          color: colors.text.primary,
                         }}
                       >
                         {rightMonth.format("MMM YYYY")}
@@ -367,6 +400,12 @@ export const UserFilters = ({
                         onClick={() =>
                           setRightMonth(rightMonth.add(1, "month"))
                         }
+                        sx={{
+                          color: colors.text.primary,
+                          '&:hover': {
+                            backgroundColor: colors.background.secondary,
+                          },
+                        }}
                       >
                         →
                       </Button>
@@ -390,14 +429,14 @@ export const UserFilters = ({
                   justifyContent: "space-between",
                   alignItems: "center",
                   pt: 2,
-                  borderTop: "1px solid #e5e7eb",
+                  borderTop: `1px solid ${colors.border.primary}`,
                 }}
               >
                 <Typography
                   variant="body2"
                   sx={{
                     fontWeight: 500,
-                    color: "#374151",
+                    color: colors.text.secondary,
                   }}
                 >
                   {startDate && endDate
@@ -410,6 +449,14 @@ export const UserFilters = ({
                   <Button
                     variant="outlined"
                     onClick={() => setIsCalendarOpen(false)}
+                    sx={{
+                      color: colors.text.secondary,
+                      borderColor: colors.border.primary,
+                      '&:hover': {
+                        borderColor: colors.text.secondary,
+                        backgroundColor: colors.background.secondary,
+                      },
+                    }}
                   >
                     Cancel
                   </Button>
@@ -417,8 +464,8 @@ export const UserFilters = ({
                     variant="contained"
                     onClick={handleApply}
                     sx={{
-                      bgcolor: "#3b82f6",
-                      "&:hover": { bgcolor: "#2563eb" },
+                      bgcolor: colors.primary[600],
+                      "&:hover": { bgcolor: colors.primary[700] },
                     }}
                   >
                     Apply
@@ -430,7 +477,7 @@ export const UserFilters = ({
         </Box>
 
         {setCustomerType ? (
-          <FormControl>
+          <FormControl size="small">
             <CustomSelect
               label="Select Customer Type"
               value={customerType || ""}
@@ -445,7 +492,7 @@ export const UserFilters = ({
             />
           </FormControl>
         ) : (
-          <FormControl>
+          <FormControl size="small">
             <CustomSelect
               label="Select Role"
               value={role || ""}

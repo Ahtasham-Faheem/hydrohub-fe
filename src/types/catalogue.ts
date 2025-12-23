@@ -9,13 +9,35 @@ export interface CatalogueAttribute {
   options: string[];
 }
 
+export interface Category {
+  id: string;
+  vendorId: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Collection {
+  id: string;
+  vendorId: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CatalogueItem {
   id: string;
   name: string;
   subHeading?: string;
   description?: string;
-  category?: string;
-  collection?: string;
+  category?: string | Category;
+  collection?: string | Collection;
+  categoryId?: string;
+  collectionId?: string;
   countryOrigin?: string;
   link?: string;
   sku?: string;
@@ -30,21 +52,23 @@ export interface CatalogueItem {
   markSale: boolean;
   stockManaged: boolean;
   openingStock: number;
-  stockIn: number;
-  stockOut: number;
-  currentStock: number;
+  emptiesTrackable?: boolean;
+  stockIn?: number;
+  stockOut?: number;
+  currentStock?: number;
   tags: string[];
   rating: number;
-  status: 'active' | 'inactive';
-  mainImage: string;
-  gallery: string[];
-  variants: CatalogueVariant[];
-  updated: number;
+  status?: 'active' | 'inactive';
+  mainImage?: string;
+  gallery?: string[];
+  images?: string[];
+  variants?: CatalogueVariant[];
+  updated?: number;
 }
 
 export interface CatalogueFilterParams {
   search?: string;
-  type?: 'all' | 'product' | 'service';
+  collection?: string;
   status?: 'all' | 'active' | 'inactive';
   category?: string;
 }

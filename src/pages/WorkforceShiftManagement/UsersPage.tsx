@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Box, Card, Divider } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useGetStaff } from "../../hooks/useStaff";
@@ -7,7 +7,7 @@ import { UserStatsCards } from "../../components/users/UserStatsCards";
 import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
 import { DataTable } from "../../components/common/DataTable";
-import type { Column } from "../../components/common/DataTable";
+import type { Column, SortConfig } from "../../components/common/DataTable";
 import { useTheme } from "../../contexts/ThemeContext";
 
 export const UsersPage = () => {
@@ -20,25 +20,31 @@ export const UsersPage = () => {
   const [endDate, setEndDate] = useState<any>(null);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  
+  const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+
   // Get vendorId from localStorage
-  const vendorData = localStorage.getItem('userData');
+  const vendorData = localStorage.getItem("userData");
   const vendorId = vendorData ? JSON.parse(vendorData).id : null;
-  
+
   // Build filters object for API
   const buildFilters = () => {
     const filters: any = {};
     if (status) filters.status = status;
     if (role) filters.role = role;
-    if (startDate) filters.dateFrom = startDate.format('YYYY-MM-DD');
-    if (endDate) filters.dateTo = endDate.format('YYYY-MM-DD');
+    if (startDate) filters.dateFrom = startDate.format("YYYY-MM-DD");
+    if (endDate) filters.dateTo = endDate.format("YYYY-MM-DD");
     if (search) filters.search = search;
     return Object.keys(filters).length > 0 ? filters : undefined;
   };
-  
+
   // Using TanStack Query to fetch staff members with filters
-  const { data: staffData, isLoading } = useGetStaff(vendorId, currentPage, 10, buildFilters());
-  
+  const { data: staffData, isLoading } = useGetStaff(
+    vendorId,
+    currentPage,
+    10,
+    buildFilters()
+  );
+
   const staff = staffData?.data || [];
   const totalPages = staffData?.pagination?.totalPages || 1;
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
@@ -47,13 +53,88 @@ export const UsersPage = () => {
   );
 
   const [columns, setColumns] = useState([
-    { id: 1, label: "User", enabled: true },
-    { id: 2, label: "Email", enabled: true },
-    { id: 3, label: "Role", enabled: true },
-    { id: 4, label: "Status", enabled: true },
-    { id: 5, label: "Verified", enabled: true },
-    { id: 6, label: "Actions", enabled: true },
+    { id: 1, key: "firstName", label: "User", enabled: true },
+    { id: 2, key: "email", label: "Email", enabled: true },
+    { id: 3, key: "role", label: "Role", enabled: true },
+    { id: 4, key: "status", label: "Status", enabled: true },
   ]);
+
+  // Handle sorting
+  const handleSort = (key: string) => {
+    setSortConfig((prevSort) => {
+      if (prevSort?.key === key) {
+        // Toggle direction if same key
+        return {
+          key,
+          direction: prevSort.direction === "asc" ? "desc" : "asc",
+        };
+      } else {
+        // New key, default to ascending
+        return { key, direction: "asc" };
+      }
+    });
+  };
+
+  // Helper function to get nested values
+  const getNestedValue = (obj: any, path: string) => {
+    return path.split(".").reduce((acc, part) => acc?.[part], obj);
+  };
+
+  // Sort and filter data based on sortConfig and search
+  const sortedAndFilteredStaff = useMemo(() => {
+    let filteredData = staff;
+
+    // Apply search filter
+    if (search.trim()) {
+      const searchTerm = search.toLowerCase().trim();
+      filteredData = staff.filter((item: any) => {
+        const firstName = (item?.firstName || "").toLowerCase();
+        const lastName = (item?.lastName || "").toLowerCase();
+        const email = (item?.email || "").toLowerCase();
+        const role = (item?.role || "").toLowerCase();
+        const status = (item?.status || "").toLowerCase();
+        const staffId = (item?.staffId || "").toLowerCase();
+
+        return (
+          firstName.includes(searchTerm) ||
+          lastName.includes(searchTerm) ||
+          email.includes(searchTerm) ||
+          role.includes(searchTerm) ||
+          status.includes(searchTerm) ||
+          staffId.includes(searchTerm) ||
+          `${firstName} ${lastName}`.includes(searchTerm)
+        );
+      });
+    }
+
+    // Apply sorting
+    if (!sortConfig) return filteredData;
+
+    const sorted = [...filteredData].sort((a, b) => {
+      const aValue = getNestedValue(a, sortConfig.key);
+      const bValue = getNestedValue(b, sortConfig.key);
+
+      // Handle null/undefined values
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      // Convert to strings for comparison
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+
+      if (aStr < bStr) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aStr > bStr) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return sorted;
+  }, [staff, sortConfig, search]);
+
+  // Get visible columns based on enabled state
+  const visibleColumns = columns
+    .filter((col) => col.enabled)
+    .map((col) => col.key);
 
   const handleToggleColumn = (id: number) =>
     setColumns((prev) =>
@@ -81,38 +162,44 @@ export const UsersPage = () => {
   const cards = [
     {
       title: "Active Users",
-      value: staff.filter((u: any) => u?.status === "active").length.toString(),
+      value: sortedAndFilteredStaff
+        .filter((u: any) => u?.status === "active")
+        .length.toString(),
       change: "+0%",
       desc: "All staff currently authorized in the system",
       color: colors.status.success,
-      bgColor: colors.background.tertiary,
+      bgColor: colors.status.successLight,
       icon: <LuUserRoundCheck />,
     },
     {
       title: "Total Staff",
-      value: staff.length.toString(),
+      value: sortedAndFilteredStaff.length.toString(),
       change: "+0%",
       desc: "Total staff members in the system",
       color: colors.primary[600],
-      bgColor: colors.background.tertiary,
+      bgColor: colors.status.infoLight,
       icon: <LuUserRoundCheck />,
     },
     {
       title: "Supervisors",
-      value: staff.filter((u: any) => u?.role === "supervisor").length.toString(),
+      value: sortedAndFilteredStaff
+        .filter((u: any) => u?.role === "supervisor")
+        .length.toString(),
       change: "0%",
       desc: "Supervisory staff members",
       color: colors.status.warning,
-      bgColor: colors.background.tertiary,
+      bgColor: colors.status.warningLight,
       icon: <LuUserRoundX />,
     },
     {
       title: "Inactive Users",
-      value: staff.filter((u: any) => u?.status === "inactive").length.toString(),
+      value: sortedAndFilteredStaff
+        .filter((u: any) => u?.status === "inactive")
+        .length.toString(),
       change: "0%",
       desc: "Users no longer active in operations",
       color: colors.status.error,
-      bgColor: colors.background.tertiary,
+      bgColor: colors.status.errorLight,
       icon: <LuUserRoundX />,
     },
   ];
@@ -122,30 +209,56 @@ export const UsersPage = () => {
     {
       key: "firstName",
       label: "User",
+      sortable: true,
+      visible: columns.find((c) => c.key === "firstName")?.enabled,
       render: (_: any, item: any) => {
-        const firstName = item?.firstName || 'N/A';
-        const lastName = item?.lastName || 'N/A';
-        const initials = (firstName?.[0] || 'U') + (lastName?.[0] || 'S');
+        const firstName = item?.firstName || "N/A";
+        const lastName = item?.lastName || "N/A";
+        const initials = (firstName?.[0] || "U") + (lastName?.[0] || "S");
         return (
           <Box display="flex" alignItems="center" gap={2}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: colors.primary[600],
-                color: colors.text.inverse,
-                fontWeight: 600,
-                fontSize: '0.875rem',
-              }}
-            >
-              {initials}
-            </Box>
+            {item?.profilePictureAsset?.fileUrl ? (
+              <img
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: colors.primary[600],
+                  color: colors.text.inverse,
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                }}
+                src={item?.profilePictureAsset?.fileUrl}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: colors.primary[600],
+                  color: colors.text.inverse,
+                  fontWeight: 600,
+                  fontSize: "1.25rem",
+                }}
+              >
+                {initials}
+              </Box>
+            )}
             <Box>
-              <Box sx={{ fontWeight: 600, fontSize: 14, color: colors.text.primary }}>
+              <Box
+                sx={{
+                  fontWeight: 600,
+                  fontSize: 14,
+                  color: colors.text.primary,
+                }}
+              >
                 {firstName} {lastName}
               </Box>
               <Box sx={{ fontSize: 12, color: colors.text.secondary }}>
@@ -159,43 +272,58 @@ export const UsersPage = () => {
     {
       key: "email",
       label: "Email",
+      sortable: true,
+      visible: columns.find((c) => c.key === "email")?.enabled,
       render: (_: any, item: any) => {
-        return item?.email || 'N/A';
-      }
+        return item?.email || "N/A";
+      },
     },
     {
       key: "role",
       label: "Role",
+      sortable: true,
+      visible: columns.find((c) => c.key === "role")?.enabled,
       render: (_: any, item: any) => {
-        return (item?.role || 'N/A').replace('_', ' ').toUpperCase();
-      }
+        return (item?.role || "N/A").replace("_", " ").toUpperCase();
+      },
     },
     {
       key: "status",
       label: "Status",
+      sortable: true,
+      visible: columns.find((c) => c.key === "status")?.enabled,
       render: (_: any, item: any) => (
         <Box
           sx={{
-            display: 'inline-block',
+            display: "inline-block",
             px: 1.5,
             py: 0.5,
             borderRadius: 1,
             bgcolor: colors.background.tertiary,
-            color: item?.status === "active" ? colors.status.success : colors.status.error,
-            fontSize: '0.75rem',
+            color:
+              item?.status === "active"
+                ? colors.status.success
+                : colors.status.error,
+            fontSize: "0.75rem",
             fontWeight: 600,
-            textTransform: 'capitalize',
-            border: `1px solid ${item?.status === "active" ? colors.status.success : colors.status.error}`,
+            textTransform: "capitalize",
+            border: `1px solid ${
+              item?.status === "active"
+                ? colors.status.success
+                : colors.status.error
+            }`,
           }}
         >
-          {item?.status || 'N/A'}
+          {item?.status || "N/A"}
         </Box>
       ),
     },
   ];
 
   return (
-    <Box sx={{ backgroundColor: colors.background.primary, minHeight: '100vh' }}>
+    <Box
+      sx={{ backgroundColor: colors.background.primary, minHeight: "100vh" }}
+    >
       <UserStatsCards cards={cards} />
       <Card
         sx={{
@@ -208,7 +336,9 @@ export const UsersPage = () => {
           overflow: "visible",
         }}
       >
-        <h2 className="mb-4 text-lg" style={{ color: colors.text.primary }}>Filters</h2>
+        <h2 className="mb-4 text-lg" style={{ color: colors.text.primary }}>
+          Filters
+        </h2>
 
         <UserFilters
           status={status}
@@ -236,12 +366,21 @@ export const UsersPage = () => {
             handleSaveColumns: () => setManageAnchorEl(null),
             search,
             setSearch,
+            currentSort: sortConfig,
+            onSort: handleSort,
+            sortOptions: [
+              { key: "firstName", label: "Name" },
+              { key: "email", label: "Email" },
+              { key: "role", label: "Role" },
+              { key: "status", label: "Status" },
+              { key: "createdAt", label: "Created Date" },
+            ],
           }}
         />
       </Card>
       <DataTable
         columns={tableColumns}
-        data={staff}
+        data={sortedAndFilteredStaff}
         isLoading={isLoading}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
@@ -251,6 +390,9 @@ export const UsersPage = () => {
         onView={(item) => console.log("View", item)}
         onEdit={(item) => navigate(`/dashboard/users/edit/${item.id}`)}
         onDelete={(item) => console.log("Delete", item)}
+        sortConfig={sortConfig}
+        onSort={handleSort}
+        visibleColumns={visibleColumns}
       />
     </Box>
   );

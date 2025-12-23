@@ -40,7 +40,7 @@ export const CustomSelect = ({
   return (
     <FormControl fullWidth={fullWidth} error={!!error} size="small">
       <InputLabel 
-        size="medium"
+        size={size}
         sx={{ 
           color: colors.text.secondary,
           '&.Mui-focused': { color: colors.primary[500] }

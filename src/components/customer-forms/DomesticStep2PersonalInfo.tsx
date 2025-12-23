@@ -5,11 +5,13 @@ import { CustomDateInput } from "../common/CustomDateInput";
 import { PhoneInput } from "../common/PhoneInput";
 import { CNICInput } from "../common/CNICInput";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import type { DomesticCustomer } from "../../types/customer";
 import dayjs from "dayjs";
 
 export const DomesticStep2PersonalInfo = () => {
   const { state, updateFormData, fieldErrors, setFieldErrors } = useCustomerForm();
+  const { colors } = useTheme();
   const data = (state?.data || {}) as DomesticCustomer;
 
   const handlePhoneChange = (field: string, value: string) => {
@@ -23,7 +25,7 @@ export const DomesticStep2PersonalInfo = () => {
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Personal Details
         </Typography>
@@ -136,7 +138,7 @@ export const DomesticStep2PersonalInfo = () => {
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Address Information
         </Typography>
@@ -164,7 +166,7 @@ export const DomesticStep2PersonalInfo = () => {
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Emergency Contact Information
         </Typography>

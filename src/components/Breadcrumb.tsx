@@ -7,7 +7,7 @@ const routeLabels: Record<string, string> = {
   dashboard: 'Dashboard',
   overview: 'Dashboard',
   users: 'System Users',
-  'create-user': 'Create User',
+  'create': 'User Creation',
   'edit': 'Edit',
   'business-control-center': 'Business Control Center',
   login: 'Login',
@@ -27,14 +27,25 @@ export const Breadcrumb = () => {
   // Determine the page label
   let currentPageLabel = '';
   
+  // Handle create routes specifically
+  if (pathnames[pathnames.length - 1] === 'create') {
+    const parentSection = pathnames[pathnames.length - 2];
+    if (parentSection === 'users') {
+      currentPageLabel = 'User Creation';
+    } else if (parentSection === 'customer-profiles') {
+      currentPageLabel = 'Customer Creation';
+    } else {
+      currentPageLabel = 'Create';
+    }
+  }
   // Handle edit routes with IDs
-  if (pathnames[pathnames.length - 2] === 'edit') {
+  else if (pathnames[pathnames.length - 2] === 'edit') {
     const parentSection = pathnames[pathnames.length - 3];
     if (parentSection === 'users') {
       currentPageLabel = 'Edit User';
     } else if (parentSection === 'customer-profiles') {
       currentPageLabel = 'Edit Customer';
-      } else if (parentSection === 'dashboard') {
+    } else if (parentSection === 'dashboard') {
       currentPageLabel = 'Business Control Center';
     } else {
       currentPageLabel = 'Edit';

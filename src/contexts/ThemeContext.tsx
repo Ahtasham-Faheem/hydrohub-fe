@@ -34,6 +34,10 @@ interface ThemeColors {
     warning: string;
     error: string;
     info: string;
+    successLight: string;
+    warningLight: string;
+    errorLight: string;
+    infoLight: string;
   };
   
   // Primary brand colors
@@ -84,6 +88,10 @@ const lightTheme: ThemeColors = {
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#3b82f6',
+    successLight: '#dcfce7',
+    warningLight: '#fef3c7',
+    errorLight: '#fee2e2',
+    infoLight: '#dbeafe',
   },
   primary: {
     50: '#eff6ff',
@@ -130,6 +138,10 @@ const darkTheme: ThemeColors = {
     warning: '#f59e0b',
     error: '#ef4444',
     info: '#3b82f6',
+    successLight: '#064e3b',
+    warningLight: '#451a03',
+    errorLight: '#450a0a',
+    infoLight: '#1e3a8a',
   },
   primary: {
     50: '#1e3a8a',

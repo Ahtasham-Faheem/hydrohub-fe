@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { CustomInput } from "../common/CustomInput";
 import { useCustomerForm } from "../../contexts/CustomerFormContext";
+import { useTheme } from "../../contexts/ThemeContext";
 
 export const CustomerBottleManagement = () => {
   const { state, updateFormData, fieldErrors } = useCustomerForm();
+  const { colors } = useTheme();
   const data = state.data as any;
   const security = data?.security || {};
 
@@ -36,7 +38,7 @@ export const CustomerBottleManagement = () => {
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Required Information
         </Typography>
@@ -49,7 +51,7 @@ export const CustomerBottleManagement = () => {
             }}
           >
             <CustomInput
-              label="Number of Bottles *"
+              label="Number of Bottles"
               type="number"
               value={formatNumber(security.numberOfBottles)}
               onChange={(e) => handleInputChange('numberOfBottles', e.target.value)}
@@ -58,7 +60,7 @@ export const CustomerBottleManagement = () => {
               required
             />
             <CustomInput
-              label="Security Per Bottle (PKR) *"
+              label="Security Per Bottle (PKR)"
               type="number"
               value={formatNumber(security.securityPerBottle)}
               onChange={(e) => handleInputChange('securityPerBottle', e.target.value)}
@@ -74,7 +76,7 @@ export const CustomerBottleManagement = () => {
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Security & Payment Details
         </Typography>
@@ -99,7 +101,7 @@ export const CustomerBottleManagement = () => {
               {security.numberOfBottles && security.securityPerBottle && (
                 <Typography 
                   variant="caption" 
-                  sx={{ color: "#6b7280", mt: 0.5, display: 'block' }}
+                  sx={{ color: colors.text.secondary, mt: 0.5, display: 'block' }}
                 >
                   Auto-calculated: {security.numberOfBottles} × {security.securityPerBottle} = {security.securityAmount || 0} PKR
                 </Typography>
@@ -121,7 +123,7 @@ export const CustomerBottleManagement = () => {
       <Box>
         <Typography
           variant="subtitle2"
-          sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+          sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
         >
           Bottle Return Management
         </Typography>
@@ -183,7 +185,7 @@ export const CustomerBottleManagement = () => {
         <Box>
           <Typography
             variant="subtitle2"
-            sx={{ fontWeight: 600, mb: 2, color: "#374151" }}
+            sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}
           >
             Summary
           </Typography>
@@ -193,23 +195,23 @@ export const CustomerBottleManagement = () => {
               gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr 1fr" },
               gap: 2,
               p: 2,
-              backgroundColor: "#f8fafc",
+              backgroundColor: colors.background.secondary,
               borderRadius: 1,
-              border: "1px solid #e2e8f0",
+              border: `1px solid ${colors.border.primary}`,
             }}
           >
             {security.numberOfBottles && (
-              <Typography variant="body2" sx={{ color: "#6b7280" }}>
+              <Typography variant="body2" sx={{ color: colors.text.secondary }}>
                 Total Bottles: <strong>{security.numberOfBottles}</strong>
               </Typography>
             )}
             {security.securityAmount && (
-              <Typography variant="body2" sx={{ color: "#6b7280" }}>
+              <Typography variant="body2" sx={{ color: colors.text.secondary }}>
                 Security Amount: <strong>PKR {security.securityAmount}</strong>
               </Typography>
             )}
             {security.advancePayment && (
-              <Typography variant="body2" sx={{ color: "#6b7280" }}>
+              <Typography variant="body2" sx={{ color: colors.text.secondary }}>
                 Advance Payment: <strong>PKR {security.advancePayment}</strong>
               </Typography>
             )}

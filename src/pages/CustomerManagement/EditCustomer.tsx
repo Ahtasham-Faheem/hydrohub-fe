@@ -19,6 +19,7 @@ import {
   CustomerFormProvider,
 } from "../../contexts/CustomerFormContext";
 import { customerService } from "../../services/api";
+import { useTheme } from "../../contexts/ThemeContext";
 import { LuUserRoundPen, LuUserCheck, LuMapPin, LuLink } from "react-icons/lu";
 
 // Import form components
@@ -32,7 +33,7 @@ import { DomesticStep5Preferences } from "../../components/customer-forms/Domest
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
 
 // Custom Step Icon Component
-const CustomStepIcon = ({ active }: { active: boolean }) => (
+const CustomStepIcon = ({ active, colors }: { active: boolean; colors: any }) => (
   <Box
     sx={{
       display: "flex",
@@ -41,7 +42,7 @@ const CustomStepIcon = ({ active }: { active: boolean }) => (
       width: 22,
       height: 22,
       borderRadius: "50%",
-      bgcolor: active ? "var(--color-primary-600)" : "#e5e7eb",
+      bgcolor: active ? colors.primary[600] : colors.border.primary,
       color: "white",
     }}
   >
@@ -70,11 +71,12 @@ const businessSteps = [
 const EditCustomerFormContent = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { colors } = useTheme();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [image, setImage] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
   const {
     state,
@@ -109,7 +111,7 @@ const EditCustomerFormContent = () => {
         
         // Set profile picture URL from API response if available
         if (customerData.profilePictureAsset?.fileUrl) {
-          setImage(customerData.profilePictureAsset.fileUrl);
+          setExistingImageUrl(customerData.profilePictureAsset.fileUrl);
         }
 
         // Populate form with customer data
@@ -248,6 +250,10 @@ const EditCustomerFormContent = () => {
 
       if (!data.gender || !data.gender.trim()) {
         fieldErrorsMap["gender"] = "Gender is required";
+      }
+
+      if (!data.cnicNumber || !data.cnicNumber.trim()) {
+        fieldErrorsMap["cnicNumber"] = "CNIC Number is required";
       }
 
       if (!data.maritalStatus || !data.maritalStatus.trim()) {
@@ -471,28 +477,10 @@ const EditCustomerFormContent = () => {
     setCurrentStep(Math.max(state.currentStep - 1, 0));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
-        return (
-          <DomesticStep1BasicProfile
-            image={image}
-            onImageUpload={handleImageUpload}
-            onImageReset={() => setImage(null)}
-            isEditMode={true}
-          />
-        );
+        return <DomesticStep1BasicProfile isEditMode={true} existingImageUrl={existingImageUrl || undefined} />;
       case 1:
         return <DomesticStep2PersonalInfo />;
       case 2:
@@ -504,14 +492,7 @@ const EditCustomerFormContent = () => {
       case 5:
         return <DomesticStep6LinkedAccounts />;
       default:
-        return (
-          <DomesticStep1BasicProfile
-            image={image}
-            onImageUpload={handleImageUpload}
-            onImageReset={() => setImage(null)}
-            isEditMode={true}
-          />
-        );
+        return <DomesticStep1BasicProfile isEditMode={true} existingImageUrl={existingImageUrl || undefined} />;
     }
   };
 
@@ -523,6 +504,7 @@ const EditCustomerFormContent = () => {
           alignItems: "center",
           justifyContent: "center",
           minHeight: "calc(100vh - 100px)",
+          backgroundColor: colors.background.primary,
         }}
       >
         <CircularProgress />
@@ -531,18 +513,22 @@ const EditCustomerFormContent = () => {
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "calc(100vh - 100px)" }}>
+    <Box sx={{ 
+      display: "flex", 
+      minHeight: "calc(100vh - 100px)",
+      backgroundColor: colors.background.primary 
+    }}>
       {/* Sidebar */}
       <Box
         sx={{
           width: 320,
-          bgcolor: "white",
+          bgcolor: colors.background.card,
           p: 4,
           pr: 0,
-          borderRight: "1px solid #e0e0e0",
+          borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
           Edit Customer
         </Typography>
         <Stepper
@@ -559,7 +545,7 @@ const EditCustomerFormContent = () => {
             <Step key={step.label}>
               <StepLabel
                 StepIconComponent={() => (
-                  <CustomStepIcon active={index === state.currentStep} />
+                  <CustomStepIcon active={index === state.currentStep} colors={colors} />
                 )}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -567,8 +553,8 @@ const EditCustomerFormContent = () => {
                     sx={{
                       color:
                         index === state.currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                     }}
                   >
                     {step.icon}
@@ -578,8 +564,8 @@ const EditCustomerFormContent = () => {
                     sx={{
                       color:
                         index === state.currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                       fontWeight:
                         index === state.currentStep ? 600 : 400,
                     }}
@@ -595,11 +581,17 @@ const EditCustomerFormContent = () => {
 
       {/* Main Content */}
       <Box sx={{ flexGrow: 1, height: "auto" }}>
-        <Card sx={{ p: 3, height: "100%", boxShadow: "none" }}>
+        <Card sx={{ 
+          p: 3, 
+          height: "100%", 
+          boxShadow: "none",
+          backgroundColor: colors.background.card,
+          color: colors.text.primary 
+        }}>
           <Box sx={{ mb: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {steps[state.currentStep].icon}
-              <Typography variant="h6" sx={{ my: 1 }}>
+              <Typography variant="h6" sx={{ my: 1, color: colors.text.primary }}>
                 {steps[state.currentStep].label}
               </Typography>
             </Box>

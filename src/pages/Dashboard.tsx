@@ -87,7 +87,6 @@ export const Dashboard = () => {
                 path="/"
                 element={
                   <BusinessControlCenter
-                    onHideHeader={() => setHeaderVisible(!headerVisible)}
                   />
                 }
               />
@@ -95,7 +94,6 @@ export const Dashboard = () => {
                 path="overview"
                 element={
                   <BusinessControlCenter
-                    onHideHeader={() => setHeaderVisible(!headerVisible)}
                   />
                 }
               />

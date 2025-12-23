@@ -37,7 +37,7 @@ import { SalaryBenefits } from "../../components/forms/SalaryBenefits";
 import { IdentificationVerification } from "../../components/forms/IdentificationVerification";
 
 // Custom Step Icon Component
-const CustomStepIcon = ({ active }: { active: boolean }) => (
+const CustomStepIcon = ({ active, colors }: { active: boolean; colors: any }) => (
   <Box
     sx={{
       display: "flex",
@@ -46,7 +46,7 @@ const CustomStepIcon = ({ active }: { active: boolean }) => (
       width: 22,
       height: 22,
       borderRadius: "50%",
-      bgcolor: active ? "var(--color-primary-600)" : "#e5e7eb",
+      bgcolor: active ? colors.primary[600] : colors.border.primary,
       color: "white",
     }}
   >
@@ -363,13 +363,13 @@ const CreateUserForm = () => {
           width: 320,
           bgcolor: colors.background.card,
           p: 4,
-          pr: 0,
+          pr: 2,
           borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
-        <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
+        {/* <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
           User Creation Form
-        </Typography>
+        </Typography> */}
         <Stepper
           activeStep={currentStep}
           orientation="vertical"
@@ -384,11 +384,11 @@ const CreateUserForm = () => {
             <Step key={step.label}>
               <StepLabel
                 StepIconComponent={() => (
-                  <CustomStepIcon active={index === currentStep} />
+                  <CustomStepIcon active={index === currentStep} colors={colors} />
                 )}
                 sx={{
                   cursor: "pointer",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                  "&:hover": { bgcolor: colors.background.secondary },
                 }}
               >
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -396,8 +396,8 @@ const CreateUserForm = () => {
                     sx={{
                       color:
                         index === currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                     }}
                   >
                     {step.icon}
@@ -407,8 +407,8 @@ const CreateUserForm = () => {
                     sx={{
                       color:
                         index === currentStep
-                          ? "var(--color-primary-600)"
-                          : "inherit",
+                          ? colors.primary[600]
+                          : colors.text.secondary,
                       fontWeight: index === currentStep ? 600 : 400,
                     }}
                   >

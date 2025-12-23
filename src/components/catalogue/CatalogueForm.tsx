@@ -1,14 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Box,
   Card,
-  TextField,
   Button,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   FormControlLabel,
   Switch,
   Chip,
@@ -18,15 +13,20 @@ import {
   DialogActions,
   IconButton,
   Stack,
+  CircularProgress,
 } from '@mui/material';
 import { MdClose, MdAdd } from 'react-icons/md';
-import { theme } from '../../theme/colors';
 import type { CatalogueItem } from '../../types/catalogue';
+import type { Category, Collection } from '../../types/catalogue';
+import { CustomInput } from '../common/CustomInput';
+import { CustomSelect } from '../common/CustomSelect';
+import { useTheme } from '../../contexts/ThemeContext';
+import { assetsService } from '../../services/api';
 
 interface CatalogueFormProps {
   item?: CatalogueItem;
-  categories: string[];
-  collections: string[];
+  categories: Category[];
+  collections: Collection[];
   onSave: (item: Omit<CatalogueItem, 'id' | 'updated'> | CatalogueItem) => void;
   onCancel: () => void;
   onAddCategory: (category: string) => void;
@@ -42,10 +42,10 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
   onAddCategory,
   onAddCollection,
 }) => {
+  const { colors } = useTheme();
   const [formData, setFormData] = useState<Partial<CatalogueItem>>(
     item || {
       type: 'product',
-      status: 'active',
       costPrice: 0,
       sellingPrice: 0,
       discountPercent: 0,
@@ -54,13 +54,10 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
       markSale: false,
       stockManaged: false,
       openingStock: 0,
-      stockIn: 0,
-      stockOut: 0,
-      currentStock: 0,
+      emptiesTrackable: false,
       tags: [],
       rating: 0,
-      gallery: [],
-      variants: [],
+      images: [],
     }
   );
 
@@ -70,40 +67,107 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
   const [newCollection, setNewCollection] = useState('');
   const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadingImages, setUploadingImages] = useState<boolean>(false);
 
   const galleryInputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize form data when item changes
+  useEffect(() => {
+    if (item) {
+      setFormData({
+        ...item,
+        // Ensure numeric fields are properly converted
+        costPrice: Number(item.costPrice) || 0,
+        sellingPrice: Number(item.sellingPrice) || 0,
+        discountPercent: Number(item.discountPercent) || 0,
+        discountAmount: Number(item.discountAmount) || 0,
+        salePrice: Number(item.salePrice) || 0,
+        openingStock: Number(item.openingStock) || 0,
+        rating: Number(item.rating) || 0,
+        // Ensure boolean fields are properly converted
+        markSale: Boolean(item.markSale),
+        stockManaged: Boolean(item.stockManaged),
+        emptiesTrackable: Boolean(item.emptiesTrackable),
+        // Ensure arrays are properly initialized
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        images: Array.isArray(item.images) ? item.images : [],
+      });
+    }
+  }, [item]);
+
+  // Helper function to get image URL from asset ID or base64
+  const getImageUrl = (imageData: string | undefined): string => {
+    if (!imageData || typeof imageData !== 'string') return '';
+    // If it's already a base64 string or full URL, return as is
+    if (imageData.startsWith('data:') || imageData.startsWith('http')) {
+      return imageData;
+    }
+    // If it's an asset ID, construct the URL
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    return `${API_BASE_URL}/assets/${imageData}`;
+  };
 
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: '' }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach((file) => {
-      if (!file.type.startsWith('image/')) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const gallery = [...(formData.gallery || [])];
-        gallery.push(ev.target?.result as string);
+    if (files.length === 0) return;
+
+    setUploadingImages(true);
+    
+    try {
+      const uploadPromises = files.map(async (file) => {
+        if (!file.type.startsWith('image/')) return null;
+        
+        try {
+          const uploadResponse = await assetsService.uploadFile(file);
+          return uploadResponse.id; // Return the asset ID
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          return null;
+        }
+      });
+
+      const uploadedAssetIds = await Promise.all(uploadPromises);
+      const validAssetIds = uploadedAssetIds.filter((id): id is string => id !== null);
+      
+      if (validAssetIds.length > 0) {
+        const currentImages = formData.images || [];
         setFormData((prev) => ({
           ...prev,
-          gallery,
-          mainImage: gallery[0],
+          images: [...currentImages, ...validAssetIds],
         }));
-      };
-      reader.readAsDataURL(file);
-    });
-    if (galleryInputRef.current) galleryInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Error uploading images:', error);
+    } finally {
+      setUploadingImages(false);
+      if (galleryInputRef.current) galleryInputRef.current.value = '';
+    }
   };
 
-  const removeImage = (index: number) => {
-    const gallery = (formData.gallery || []).filter((_, i) => i !== index);
+  const removeImage = async (index: number) => {
+    const images = formData.images || [];
+    const assetIdToDelete = images[index];
+    
+    // Remove from local state first
+    const updatedImages = images.filter((_: string, i: number) => i !== index);
     setFormData((prev) => ({
       ...prev,
-      gallery,
-      mainImage: gallery[0] || '',
+      images: updatedImages,
     }));
+
+    // Delete from server if it's an asset ID (not a base64 string)
+    if (assetIdToDelete && !assetIdToDelete.startsWith('data:')) {
+      try {
+        await assetsService.deleteAsset(assetIdToDelete);
+      } catch (error) {
+        console.error('Error deleting asset:', error);
+      }
+    }
   };
 
   const addTag = () => {
@@ -127,6 +191,7 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
     const newErrors: Record<string, string> = {};
     if (!formData.name?.trim()) newErrors.name = 'Name is required';
     if (!formData.sellingPrice || formData.sellingPrice <= 0) newErrors.sellingPrice = 'Valid selling price is required';
+    if (!formData.type) newErrors.type = 'Product type is required';
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return false;
@@ -136,7 +201,43 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
 
   const handleSave = () => {
     if (!validateForm()) return;
-    onSave(formData as any);
+    
+    // Prepare payload according to API structure with proper type conversion
+    const payload = {
+      name: formData.name || '',
+      subHeading: formData.subHeading || '',
+      description: formData.description || '',
+      type: formData.type || 'product',
+      categoryId: formData.categoryId || undefined,
+      collectionId: formData.collectionId || undefined,
+      costPrice: Number(formData.costPrice) || 0,
+      sellingPrice: Number(formData.sellingPrice) || 0,
+      discountPercent: Number(formData.discountPercent) || 0,
+      discountAmount: Number(formData.discountAmount) || 0,
+      salePrice: Number(formData.salePrice) || 0,
+      markSale: Boolean(formData.markSale),
+      stockManaged: Boolean(formData.stockManaged),
+      openingStock: Number(formData.openingStock) || 0,
+      emptiesTrackable: Boolean(formData.emptiesTrackable),
+      sku: formData.sku || '',
+      productId: formData.productId || '',
+      barcode: formData.barcode || '',
+      countryOrigin: formData.countryOrigin || '',
+      link: formData.link || '',
+      // Convert images array to string array (asset IDs only)
+      images: (formData.images || []).map((img: any) => {
+        if (typeof img === 'string') {
+          return img; // Already a string (asset ID)
+        } else if (img && typeof img === 'object' && img.id) {
+          return img.id; // Extract asset ID from object
+        }
+        return ''; // Fallback for invalid entries
+      }).filter(Boolean), // Remove empty strings
+      tags: formData.tags || [],
+      rating: Number(formData.rating) || 0,
+    };
+    
+    onSave(payload as any);
   };
 
   const recalculateDiscount = (selling: number, sale: number) => {
@@ -168,19 +269,17 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
     }));
   };
 
-  const handleStockChange = () => {
-    const open = Number(formData.openingStock || 0);
-    const inAmt = Number(formData.stockIn || 0);
-    const out = Number(formData.stockOut || 0);
-    const current = Math.max(0, open + inAmt - out);
-    setFormData((prev) => ({ ...prev, currentStock: current }));
-  };
-
   return (
-    <Box>
-      <Card sx={{ p: 3, mb: 3, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-        <Box sx={{ mb: 3, pb: 2, borderBottom: `1px solid ${theme.colors.primary[100]}` }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
+    <Box sx={{ backgroundColor: colors.background.primary }}>
+      <Card sx={{ 
+        p: 3, 
+        mb: 3, 
+        boxShadow: colors.shadow.md,
+        backgroundColor: colors.background.card,
+        border: `1px solid ${colors.border.primary}`,
+      }}>
+        <Box sx={{ mb: 3, pb: 2, borderBottom: `1px solid ${colors.border.primary}` }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: colors.text.primary }}>
             {item ? 'Edit Catalogue Item' : 'Add New Catalogue Item'}
           </Typography>
         </Box>
@@ -188,29 +287,41 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'auto 1fr' }, gap: 3 }}>
           {/* Left: Image Gallery */}
           <Box sx={{ minWidth: { md: '250px' } }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#374151' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: colors.text.primary }}>
               Product Images
             </Typography>
             <Box
               sx={{
-                border: `2px dashed ${theme.colors.primary[100]}`,
+                border: `2px dashed ${colors.border.primary}`,
                 borderRadius: 1,
                 p: 2,
                 textAlign: 'center',
-                backgroundColor: theme.colors.primary[50],
-                cursor: 'pointer',
+                backgroundColor: colors.background.secondary,
+                cursor: uploadingImages ? 'not-allowed' : 'pointer',
                 transition: 'all 0.2s',
-                '&:hover': {
-                  borderColor: theme.colors.primary[600],
-                  backgroundColor: theme.colors.primary[100],
-                },
+                opacity: uploadingImages ? 0.6 : 1,
+                '&:hover': !uploadingImages ? {
+                  borderColor: colors.primary[600],
+                  backgroundColor: colors.primary[50] || colors.background.tertiary,
+                } : {},
               }}
-              onClick={() => galleryInputRef.current?.click()}
+              onClick={() => !uploadingImages && galleryInputRef.current?.click()}
             >
-              <MdAdd size={32} color={theme.colors.primary[600]} style={{ margin: '0 auto' }} />
-              <Typography variant="caption" sx={{ display: 'block', color: theme.colors.text300, mt: 1 }}>
-                Click to upload or drag images here
-              </Typography>
+              {uploadingImages ? (
+                <>
+                  <CircularProgress size={32} sx={{ color: colors.primary[600] }} />
+                  <Typography variant="caption" sx={{ display: 'block', color: colors.text.tertiary, mt: 1 }}>
+                    Uploading images...
+                  </Typography>
+                </>
+              ) : (
+                <>
+                  <MdAdd size={32} color={colors.primary[600]} style={{ margin: '0 auto' }} />
+                  <Typography variant="caption" sx={{ display: 'block', color: colors.text.tertiary, mt: 1 }}>
+                    Click to upload or drag images here
+                  </Typography>
+                </>
+              )}
               <input
                 ref={galleryInputRef}
                 type="file"
@@ -218,13 +329,14 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                 accept="image/*"
                 onChange={handleImageUpload}
                 style={{ display: 'none' }}
+                disabled={uploadingImages}
               />
             </Box>
 
             {/* Gallery Preview */}
-            {formData.gallery && formData.gallery.length > 0 && (
+            {formData.images && formData.images.length > 0 && (
               <Stack direction="row" spacing={1} sx={{ mt: 2, flexWrap: 'wrap' }}>
-                {formData.gallery.map((img, idx) => (
+                {formData.images.map((img: any, idx: number) => (
                   <Box
                     key={idx}
                     sx={{
@@ -233,10 +345,10 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                       height: 80,
                       borderRadius: 1,
                       overflow: 'hidden',
-                      border: idx === 0 ? `2px solid ${theme.colors.success[600]}` : 'none',
+                      border: idx === 0 ? `2px solid ${colors.status.success}` : `1px solid ${colors.border.primary}`,
                     }}
                   >
-                    <img src={img} alt="gallery" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={getImageUrl(typeof img === 'string' ? img : '')} alt="gallery" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <IconButton
                       size="small"
                       sx={{
@@ -258,8 +370,8 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                           position: 'absolute',
                           bottom: 4,
                           left: 4,
-                          backgroundColor: theme.colors.success[600],
-                          color: 'white',
+                          backgroundColor: colors.status.success,
+                          color: colors.text.inverse,
                           px: 1,
                           borderRadius: 0.5,
                           fontSize: '10px',
@@ -276,165 +388,174 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
 
           {/* Right: Form Fields */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <TextField
+            <CustomInput
               fullWidth
               label="Item Name *"
               value={formData.name || ''}
               onChange={(e) => handleInputChange('name', e.target.value)}
-              error={!!errors.name}
-              helperText={errors.name}
-              variant="outlined"
+              error={errors.name}
               size="small"
               sx={{ gridColumn: { xs: 'span 1', sm: 'span 1' } }}
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Sub Heading"
               value={formData.subHeading || ''}
               onChange={(e) => handleInputChange('subHeading', e.target.value)}
-              variant="outlined"
               size="small"
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Description"
               value={formData.description || ''}
               onChange={(e) => handleInputChange('description', e.target.value)}
               multiline
               rows={3}
-              variant="outlined"
               size="small"
               sx={{ gridColumn: { xs: 'span 1', sm: 'span 2' } }}
             />
 
             <Box>
-              <FormControl fullWidth size="small" sx={{ mb: 1 }}>
-                <InputLabel>Category</InputLabel>
-                <Select
-                  value={formData.category || ''}
-                  label="Category"
-                  onChange={(e) => handleInputChange('category', e.target.value)}
-                >
-                  <MenuItem value="">Select category</MenuItem>
-                  {categories.map((cat) => (
-                    <MenuItem key={cat} value={cat}>
-                      {cat}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button size="small" variant="outlined" fullWidth onClick={() => setNewCategoryDialog(true)}>
+              <CustomSelect
+                fullWidth
+                size="small"
+                label="Category"
+                value={formData.categoryId || ''}
+                onChange={(e) => handleInputChange('categoryId', e.target.value)}
+                options={[
+                  { label: "Select category", value: "" },
+                  ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
+                ]}
+              />
+              <Button 
+                size="small" 
+                variant="outlined" 
+                fullWidth 
+                onClick={() => setNewCategoryDialog(true)}
+                sx={{
+                  color: colors.text.primary,
+                  borderColor: colors.border.primary,
+                  '&:hover': {
+                    borderColor: colors.primary[600],
+                    backgroundColor: colors.background.secondary,
+                  },
+                }}
+              >
                 + Add New
               </Button>
             </Box>
 
             <Box>
-              <FormControl fullWidth size="small" sx={{ mb: 1 }}>
-                <InputLabel>Collection</InputLabel>
-                <Select
-                  value={formData.collection || ''}
-                  label="Collection"
-                  onChange={(e) => handleInputChange('collection', e.target.value)}
-                >
-                  <MenuItem value="">Select collection</MenuItem>
-                  {collections.map((col) => (
-                    <MenuItem key={col} value={col}>
-                      {col}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Button size="small" variant="outlined" fullWidth onClick={() => setNewCollectionDialog(true)}>
+              <CustomSelect
+                fullWidth
+                size="small"
+                label="Collection"
+                value={formData.collectionId || ''}
+                onChange={(e) => handleInputChange('collectionId', e.target.value)}
+                options={[
+                  { label: "Select collection", value: "" },
+                  ...collections.map((col) => ({ label: col.name, value: col.id })),
+                ]}
+              />
+              <Button 
+                size="small" 
+                variant="outlined" 
+                fullWidth 
+                onClick={() => setNewCollectionDialog(true)}
+                sx={{
+                  color: colors.text.primary,
+                  borderColor: colors.border.primary,
+                  '&:hover': {
+                    borderColor: colors.primary[600],
+                    backgroundColor: colors.background.secondary,
+                  },
+                }}
+              >
                 + Add New
               </Button>
             </Box>
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Country of Origin"
               value={formData.countryOrigin || ''}
               onChange={(e) => handleInputChange('countryOrigin', e.target.value)}
               placeholder="e.g., Pakistan"
-              variant="outlined"
               size="small"
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="SKU"
               value={formData.sku || ''}
               onChange={(e) => handleInputChange('sku', e.target.value)}
-              variant="outlined"
               size="small"
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Product ID"
               value={formData.productId || ''}
               onChange={(e) => handleInputChange('productId', e.target.value)}
-              variant="outlined"
               size="small"
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Barcode"
               value={formData.barcode || ''}
               onChange={(e) => handleInputChange('barcode', e.target.value)}
-              variant="outlined"
               size="small"
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Product Link"
               value={formData.link || ''}
               onChange={(e) => handleInputChange('link', e.target.value)}
               placeholder="Optional URL"
-              variant="outlined"
               size="small"
             />
           </Box>
         </Box>
 
         {/* Pricing Section */}
-        <Card sx={{ p: 2, mt: 3, backgroundColor: '#fafbfc', border: `1px solid ${theme.colors.primary[100]}` }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+        <Card sx={{ 
+          p: 2, 
+          mt: 3, 
+          backgroundColor: colors.background.secondary, 
+          border: `1px solid ${colors.border.primary}`,
+        }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}>
             Pricing
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', sm: '1fr 1fr 0.75fr 0.75fr 0.75fr' }, gap: 2 }}>
-            <TextField
+            <CustomInput
               fullWidth
               label="Cost Price"
               type="number"
-              value={formData.costPrice || ''}
+              value={String(formData.costPrice || '')}
               onChange={(e) => handleInputChange('costPrice', Number(e.target.value))}
-              variant="outlined"
               size="small"
-              inputProps={{ step: '0.01' }}
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Selling Price *"
               type="number"
-              value={formData.sellingPrice || ''}
+              value={String(formData.sellingPrice || '')}
               onChange={(e) => handleSellingPriceChange(Number(e.target.value))}
-              error={!!errors.sellingPrice}
-              helperText={errors.sellingPrice}
-              variant="outlined"
+              error={errors.sellingPrice}
               size="small"
-              inputProps={{ step: '0.01' }}
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Discount %"
               type="number"
-              value={formData.discountPercent || ''}
+              value={String(formData.discountPercent || '')}
               onChange={(e) => {
                 const pct = Number(e.target.value);
                 const sell = formData.sellingPrice || 0;
@@ -444,16 +565,14 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                 handleInputChange('discountAmount', Math.round(discAmt * 100) / 100);
                 handleInputChange('salePrice', Math.round(sale * 100) / 100);
               }}
-              variant="outlined"
               size="small"
-              inputProps={{ step: '0.01' }}
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Discount Amount"
               type="number"
-              value={formData.discountAmount || ''}
+              value={String(formData.discountAmount || '')}
               onChange={(e) => {
                 const amt = Number(e.target.value);
                 const sell = formData.sellingPrice || 0;
@@ -463,20 +582,16 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                 handleInputChange('discountPercent', Math.round(pct * 100) / 100);
                 handleInputChange('salePrice', Math.round(sale * 100) / 100);
               }}
-              variant="outlined"
               size="small"
-              inputProps={{ step: '0.01' }}
             />
 
-            <TextField
+            <CustomInput
               fullWidth
               label="Sale Price"
               type="number"
-              value={formData.salePrice || ''}
+              value={String(formData.salePrice || '')}
               onChange={(e) => handleSalePriceChange(Number(e.target.value))}
-              variant="outlined"
               size="small"
-              inputProps={{ step: '0.01' }}
             />
 
             <Box sx={{ gridColumn: { xs: 'span 2', sm: 'span 5' }, display: 'flex', alignItems: 'center' }}>
@@ -485,17 +600,30 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                   <Switch
                     checked={formData.markSale || false}
                     onChange={(e) => handleInputChange('markSale', e.target.checked)}
+                    sx={{
+                      '& .MuiSwitch-switchBase.Mui-checked': {
+                        color: colors.primary[600],
+                      },
+                      '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                        backgroundColor: colors.primary[600],
+                      },
+                    }}
                   />
                 }
-                label="Mark as Sale Item"
+                label={<Typography sx={{ color: colors.text.primary }}>Mark as Sale Item</Typography>}
               />
             </Box>
           </Box>
         </Card>
 
         {/* Stock Section */}
-        <Card sx={{ p: 2, mt: 3, backgroundColor: '#fafbfc', border: `1px solid ${theme.colors.primary[100]}` }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: '#374151' }}>
+        <Card sx={{ 
+          p: 2, 
+          mt: 3, 
+          backgroundColor: colors.background.secondary, 
+          border: `1px solid ${colors.border.primary}`,
+        }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2, color: colors.text.primary }}>
             Stock Management
           </Typography>
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'auto 1fr 1fr 1fr 1fr' }, gap: 2, alignItems: 'center' }}>
@@ -504,60 +632,46 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                 <Switch
                   checked={formData.stockManaged || false}
                   onChange={(e) => handleInputChange('stockManaged', e.target.checked)}
+                  sx={{
+                    '& .MuiSwitch-switchBase.Mui-checked': {
+                      color: colors.primary[600],
+                    },
+                    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                      backgroundColor: colors.primary[600],
+                    },
+                  }}
                 />
               }
-              label="Manage Stock?"
+              label={<Typography sx={{ color: colors.text.primary }}>Manage Stock?</Typography>}
             />
 
             {formData.stockManaged && (
               <>
-                <TextField
+                <CustomInput
                   fullWidth
                   label="Opening Stock"
                   type="number"
-                  value={formData.openingStock || 0}
-                  onChange={(e) => {
-                    handleInputChange('openingStock', Number(e.target.value));
-                    handleStockChange();
-                  }}
-                  variant="outlined"
+                  value={String(formData.openingStock || 0)}
+                  onChange={(e) => handleInputChange('openingStock', Number(e.target.value))}
                   size="small"
                 />
 
-                <TextField
-                  fullWidth
-                  label="Stock In"
-                  type="number"
-                  value={formData.stockIn || 0}
-                  onChange={(e) => {
-                    handleInputChange('stockIn', Number(e.target.value));
-                    handleStockChange();
-                  }}
-                  variant="outlined"
-                  size="small"
-                />
-
-                <TextField
-                  fullWidth
-                  label="Stock Out"
-                  type="number"
-                  value={formData.stockOut || 0}
-                  onChange={(e) => {
-                    handleInputChange('stockOut', Number(e.target.value));
-                    handleStockChange();
-                  }}
-                  variant="outlined"
-                  size="small"
-                />
-
-                <TextField
-                  fullWidth
-                  label="Current Stock"
-                  type="number"
-                  value={formData.currentStock || 0}
-                  disabled
-                  variant="outlined"
-                  size="small"
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.emptiesTrackable || false}
+                      onChange={(e) => handleInputChange('emptiesTrackable', e.target.checked)}
+                      sx={{
+                        '& .MuiSwitch-switchBase.Mui-checked': {
+                          color: colors.primary[600],
+                        },
+                        '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                          backgroundColor: colors.primary[600],
+                        },
+                      }}
+                    />
+                  }
+                  label={<Typography sx={{ color: colors.text.primary }}>Track Empties</Typography>}
                 />
               </>
             )}
@@ -566,23 +680,30 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
 
         {/* Tags Section */}
         <Box sx={{ mt: 3 }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#374151' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: colors.text.primary }}>
             Tags
           </Typography>
           <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
-            <TextField
+            <CustomInput
               size="small"
+              label="Add Tag"
               placeholder="Add tag and press Enter"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  addTag();
-                }
-              }}
               sx={{ flex: 1 }}
             />
-            <Button variant="outlined" onClick={addTag}>
+            <Button 
+              variant="outlined" 
+              onClick={addTag}
+              sx={{
+                color: colors.text.primary,
+                borderColor: colors.border.primary,
+                '&:hover': {
+                  borderColor: colors.primary[600],
+                  backgroundColor: colors.background.secondary,
+                },
+              }}
+            >
               Add
             </Button>
           </Stack>
@@ -593,8 +714,11 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                 label={tag}
                 onDelete={() => removeTag(tag)}
                 sx={{
-                  backgroundColor: theme.colors.primary[100],
-                  color: theme.colors.primary[700],
+                  backgroundColor: colors.primary[100] || colors.background.tertiary,
+                  color: colors.primary[700] || colors.text.primary,
+                  '& .MuiChip-deleteIcon': {
+                    color: colors.primary[700] || colors.text.primary,
+                  },
                 }}
               />
             ))}
@@ -604,7 +728,7 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
         {/* Rating & Status */}
         <Box sx={{ mt: 3, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 3 }}>
           <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: '#374151' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: colors.text.primary }}>
               Rating
             </Typography>
             <Box sx={{ fontSize: '24px' }}>
@@ -612,49 +736,65 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
                 <span
                   key={star}
                   onClick={() => handleInputChange('rating', star)}
-                  style={{ cursor: 'pointer', marginRight: '4px' }}
+                  style={{ 
+                    cursor: 'pointer', 
+                    marginRight: '4px',
+                    color: star <= (formData.rating || 0) ? colors.status.warning : colors.text.tertiary,
+                  }}
                 >
                   {star <= (formData.rating || 0) ? '★' : '☆'}
                 </span>
               ))}
             </Box>
           </Box>
-
-          <FormControlLabel
-            control={
-              <Switch
-                checked={formData.status === 'active'}
-                onChange={(e) => handleInputChange('status', e.target.checked ? 'active' : 'inactive')}
-              />
-            }
-            label="Active"
-          />
         </Box>
 
         {/* Form Actions */}
-        <Stack direction="row" spacing={2} sx={{ mt: 3, pt: 2, borderTop: `1px solid ${theme.colors.primary[100]}` }}>
+        <Stack direction="row" spacing={2} sx={{ mt: 3, pt: 2, borderTop: `1px solid ${colors.border.primary}` }}>
           <Button
             variant="contained"
             sx={{
-              backgroundColor: theme.colors.primary[600],
-              '&:hover': { backgroundColor: theme.colors.primary[700] },
+              backgroundColor: colors.primary[600],
+              '&:hover': { backgroundColor: colors.primary[700] },
             }}
             onClick={handleSave}
           >
             {item ? 'Update Item' : 'Create Item'}
           </Button>
-          <Button variant="outlined" onClick={onCancel}>
+          <Button 
+            variant="outlined" 
+            onClick={onCancel}
+            sx={{
+              color: colors.text.secondary,
+              borderColor: colors.border.primary,
+              '&:hover': {
+                borderColor: colors.text.secondary,
+                backgroundColor: colors.background.secondary,
+              },
+            }}
+          >
             Cancel
           </Button>
         </Stack>
       </Card>
 
       {/* New Category Dialog */}
-      <Dialog open={newCategoryDialog} onClose={() => setNewCategoryDialog(false)}>
-        <DialogTitle>Add New Category</DialogTitle>
+      <Dialog 
+        open={newCategoryDialog} 
+        onClose={() => setNewCategoryDialog(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundColor: colors.background.card,
+              border: `1px solid ${colors.border.primary}`,
+              boxShadow: colors.shadow.lg,
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: colors.text.primary }}>Add New Category</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
+          <CustomInput
             fullWidth
             label="Category Name"
             value={newCategory}
@@ -662,8 +802,13 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
             sx={{ mt: 2 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNewCategoryDialog(false)}>Cancel</Button>
+        <DialogActions sx={{ backgroundColor: colors.background.secondary }}>
+          <Button 
+            onClick={() => setNewCategoryDialog(false)}
+            sx={{ color: colors.text.secondary }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={() => {
               if (newCategory.trim()) {
@@ -673,6 +818,12 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
               }
             }}
             variant="contained"
+            sx={{
+              backgroundColor: colors.primary[600],
+              '&:hover': {
+                backgroundColor: colors.primary[700],
+              },
+            }}
           >
             Add
           </Button>
@@ -680,11 +831,22 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
       </Dialog>
 
       {/* New Collection Dialog */}
-      <Dialog open={newCollectionDialog} onClose={() => setNewCollectionDialog(false)}>
-        <DialogTitle>Add New Collection</DialogTitle>
+      <Dialog 
+        open={newCollectionDialog} 
+        onClose={() => setNewCollectionDialog(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              backgroundColor: colors.background.card,
+              border: `1px solid ${colors.border.primary}`,
+              boxShadow: colors.shadow.lg,
+            },
+          },
+        }}
+      >
+        <DialogTitle sx={{ color: colors.text.primary }}>Add New Collection</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
+          <CustomInput
             fullWidth
             label="Collection Name"
             value={newCollection}
@@ -692,8 +854,13 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
             sx={{ mt: 2 }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setNewCollectionDialog(false)}>Cancel</Button>
+        <DialogActions sx={{ backgroundColor: colors.background.secondary }}>
+          <Button 
+            onClick={() => setNewCollectionDialog(false)}
+            sx={{ color: colors.text.secondary }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={() => {
               if (newCollection.trim()) {
@@ -703,6 +870,12 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
               }
             }}
             variant="contained"
+            sx={{
+              backgroundColor: colors.primary[600],
+              '&:hover': {
+                backgroundColor: colors.primary[700],
+              },
+            }}
           >
             Add
           </Button>
@@ -711,13 +884,4 @@ export const CatalogueForm: React.FC<CatalogueFormProps> = ({
     </Box>
   );
 };
-
-// interface CatalogueFormProps {
-//   item?: CatalogueItem;
-//   categories: string[];
-//   collections: string[];
-//   onSave: (item: Omit<CatalogueItem, 'id' | 'updated'> | CatalogueItem) => void;
-//   onCancel: () => void;
-//   onAddCategory: (category: string) => void;
-//   onAddCollection: (collection: string) => void;
 
