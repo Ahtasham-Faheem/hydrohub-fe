@@ -113,11 +113,14 @@ interface FormContextType {
   formData: FormData;
   currentStep: number;
   fieldErrors: Record<string, string>;
+  originalData: FormData | null;
   updateFormData: (field: keyof FormData, value: string | boolean) => void;
   updateMultipleFields: (fields: Partial<FormData>) => void;
   setCurrentStep: (step: number) => void;
   setFieldErrors: (errors: Record<string, string>) => void;
   resetForm: () => void;
+  setOriginalData: (data: FormData) => void;
+  hasChangesInStep: (step: number) => boolean;
   validateRequiredFields: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
   validateStep1: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
   validateStep2: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
@@ -226,6 +229,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [originalData, setOriginalData] = useState<FormData | null>(null);
 
   const updateFormData = (field: keyof FormData, value: string | boolean) => {
     const newData = { ...formData, [field]: value };
@@ -247,8 +251,58 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
   const resetForm = () => {
     setFormData(initialFormData);
     setCurrentStepState(0);
+    setOriginalData(null);
     localStorage.removeItem("createUserFormData");
     localStorage.removeItem("createUserCurrentStep");
+  };
+
+  const hasChangesInStep = (step: number): boolean => {
+    if (!originalData) return true; // If no original data, assume changes exist
+
+    const getStepFields = (stepNumber: number): (keyof FormData)[] => {
+      switch (stepNumber) {
+        case 0:
+          return ['title', 'firstName', 'lastName', 'profilePictureAssetId', 'userRole'];
+        case 1:
+          return [
+            'fathersName', 'mothersName', 'dateOfBirth', 'nationality', 'nationalId',
+            'gender', 'maritalStatus', 'alternateContactNumber', 'secondaryEmailAddress',
+            'presentAddress', 'permanentAddress', 'emergencyContactName',
+            'emergencyContactRelation', 'emergencyContactNumber', 'alternateEmergencyContact'
+          ];
+        case 2:
+          return [
+            'jobTitle', 'department', 'employmentType', 'supervisorId',
+            'workLocation', 'shiftType', 'employmentStatus'
+          ];
+        case 3:
+          return [
+            'basicSalary', 'allowances', 'providentFund', 'salaryPaymentMode',
+            'bankName', 'bankAccountTitle', 'bankAccountNumber', 'taxStatus'
+          ];
+        case 4:
+          return [
+            'identityDocumentName', 'idCardNumber', 'idCardIssuanceDate',
+            'idCardExpiryDate', 'referralPersonName', 'referralRelation',
+            'referralContact', 'policeVerification', 'remarks'
+          ];
+        default:
+          return [];
+      }
+    };
+
+    const stepFields = getStepFields(step);
+    return stepFields.some(field => {
+      const currentValue = formData[field];
+      const originalValue = originalData[field];
+      
+      // Handle different data types
+      if (typeof currentValue === 'string' && typeof originalValue === 'string') {
+        return currentValue.trim() !== originalValue.trim();
+      }
+      
+      return currentValue !== originalValue;
+    });
   };
 
   const validateRequiredFields = async () => {
@@ -376,11 +430,14 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
         formData,
         currentStep,
         fieldErrors,
+        originalData,
         updateFormData,
         updateMultipleFields,
         setCurrentStep,
         setFieldErrors,
         resetForm,
+        setOriginalData,
+        hasChangesInStep,
         validateRequiredFields,
         validateStep1,
         validateStep2,

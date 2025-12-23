@@ -85,6 +85,8 @@ const EditCustomerFormContent = () => {
     setCustomerType,
     resetForm,
     updateFormData,
+    setOriginalData,
+    hasChangesInStep,
   } = useCustomerForm();
 
   // Refs for manual form submission
@@ -168,6 +170,57 @@ const EditCustomerFormContent = () => {
         updateFormData('preferences.monthlyConsumption', preferences.expectedConsumption || '');
         updateFormData('preferences.securitySummary', preferences.securitySummary || '');
         updateFormData('preferences.additionalRequests', preferences.additionalRequests || '');
+
+        // Store original data for change tracking
+        const originalCustomerData = {
+          customerId: customerData.id,
+          customerType: customerData.customerType || 'Domestic Customer',
+          title: customerData.title || 'Mr.',
+          firstName: customerData.firstName || '',
+          lastName: customerData.lastName || '',
+          email: customerData.email || '',
+          mobileNumber: customerData.phone || '',
+          username: customerData.username || '',
+          profilePictureAssetId: customerData.profilePictureAssetId || '',
+          // Personal Information
+          fatherHusbandName: additionalInfo.fathersName || '',
+          motherName: additionalInfo.mothersName || '',
+          dateOfBirth: additionalInfo.dateOfBirth || '',
+          cnicNumber: additionalInfo.nationalId || '',
+          nationality: additionalInfo.nationality || '',
+          gender: additionalInfo.gender || '',
+          maritalStatus: additionalInfo.maritalStatus || '',
+          alternateContactNumber: additionalInfo.alternateContactNumber || '',
+          emergencyContactName: additionalInfo.emergencyContactName || '',
+          emergencyContactRelation: additionalInfo.emergencyContactRelation || '',
+          emergencyContactNumber: additionalInfo.emergencyContactNumber || '',
+          alternateEmergencyContact: additionalInfo.alternateEmergencyContact || '',
+          presentAddress: additionalInfo.presentAddress || '',
+          permanentAddress: additionalInfo.permanentAddress || '',
+          // Building Access Info
+          buildingAccessInfo: {
+            mapLocation: buildingInfo.mapLocation || '',
+            ownershipStatus: buildingInfo.ownership || '',
+            deliveryAccessLevel: buildingInfo.accessLevel || '',
+            floorPosition: buildingInfo.floorPosition || '',
+            basementPosition: buildingInfo.basementPosition || '',
+            liftServiceStartTime: buildingInfo.liftStartTime || '',
+            liftServiceCloseTime: buildingInfo.liftEndTime || '',
+          },
+          // Preferences
+          preferences: {
+            preferredDeliveryTime: preferences.preferredDeliveryTime || '',
+            deliveryFrequency: preferences.deliveryFrequency || '',
+            bottleHandlingPreference: preferences.bottleHandling || '',
+            billingOption: preferences.billingOption || '',
+            paymentMode: preferences.paymentMode || '',
+            monthlyConsumption: preferences.expectedConsumption || '',
+            securitySummary: preferences.securitySummary || '',
+            additionalRequests: preferences.additionalRequests || '',
+          },
+        } as any;
+
+        setOriginalData(originalCustomerData);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load customer data");
       } finally {
@@ -185,6 +238,13 @@ const EditCustomerFormContent = () => {
 
     // Step 0 (Basic Profile): Update customer basic profile via PATCH
     if (state.currentStep === 0) {
+      // Check if there are any changes in this step
+      if (!hasChangesInStep(0)) {
+        // No changes, just move to next step
+        setCurrentStep(1);
+        return;
+      }
+
       // Validate only step 0 fields
       const fieldErrorsMap: Record<string, string> = {};
 
@@ -234,6 +294,13 @@ const EditCustomerFormContent = () => {
 
     // Step 1 (Personal Information): Update customer additional info
     if (state.currentStep === 1) {
+      // Check if there are any changes in this step
+      if (!hasChangesInStep(1)) {
+        // No changes, just move to next step
+        setCurrentStep(2);
+        return;
+      }
+
       const data = state.data as any;
       const fieldErrorsMap: Record<string, string> = {};
 
@@ -312,6 +379,13 @@ const EditCustomerFormContent = () => {
 
     // Step 2 (Building Access): Submit and move to next step
     if (state.currentStep === 2) {
+      // Check if there are any changes in this step
+      if (!hasChangesInStep(2)) {
+        // No changes, just move to next step
+        setCurrentStep(3);
+        return;
+      }
+
       const data = state.data as any;
       const fieldErrorsMap: Record<string, string> = {};
 
@@ -371,6 +445,13 @@ const EditCustomerFormContent = () => {
 
     // Step 3 (Addresses): Submit and move to next step
     if (state.currentStep === 3) {
+      // Check if there are any changes in this step
+      if (!hasChangesInStep(3)) {
+        // No changes, just move to next step
+        setCurrentStep(4);
+        return;
+      }
+
       try {
         setIsLoading(true);
         // Addresses are handled via the component's form ref
@@ -390,6 +471,13 @@ const EditCustomerFormContent = () => {
 
     // Step 4 (Preferences): Submit and move to next step
     if (state.currentStep === 4) {
+      // Check if there are any changes in this step
+      if (!hasChangesInStep(4)) {
+        // No changes, just move to next step
+        setCurrentStep(5);
+        return;
+      }
+
       const data = state.data as any;
       const fieldErrorsMap: Record<string, string> = {};
 
@@ -456,6 +544,14 @@ const EditCustomerFormContent = () => {
 
     // Step 5 (Linked Accounts): Submit and complete
     if (state.currentStep === 5) {
+      // Check if there are any changes in this step
+      if (!hasChangesInStep(5)) {
+        // No changes, just complete
+        resetForm();
+        navigate("/dashboard/customer-profiles");
+        return;
+      }
+
       try {
         setIsLoading(true);
         // Linked accounts are handled via the component's internal logic

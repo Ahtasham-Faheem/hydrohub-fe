@@ -143,8 +143,8 @@ const CreateCustomerFormContent = () => {
   const handleNext = async () => {
     setError(null);
 
-    // Step 0 (Basic Profile): Create customer with /customers API
-    if (state.currentStep === 0 && !customerProfileId) {
+    // Step 0 (Basic Profile): Create customer with /customers API (first time) or update via PATCH (if already created)
+    if (state.currentStep === 0) {
       const validation = await validateRequiredFields();
       if (!validation.isValid) {
         setError(validation.errors[0] || "Please fill in all required fields");
@@ -178,23 +178,37 @@ const CreateCustomerFormContent = () => {
 
       try {
         setIsLoading(true);
-        const newCustomer = await createCustomerMutation.mutateAsync({
-          email: data.email,
-          phone: data.mobileNumber,
-          username: data.username,
-          password: data.password,
-          customerType: (data.customerType || "Domestic Customer") as
-            | "Domestic Customer"
-            | "Business Customer"
-            | "Commercial Customer",
-          title: data.title,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          profilePictureAssetId: data.profilePictureAssetId || "",
-        });
+        
+        // Check if customer already exists (has customerProfileId)
+        if (customerProfileId) {
+          // Customer already created, use PATCH API to update basic profile
+          await customerService.updateCustomerBasicProfile(customerProfileId, {
+            title: data.title,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            profilePictureAssetId: data.profilePictureAssetId || "",
+          });
+        } else {
+          // First time creation, use POST API
+          const newCustomer = await createCustomerMutation.mutateAsync({
+            email: data.email,
+            phone: data.mobileNumber,
+            username: data.username,
+            password: data.password,
+            customerType: (data.customerType || "Domestic Customer") as
+              | "Domestic Customer"
+              | "Business Customer"
+              | "Commercial Customer",
+            title: data.title,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            profilePictureAssetId: data.profilePictureAssetId || "",
+          });
 
-        setCustomerProfileId(newCustomer.id);
-        localStorage.setItem("createCustomerProfileId", newCustomer.id);
+          setCustomerProfileId(newCustomer.id);
+          localStorage.setItem("createCustomerProfileId", newCustomer.id);
+        }
+
         setSuccess(true);
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(1);
@@ -208,7 +222,7 @@ const CreateCustomerFormContent = () => {
     }
 
     // Step 1 (Additional Personal Info): Update customer additional info
-    if (state.currentStep === 1 && customerProfileId) {
+    if (state.currentStep === 1) {
       const validation = await validateStep2();
       if (!validation.isValid) {
         setError(validation.errors[0] || "Please fill in all required fields");
@@ -217,6 +231,12 @@ const CreateCustomerFormContent = () => {
 
       try {
         setIsLoading(true);
+        if (!customerProfileId) {
+          setError("Customer ID not found. Please complete step 1 first.");
+          setIsLoading(false);
+          return;
+        }
+
         const data = state.data as any;
         await customerService.updateAdditionalPersonalInfo(customerProfileId, {
           fathersName: data.fatherHusbandName || "",

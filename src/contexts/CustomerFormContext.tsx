@@ -20,6 +20,7 @@ import {
 interface CustomerFormContextType {
   state: CustomerFormState;
   fieldErrors: Record<string, string>;
+  originalData: DomesticCustomer | BusinessCustomer | null;
   setFieldErrors: (errors: Record<string, string>) => void;
   setCustomerType: (type: CustomerType) => void;
   setCurrentStep: (step: number) => void;
@@ -32,6 +33,8 @@ interface CustomerFormContextType {
   removeLinkedAccount: (index: number) => void;
   resetForm: () => void;
   clearProgress: () => void;
+  setOriginalData: (data: DomesticCustomer | BusinessCustomer) => void;
+  hasChangesInStep: (step: number) => boolean;
   validateRequiredFields: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
   validateStep2: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
   validateStep3: () => Promise<{ isValid: boolean; errors: string[]; fieldErrors: Record<string, string> }>;
@@ -95,6 +98,7 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
     };
   });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [originalData, setOriginalData] = useState<DomesticCustomer | BusinessCustomer | null>(null);
 
   const setCustomerType = (type: CustomerType) => {
     setState((prevState) => {
@@ -273,12 +277,92 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
       errors: {},
     };
     setState(initialState);
+    setOriginalData(null);
     localStorage.removeItem("createCustomerFormState");
     localStorage.removeItem("createCustomerProfileId");
   };
 
   const clearProgress = () => {
     localStorage.removeItem("createCustomerFormState");
+  };
+
+  const hasChangesInStep = (step: number): boolean => {
+    if (!originalData || !state.data) return true; // If no original data, assume changes exist
+
+    const deepEqual = (obj1: any, obj2: any): boolean => {
+      if (obj1 === obj2) return true;
+      if (obj1 == null || obj2 == null) return false;
+      if (typeof obj1 !== typeof obj2) return false;
+      
+      if (typeof obj1 === 'object') {
+        const keys1 = Object.keys(obj1);
+        const keys2 = Object.keys(obj2);
+        
+        if (keys1.length !== keys2.length) return false;
+        
+        for (let key of keys1) {
+          if (!keys2.includes(key)) return false;
+          if (!deepEqual(obj1[key], obj2[key])) return false;
+        }
+        return true;
+      }
+      
+      return obj1 === obj2;
+    };
+
+    const getStepData = (data: any, stepNumber: number) => {
+      switch (stepNumber) {
+        case 0:
+          return {
+            title: data.title,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            profilePictureAssetId: data.profilePictureAssetId,
+          };
+        case 1:
+          return {
+            fatherHusbandName: data.fatherHusbandName,
+            motherName: data.motherName,
+            dateOfBirth: data.dateOfBirth,
+            cnicNumber: data.cnicNumber,
+            nationality: data.nationality,
+            gender: data.gender,
+            maritalStatus: data.maritalStatus,
+            alternateContactNumber: data.alternateContactNumber,
+            presentAddress: data.presentAddress,
+            permanentAddress: data.permanentAddress,
+            emergencyContactName: data.emergencyContactName,
+            emergencyContactRelation: data.emergencyContactRelation,
+            emergencyContactNumber: data.emergencyContactNumber,
+            alternateEmergencyContact: data.alternateEmergencyContact,
+          };
+        case 2:
+          return {
+            buildingAccessInfo: data.buildingAccessInfo,
+          };
+        case 3:
+          return {
+            deliveryAddresses: data.deliveryAddresses,
+            billingAddress: data.billingAddress,
+            businessAddresses: data.businessAddresses,
+          };
+        case 4:
+          return {
+            preferences: data.preferences,
+          };
+        case 5:
+          return {
+            linkedAccounts: data.linkedAccounts,
+          };
+        default:
+          return {};
+      }
+    };
+
+    const currentStepData = getStepData(state.data, step);
+    const originalStepData = getStepData(originalData, step);
+
+    return !deepEqual(currentStepData, originalStepData);
   };
 
   const validateRequiredFields = async () => {
@@ -415,6 +499,7 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
   const value: CustomerFormContextType = {
     state,
     fieldErrors,
+    originalData,
     setFieldErrors,
     setCustomerType,
     setCurrentStep,
@@ -427,6 +512,8 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
     removeLinkedAccount,
     resetForm,
     clearProgress,
+    setOriginalData,
+    hasChangesInStep,
     validateRequiredFields,
     validateStep2,
     validateStep3,

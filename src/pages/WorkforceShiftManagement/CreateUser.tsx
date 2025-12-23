@@ -98,7 +98,7 @@ const CreateUserForm = () => {
     setIsLoading(true);
 
     try {
-      // Step 0: Create staff member via /staff API
+      // Step 0: Create staff member via /staff API (first time) or update via PATCH (if already created)
       if (currentStep === 0) {
         const validation = await validateRequiredFields();
         if (!validation.isValid) {
@@ -123,21 +123,34 @@ const CreateUserForm = () => {
           return;
         }
 
-        const response = await staffService.createStaff({
-          username: formData.username,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          title: formData.title || "Mr.",
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          profilePictureAssetId: formData.profilePictureAssetId,
-          role: formData.userRole || "delivery_staff",
-        });
+        // Check if staff member already exists (has staffProfileId)
+        if (formData.staffProfileId) {
+          // User already created, use PATCH API to update basic profile
+          await staffService.updateStaffBasicProfile(formData.staffProfileId, {
+            title: formData.title || "Mr.",
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            profilePictureAssetId: formData.profilePictureAssetId,
+            role: formData.userRole || "delivery_staff",
+          });
+        } else {
+          // First time creation, use POST API
+          const response = await staffService.createStaff({
+            username: formData.username,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+            title: formData.title || "Mr.",
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            profilePictureAssetId: formData.profilePictureAssetId,
+            role: formData.userRole || "delivery_staff",
+          });
 
-        // Save staffProfileId for next steps
-        if (response.id) {
-          formData.staffProfileId = response.id;
+          // Save staffProfileId for next steps
+          if (response.id) {
+            formData.staffProfileId = response.id;
+          }
         }
 
         setSuccess(true);

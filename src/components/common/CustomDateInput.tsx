@@ -36,9 +36,13 @@ export const CustomDateInput = ({
               error: !!error,
               helperText: error,
               sx: {
+                backgroundColor: colors.background.primary,
                 '& .MuiOutlinedInput-root': {
-                  backgroundColor: colors.background.card,
+                  backgroundColor: colors.background.primary,
                   color: colors.text.primary,
+                  '& .css-17r7mjy-MuiPickersInputBase-root-MuiPickersOutlinedInput-root': {
+                    color: colors.text.primary
+                  },
                   '& fieldset': {
                     borderColor: colors.border.primary,
                   },
@@ -139,4 +143,4 @@ export const CustomDateInput = ({
       </LocalizationProvider>
     </Box>
   );
-};
+}

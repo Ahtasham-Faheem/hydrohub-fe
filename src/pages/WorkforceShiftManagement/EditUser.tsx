@@ -91,6 +91,8 @@ const EditUserForm = () => {
     setFieldErrors,
     resetForm,
     updateMultipleFields,
+    setOriginalData,
+    hasChangesInStep,
   } = useFormContext();
 
   // Load user data on mount
@@ -189,6 +191,86 @@ const EditUserForm = () => {
           policeVerification: staffData.referralInfo?.policeVerification || "",
           remarks: staffData.referralInfo?.remarks || "",
         });
+
+        // Store original data for change tracking
+        const originalFormData = {
+          staffProfileId: staffData.id,
+          username: staffData.username || "",
+          email: staffData.email || "",
+          phone: staffData.phone || "",
+          title: staffData.title || "Mr.",
+          firstName: staffData.firstName || "",
+          lastName: staffData.lastName || "",
+          userRole: staffData.role || "delivery_staff",
+          profilePictureAssetId: staffData.profilePictureAssetId || "",
+          // Additional personal info (from nested object)
+          fathersName: staffData.additionalPersonalInfo?.fathersName || "",
+          mothersName: staffData.additionalPersonalInfo?.mothersName || "",
+          dateOfBirth: staffData.additionalPersonalInfo?.dateOfBirth
+            ? new Date(staffData.additionalPersonalInfo.dateOfBirth)
+                .toISOString()
+                .split("T")[0]
+            : "",
+          nationality: staffData.additionalPersonalInfo?.nationality || "",
+          nationalId: staffData.additionalPersonalInfo?.nationalId || "",
+          gender: staffData.additionalPersonalInfo?.gender || "",
+          maritalStatus: staffData.additionalPersonalInfo?.maritalStatus || "",
+          alternateContactNumber:
+            staffData.additionalPersonalInfo?.alternateContactNumber || "",
+          secondaryEmailAddress:
+            staffData.additionalPersonalInfo?.secondaryEmailAddress || "",
+          presentAddress:
+            staffData.additionalPersonalInfo?.presentAddress || "",
+          permanentAddress:
+            staffData.additionalPersonalInfo?.permanentAddress || "",
+          emergencyContactName:
+            staffData.additionalPersonalInfo?.emergencyContactName || "",
+          emergencyContactRelation:
+            staffData.additionalPersonalInfo?.emergencyContactRelation || "",
+          emergencyContactNumber:
+            staffData.additionalPersonalInfo?.emergencyContactNumber || "",
+          alternateEmergencyContact:
+            staffData.additionalPersonalInfo?.alternateEmergencyContact || "",
+          // Employment details (from nested object)
+          jobTitle: staffData.employmentDetails?.jobTitle || "",
+          department: staffData.employmentDetails?.department || "",
+          employmentType: staffData.employmentDetails?.employmentType || "",
+          supervisorId: staffData.employmentDetails?.supervisorId || "",
+          workLocation: staffData.employmentDetails?.workLocation || "",
+          shiftType: staffData.employmentDetails?.shiftType || "",
+          employmentStatus: staffData.employmentDetails?.status || "",
+          joiningDate: staffData.employmentDetails?.joiningDate || "",
+          // Salary & benefits (from nested object)
+          basicSalary: staffData.salaryBenefits?.basicSalary || "",
+          allowances: staffData.salaryBenefits?.allowances || "",
+          providentFund: staffData.salaryBenefits?.providentFund || "",
+          salaryPaymentMode: staffData.salaryBenefits?.salaryPaymentMode || "",
+          bankName: staffData.salaryBenefits?.bankName || "",
+          bankAccountTitle: staffData.salaryBenefits?.bankAccountTitle || "",
+          bankAccountNumber: staffData.salaryBenefits?.bankAccountNumber || "",
+          taxStatus: staffData.salaryBenefits?.taxStatus || "",
+          // Identification & verification (from referralInfo nested object)
+          identityDocumentName:
+            staffData.referralInfo?.identityDocumentName || "",
+          idCardNumber: staffData.referralInfo?.idCardNumber || "",
+          idCardIssuanceDate: staffData.referralInfo?.idCardIssuanceDate
+            ? new Date(staffData.referralInfo.idCardIssuanceDate)
+                .toISOString()
+                .split("T")[0]
+            : "",
+          idCardExpiryDate: staffData.referralInfo?.idCardExpiryDate
+            ? new Date(staffData.referralInfo.idCardExpiryDate)
+                .toISOString()
+                .split("T")[0]
+            : "",
+          referralPersonName: staffData.referralInfo?.referralPersonName || "",
+          referralRelation: staffData.referralInfo?.referralRelation || "",
+          referralContact: staffData.referralInfo?.referralContact || "",
+          policeVerification: staffData.referralInfo?.policeVerification || "",
+          remarks: staffData.referralInfo?.remarks || "",
+        } as any;
+
+        setOriginalData(originalFormData);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to load user data");
       } finally {
@@ -207,6 +289,14 @@ const EditUserForm = () => {
     try {
       // Step 0: Update basic profile info via PATCH /staff/{id}
       if (currentStep === 0) {
+        // Check if there are any changes in this step
+        if (!hasChangesInStep(0)) {
+          // No changes, just move to next step
+          setCurrentStep(1);
+          setIsLoading(false);
+          return;
+        }
+
         // Validate only step 0 fields
         const validation: {
           isValid: boolean;
@@ -263,6 +353,14 @@ const EditUserForm = () => {
       }
       // Step 1: Update additional personal info
       else if (currentStep === 1) {
+        // Check if there are any changes in this step
+        if (!hasChangesInStep(1)) {
+          // No changes, just move to next step
+          setCurrentStep(2);
+          setIsLoading(false);
+          return;
+        }
+
         const fieldErrorsMap: Record<string, string> = {};
 
         // Validate dateOfBirth on the frontend
@@ -339,6 +437,14 @@ const EditUserForm = () => {
       }
       // Step 2: Update employment details
       else if (currentStep === 2) {
+        // Check if there are any changes in this step
+        if (!hasChangesInStep(2)) {
+          // No changes, just move to next step
+          setCurrentStep(3);
+          setIsLoading(false);
+          return;
+        }
+
         const fieldErrorsMap: Record<string, string> = {};
 
         if (!formData.employmentType || !formData.employmentType.trim()) {
@@ -389,6 +495,14 @@ const EditUserForm = () => {
       }
       // Step 3: Update salary & benefits
       else if (currentStep === 3) {
+        // Check if there are any changes in this step
+        if (!hasChangesInStep(3)) {
+          // No changes, just move to next step
+          setCurrentStep(4);
+          setIsLoading(false);
+          return;
+        }
+
         const fieldErrorsMap: Record<string, string> = {};
 
         if (!formData.taxStatus || !formData.taxStatus.trim()) {
@@ -450,6 +564,14 @@ const EditUserForm = () => {
       }
       // Step 4: Update identification & verification
       else if (currentStep === 4) {
+        // Check if there are any changes in this step
+        if (!hasChangesInStep(4)) {
+          // No changes, just move to next step
+          setCurrentStep(5);
+          setIsLoading(false);
+          return;
+        }
+
         const fieldErrorsMap: Record<string, string> = {};
 
         if (

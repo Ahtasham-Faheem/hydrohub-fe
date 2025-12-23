@@ -65,8 +65,9 @@ export const CustomInput = ({
       helperText={error}
       sx={{ 
         fontSize: 12,
+        backgroundColor: colors.background.primary,
         '& .MuiInputLabel-root': {
-          color: colors.text.secondary,
+          color: colors.text.primary,
           '&.Mui-focused': { color: colors.primary[500] }
         },
         '& .MuiOutlinedInput-root': {

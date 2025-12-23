@@ -219,8 +219,8 @@ export const ProfilePhotoUpload = ({
           {/* Square Image Preview */}
           <Box
             sx={{
-              width: { xs: 100, sm: 120 },
-              height: { xs: 100, sm: 120 },
+              width: { xs: 100, sm: 160 },
+              height: { xs: 100, sm: 160 },
               borderRadius: 2,
               overflow: "hidden",
               border: `2px solid ${colors.border.primary}`,
