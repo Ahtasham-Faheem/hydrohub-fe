@@ -34,6 +34,7 @@ import { EmploymentDetails } from "../../components/forms/EmploymentDetails";
 import { DocumentsUpload } from "../../components/forms/DocumentsUpload";
 import { SalaryBenefits } from "../../components/forms/SalaryBenefits";
 import { IdentificationVerification } from "../../components/forms/IdentificationVerification";
+import { OnboardingProgressBar } from "../../components/common/OnboardingProgressBar";
 
 // Custom Step Icon Component
 const CustomStepIcon = ({
@@ -84,6 +85,10 @@ const EditUserForm = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [staffProfileId, setStaffProfileId] = useState<string | null>(null);
+  const [onboardingProgress, setOnboardingProgress] = useState<{
+    [key: string]: boolean | number;
+    'progress percentage'?: number | any;
+  } | null>(null);
   const {
     formData,
     currentStep,
@@ -108,6 +113,11 @@ const EditUserForm = () => {
         const staffData = await staffService.getStaffById(id);
 
         setStaffProfileId(staffData.id);
+
+        // Extract onboarding progress data
+        if (staffData.onboardingProgress) {
+          setOnboardingProgress(staffData.onboardingProgress);
+        }
 
         // Set profile picture URL from API response if available
         if (staffData.profilePictureAsset?.fileUrl) {
@@ -711,10 +721,18 @@ const EditUserForm = () => {
           width: 320,
           bgcolor: colors.background.card,
           p: 4,
-          pr: 0,
+          pr: 2,
           borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
+        {/* Progress Bar */}
+        <OnboardingProgressBar 
+          staffId={staffProfileId} 
+          currentStep={currentStep}
+          totalSteps={steps.length}
+          onboardingProgress={onboardingProgress || undefined}
+        />
+        
         {/* <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
           Edit User
         </Typography> */}

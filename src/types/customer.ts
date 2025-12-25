@@ -97,6 +97,7 @@ export interface DomesticCustomer {
   customerType?: string;
   profilePhoto?: string;
   profilePictureAssetId?: string;
+  profilePictureFileUrl?: string;
   title: 'Mr' | 'Mrs' | 'Ms' | 'Miss' | 'Mx' | 'Mr.' | 'Mrs.' | 'Ms.' | 'Miss.' | 'Mx.';
   firstName: string;
   lastName: string;
@@ -156,6 +157,7 @@ export interface DomesticCustomer {
 export interface BusinessContactPerson {
   customerId?: string;
   profilePhoto?: string;
+  profilePictureFileUrl?: string;
   title: 'Mr' | 'Mrs' | 'Ms' | 'Miss' | 'Mx';
   firstName: string;
   lastName: string;

@@ -31,6 +31,7 @@ import { DomesticStep4Addresses } from "../../components/customer-forms/Domestic
 import type { DomesticStep5PreferencesHandle } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep5Preferences } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
+import { CustomerOnboardingProgressBar } from "../../components/common/CustomerOnboardingProgressBar";
 
 // Custom Step Icon Component
 const CustomStepIcon = ({ active, colors }: { active: boolean; colors: any }) => (
@@ -78,6 +79,10 @@ const EditCustomerFormContent = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [customerId, setCustomerId] = useState<string | null>(null);
+  const [onboardingProgress, setOnboardingProgress] = useState<{
+    [key: string]: boolean | number;
+    'progress percentage'?: number | any;
+  } | null>(null);
   const {
     state,
     setCurrentStep,
@@ -110,6 +115,11 @@ const EditCustomerFormContent = () => {
 
         // Store customer ID in state
         setCustomerId(customerData.id);
+        
+        // Extract onboarding progress data
+        if (customerData.onboardingProgress) {
+          setOnboardingProgress(customerData.onboardingProgress);
+        }
         
         // Set profile picture URL from API response if available
         if (customerData.profilePictureAsset?.fileUrl) {
@@ -620,10 +630,18 @@ const EditCustomerFormContent = () => {
           width: 320,
           bgcolor: colors.background.card,
           p: 4,
-          pr: 0,
+          pr: 2,
           borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
+        {/* Progress Bar */}
+        <CustomerOnboardingProgressBar 
+          customerId={customerId} 
+          currentStep={state.currentStep}
+          totalSteps={steps.length}
+          onboardingProgress={onboardingProgress || undefined}
+        />
+        
         <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
           Edit Customer
         </Typography>

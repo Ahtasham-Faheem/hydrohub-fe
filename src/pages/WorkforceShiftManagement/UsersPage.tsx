@@ -1,12 +1,15 @@
 import { useState, useMemo } from "react";
-import { Box, Card, Divider } from "@mui/material";
+import { Box, Card, Divider, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useGetStaff } from "../../hooks/useStaff";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
+import { HiOutlineRefresh } from "react-icons/hi";
+import { GoMoveToTop } from "react-icons/go";
 import { UserStatsCards } from "../../components/users/UserStatsCards";
 import { UserFilters } from "../../components/users/UserFilters";
 import { SortAndManageColumns } from "../../components/users/SortAndManageColumns";
 import { DataTable } from "../../components/common/DataTable";
+import { CustomSelect } from "../../components/common/CustomSelect";
 import type { Column, SortConfig } from "../../components/common/DataTable";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -21,6 +24,8 @@ export const UsersPage = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [exportFormat, setExportFormat] = useState("");
 
   // Get vendorId from localStorage
   const vendorData = localStorage.getItem("userData");
@@ -38,7 +43,7 @@ export const UsersPage = () => {
   };
 
   // Using TanStack Query to fetch staff members with filters
-  const { data: staffData, isLoading } = useGetStaff(
+  const { data: staffData, isLoading, refetch } = useGetStaff(
     vendorId,
     currentPage,
     10,
@@ -149,15 +154,36 @@ export const UsersPage = () => {
     setColumns(newCols);
   };
 
-  // const handleDeleteStaff = async (item: any) => {
-  //   try {
-  //     await staffService.deleteStaff(item.id);
-  //     // Refetch staff list after deletion
-  //     refetch();
-  //   } catch (err: any) {
-  //     alert(err.response?.data?.message || 'Failed to delete staff member');
-  //   }
-  // };
+  // Handle export functionality
+  const handleExport = (format: string) => {
+    if (!format) return;
+    console.log(`Exporting users data as ${format}...`);
+    // TODO: Implement export functionality based on format
+    switch (format) {
+      case 'csv':
+        // Implement CSV export
+        break;
+      case 'excel':
+        // Implement Excel export
+        break;
+      case 'json':
+        // Implement JSON export
+        break;
+      case 'print':
+        // Implement Print functionality
+        break;
+      case 'pdf':
+        // Implement PDF export
+        break;
+      default:
+        console.log('Unknown export format');
+    }
+  };
+
+  // Handle refresh functionality
+  const handleRefresh = () => {
+    refetch();
+  };
 
   const cards = [
     {
@@ -336,9 +362,72 @@ export const UsersPage = () => {
           overflow: "visible",
         }}
       >
-        <h2 className="mb-4 text-lg" style={{ color: colors.text.primary }}>
-          Filters
-        </h2>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2,
+          }}
+        >
+          <h2 className="text-xl" style={{ color: colors.text.primary }}>
+            Filters
+          </h2>
+          
+          {/* Action Buttons */}
+          <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+            {/* Export Dropdown */}
+            <Box sx={{ minWidth: 150 }}>
+              <CustomSelect
+                label="Export"
+                value={exportFormat}
+                onChange={(e) => {
+                  setExportFormat(e.target.value);
+                  handleExport(e.target.value);
+                }}
+                options={[
+                  { value: 'csv', label: 'Export as CSV' },
+                  { value: 'excel', label: 'Export as Excel' },
+                  { value: 'json', label: 'Export as JSON' },
+                  { value: 'print', label: 'Print' },
+                  { value: 'pdf', label: 'Export as PDF' },
+                ]}
+                size="small"
+              />
+            </Box>
+
+            {/* Refresh Button */}
+            <IconButton
+              onClick={handleRefresh}
+              sx={{
+                color: colors.text.primary,
+                border: `1px solid ${colors.border.primary}`,
+                borderRadius: 1,
+                "&:hover": {
+                  borderColor: colors.primary[600],
+                  backgroundColor: colors.background.secondary,
+                },
+              }}
+            >
+              <HiOutlineRefresh size={20} />
+            </IconButton>
+
+            {/* More Options Icon */}
+            <IconButton
+              sx={{
+                color: colors.text.primary,
+                border: `1px solid ${colors.border.primary}`,
+                borderRadius: 1,
+                "&:hover": {
+                  borderColor: colors.primary[600],
+                  backgroundColor: colors.background.secondary,
+                },
+              }}
+            >
+              <GoMoveToTop size={20} />
+            </IconButton>
+          </Box>
+        </Box>
 
         <UserFilters
           status={status}
@@ -387,6 +476,9 @@ export const UsersPage = () => {
         totalPages={totalPages}
         keyField="id"
         showActions={true}
+        showCheckbox={true}
+        selectedItems={selectedUsers}
+        onSelectionChange={setSelectedUsers}
         onView={(item) => console.log("View", item)}
         onEdit={(item) => navigate(`/dashboard/users/edit/${item.id}`)}
         onDelete={(item) => console.log("Delete", item)}

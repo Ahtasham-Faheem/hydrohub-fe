@@ -78,14 +78,14 @@ export default function BusinessControlCenter() {
     <div style={{ backgroundColor: colors.background.primary }}>
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <div>
+        <div className="ml-1">
           <h1
-            className="text-2xl font-semibold mb-1"
+            className="text-xl font-semibold"
             style={{ color: colors.text.primary }}
           >
             Business Control Center
           </h1>
-          <p className="text-semibold hover:underline cursor-pointer w-max font-semibold" style={{ color: colors.text.primary }}>Dashboard</p>
+          <p className="hover:underline cursor-pointer w-max text-sm" style={{ color: colors.text.primary }}>Dashboard</p>
         </div>
 
         <div className="flex items-center gap-2">

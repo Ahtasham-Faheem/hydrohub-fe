@@ -76,7 +76,7 @@ export const Dashboard = () => {
             sx={{
               p: 4,
               pr: 6,
-              pt: headerVisible ? 10.5 : 2,
+              pt: headerVisible ? 10 : 2,
               transition: "padding-top 0.4s ease-out",
               bgcolor: colors.background.primary,
             }}

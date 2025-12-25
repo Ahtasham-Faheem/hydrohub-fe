@@ -210,11 +210,12 @@ export const UserFilters = ({
             sx={{
               borderColor: colors.border.primary,
               textTransform: "none",
-              color: colors.text.primary,
-              fontWeight: 500,
+              color: colors.text.secondary,
+              fontWeight: 400,
               width: "100%",
               py: 1,
               height: "40px",
+              fontSize: 16,
               justifyContent: "flex-start",
               backgroundColor: colors.background.primary,
               '&:hover': {
@@ -417,6 +418,7 @@ export const UserFilters = ({
                       onDateClick={(date: Dayjs) =>
                         handleDateClick(date, false)
                       }
+                      minDate={startDate}
                     />
                   </Box>
                 </Box>

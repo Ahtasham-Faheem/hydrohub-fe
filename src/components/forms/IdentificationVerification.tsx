@@ -19,22 +19,25 @@ export const IdentificationVerification = () => {
     <Stack spacing={3}>
       {/* Identity Document Name + ID Card Number + ID Card Issuance Date */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+        <CustomSelect
           label="Identity Document Name"
-          placeholder="National ID Card"
           value={formData.identityDocumentName || ""}
           onChange={(e) => {
             updateFormData("identityDocumentName", e.target.value);
-            // Clear error when user starts typing
+            // Clear error when user selects
             if (fieldErrors["identityDocumentName"]) {
               setFieldErrors({ ...fieldErrors, identityDocumentName: "" });
             }
           }}
           error={fieldErrors["identityDocumentName"]}
+          options={[
+            { value: "cnic", label: "CNIC Card" },
+            { value: "passport", label: "Passport" },
+          ]}
         />
         <CNICInput
-          label="ID Card Number *"
-          value={formData.idCardNumber || ""}
+          label="ID Card Number"
+          value={formData.idCardNumber || formData.nationalId || ''}
           onChange={(value) => updateFormData("idCardNumber", value)}
           onClearError={() => setFieldErrors({ ...fieldErrors, idCardNumber: "" })}
           error={fieldErrors["idCardNumber"]}
@@ -56,7 +59,12 @@ export const IdentificationVerification = () => {
             if (fieldErrors['idCardIssuanceDate']) {
               setFieldErrors({ ...fieldErrors, idCardIssuanceDate: "" });
             }
+            // If expiry date is before new issuance date, clear it
+            if (date && formData.idCardExpiryDate && dayjs(formData.idCardExpiryDate).isBefore(date)) {
+              updateFormData("idCardExpiryDate", "");
+            }
           }}
+          maxDate={formData.idCardExpiryDate ? dayjs(formData.idCardExpiryDate) : undefined}
           error={fieldErrors["idCardIssuanceDate"]}
         />
       </Stack>
@@ -78,6 +86,7 @@ export const IdentificationVerification = () => {
               setFieldErrors({ ...fieldErrors, idCardExpiryDate: "" });
             }
           }}
+          minDate={formData.idCardIssuanceDate ? dayjs(formData.idCardIssuanceDate) : undefined}
           error={fieldErrors["idCardExpiryDate"]}
         />
         <CustomSelect
@@ -92,9 +101,9 @@ export const IdentificationVerification = () => {
           }}
           error={fieldErrors["policeVerification"]}
           options={[
-            { value: "Verified", label: "Verified" },
+            { value: "Yes", label: "Verified" },
+            { value: "No", label: "Not Verified" },
             { value: "Pending", label: "Pending" },
-            { value: "Not Verified", label: "Not Verified" },
           ]}
         />
       </Stack>

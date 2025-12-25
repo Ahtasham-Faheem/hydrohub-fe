@@ -64,8 +64,8 @@ export const Breadcrumb = () => {
   });
 
   return (
-    <Box sx={{ mb: 3, display: 'flex',flexDirection: 'column', gap: 0.5, justifyContent: 'start' }}>
-      <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text.primary }}>
+    <Box sx={{ mb: 1.5,ml:1, display: 'flex',flexDirection: 'column', justifyContent: 'start' }}>
+      <Typography variant="h5" sx={{ fontWeight: 600, color: colors.text.primary, fontSize: '1.25rem' }}>
         {currentPageLabel}
       </Typography>
       <Breadcrumbs
@@ -74,10 +74,28 @@ export const Breadcrumb = () => {
         {breadcrumbItems.map((pathname, index) => {
           const routeTo = `/${breadcrumbItems.slice(0, index + 1).join('/')}`;
           const isLast = index === breadcrumbItems.length - 1;
-          const label = routeLabels[pathname] || pathname.charAt(0).toUpperCase() + pathname.slice(1);
+          
+          // Context-aware label for 'create' and 'edit'
+          let label = routeLabels[pathname] || pathname.charAt(0).toUpperCase() + pathname.slice(1);
+          
+          if (pathname === 'create' && index > 0) {
+            const parentSection = breadcrumbItems[index - 1];
+            if (parentSection === 'customer-profiles') {
+              label = 'Customer Creation';
+            } else if (parentSection === 'users') {
+              label = 'User Creation';
+            }
+          } else if (pathname === 'edit' && index > 0) {
+            const parentSection = breadcrumbItems[index - 1];
+            if (parentSection === 'customer-profiles') {
+              label = 'Edit Customer';
+            } else if (parentSection === 'users') {
+              label = 'Edit User';
+            }
+          }
 
           return isLast ? (
-            <Typography key={pathname} sx={{ fontWeight: 500, color: colors.text.primary }}>
+            <Typography key={pathname} sx={{ fontWeight: 500, color: colors.text.primary, fontSize: 14 }}>
               {label}
             </Typography>
           ) : (
@@ -89,6 +107,7 @@ export const Breadcrumb = () => {
               sx={{ 
                 fontWeight: 400,
                 color: colors.text.secondary,
+                 fontSize: 14,
                 '&:hover': {
                   color: colors.text.primary,
                 }

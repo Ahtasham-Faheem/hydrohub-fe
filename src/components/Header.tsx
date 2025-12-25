@@ -98,7 +98,7 @@ export const Header = ({
               flex: 1,
               minWidth: 200,
               maxWidth: "80%",
-              backgroundColor: colors.background.secondary
+              backgroundColor: colors.background.secondary,
             }}
           >
             <LuSearch
@@ -162,7 +162,7 @@ export const Header = ({
               {mode === "light" ? <LuMoon size={16} /> : <LuSun size={16} />}
             </Box>
           </Tooltip>
-          
+
           <Tooltip title="Maximize">
             <Box
               sx={{
@@ -189,7 +189,7 @@ export const Header = ({
               <LuMaximize size={16} />
             </Box>
           </Tooltip>
-          
+
           <Tooltip title="Packages">
             <Box
               sx={{
@@ -216,7 +216,7 @@ export const Header = ({
               <LuPackage size={16} />
             </Box>
           </Tooltip>
-          
+
           <Tooltip title="Language">
             <Box
               sx={{
@@ -243,7 +243,7 @@ export const Header = ({
               <LuGlobe size={16} />
             </Box>
           </Tooltip>
-          
+
           <Tooltip title="Chat">
             <Box
               sx={{
@@ -270,7 +270,7 @@ export const Header = ({
               <LuMessageCircle size={16} />
             </Box>
           </Tooltip>
-          
+
           <Tooltip title="Notifications">
             <Box
               sx={{
@@ -360,7 +360,7 @@ export const Header = ({
             sx={{
               position: "absolute",
               bottom: -16,
-              right: 20,
+              right: -10,
               zIndex: 1300,
             }}
           >
@@ -368,8 +368,8 @@ export const Header = ({
               <IconButton
                 onClick={onToggleVisibility}
                 sx={{
-                  width: 32,
-                  height: 32,
+                  width: 34,
+                  height: 34,
                   backgroundColor: colors.background.card,
                   border: `1px solid ${colors.border.primary}`,
                   boxShadow: colors.shadow.md,
@@ -397,8 +397,8 @@ export const Header = ({
         <Box
           sx={{
             position: "fixed",
-            top: 14,
-            right: 20,
+            top: 20,
+            right: 35,
             zIndex: 1300,
           }}
         >

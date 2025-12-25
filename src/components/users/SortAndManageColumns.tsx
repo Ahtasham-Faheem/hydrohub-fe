@@ -21,7 +21,8 @@ import { LuSearch } from "react-icons/lu";
 import { PrimaryButton } from "../common/PrimaryButton";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../contexts/ThemeContext";
-import { MdGridView, MdViewAgenda } from "react-icons/md";
+import { IoMdList } from "react-icons/io";
+import { CgMenuGridO } from "react-icons/cg";
 
 interface Column {
   id: number;
@@ -97,7 +98,6 @@ export const SortAndManageColumns = ({
         justifyContent: "space-between",
         alignItems: "center",
         gap: 1,
-        mb: 2,
       }}
     >
       <Box sx={{ flexGrow: 1, maxWidth: 400 }}>
@@ -117,7 +117,7 @@ export const SortAndManageColumns = ({
           endIcon={<IoIosArrowDown />}
           onClick={(e) => setSortAnchorEl(e.currentTarget)}
           sx={{
-            color: colors.text.primary,
+            color: colors.text.secondary,
             borderColor: colors.border.primary,
             "&:hover": {
               borderColor: colors.primary[600],
@@ -180,7 +180,7 @@ export const SortAndManageColumns = ({
           startIcon={<BsLayoutThreeColumns />}
           onClick={(e) => setManageAnchorEl(e.currentTarget)}
           sx={{
-            color: colors.text.primary,
+            color: colors.text.secondary,
             borderColor: colors.border.primary,
             "&:hover": {
               borderColor: colors.primary[600],
@@ -218,10 +218,10 @@ export const SortAndManageColumns = ({
           }}
         >
           <ToggleButton value="grid" aria-label="grid view">
-            <MdGridView size={20} />
+            <IoMdList size={20} />
           </ToggleButton>
           <ToggleButton value="list" aria-label="list view">
-            <MdViewAgenda size={20} />
+            <CgMenuGridO size={20} />
           </ToggleButton>
         </ToggleButtonGroup>
         <Popover

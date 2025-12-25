@@ -31,11 +31,13 @@ export const CustomSelect = ({
   const { colors } = useTheme();
   
   const handleChange = (e: SelectChangeEvent<string>) => {
+    // Always call onChange first
+    onChange(e);
+    
+    // Clear error if there is one
     if (onClearError && error) {
       onClearError();
     }
-    
-    onChange(e);
   };
   return (
     <FormControl fullWidth={fullWidth} error={!!error} size="small">

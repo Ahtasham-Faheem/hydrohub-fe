@@ -96,6 +96,7 @@ export interface FormData {
 
   // Optional fields
   profilePictureAssetId: string;
+  profilePictureFileUrl: string;
   status: string;
 
   // Staff fields
@@ -168,7 +169,7 @@ const initialFormData: FormData = {
   basicSalary: "",
   allowances: "",
   providentFund: "",
-  salaryPaymentMode: "cash",
+  salaryPaymentMode: "",
   bankName: "",
   bankAccountTitle: "",
   bankAccountNumber: "",
@@ -194,6 +195,7 @@ const initialFormData: FormData = {
   issueBy: "",
   documentRemarks: "",
   profilePictureAssetId: "",
+  profilePictureFileUrl: "",
   status: "active",
   userRole: "",
   accessLevel: "Limited",
@@ -262,7 +264,7 @@ export const FormProvider: React.FC<FormProviderProps> = ({ children }) => {
     const getStepFields = (stepNumber: number): (keyof FormData)[] => {
       switch (stepNumber) {
         case 0:
-          return ['title', 'firstName', 'lastName', 'profilePictureAssetId', 'userRole'];
+          return ['title', 'firstName', 'lastName', 'profilePictureAssetId', 'profilePictureFileUrl', 'userRole'];
         case 1:
           return [
             'fathersName', 'mothersName', 'dateOfBirth', 'nationality', 'nationalId',

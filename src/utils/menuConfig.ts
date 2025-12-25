@@ -53,7 +53,7 @@ export const menuConfig: MenuItem[] = [
     id: 'business-operations',
     label: 'Business Operations',
     type: 'divider',
-    dividerLabel: 'Business Operations',
+    dividerLabel: 'Operations',
   },
   {
     id: 'overview',
@@ -163,7 +163,7 @@ export const menuConfig: MenuItem[] = [
     id: 'workforce-divider',
     label: 'Workforce & Shift Management',
     type: 'divider',
-    dividerLabel: 'Workforce & Shift Management',
+    dividerLabel: 'Workforce',
   },
   {
     id: 'workforce-shift',
@@ -201,7 +201,7 @@ export const menuConfig: MenuItem[] = [
     id: 'sales-pos-divider',
     label: 'Sales & POS Operations',
     type: 'divider',
-    dividerLabel: 'Sales & POS Operations',
+    dividerLabel: 'Sales',
   },
   {
     id: 'sales-pos',
@@ -239,7 +239,7 @@ export const menuConfig: MenuItem[] = [
     id: 'logistics-divider',
     label: 'Logistics & Supply Chain',
     type: 'divider',
-    dividerLabel: 'Logistics & Supply Chain',
+    dividerLabel: 'Logistics',
   },
   {
     id: 'logistics-supply',
@@ -277,7 +277,7 @@ export const menuConfig: MenuItem[] = [
     id: 'communication-divider',
     label: 'Communication & Coordination',
     type: 'divider',
-    dividerLabel: 'Communication & Coordination',
+    dividerLabel: 'Communication',
   },
   {
     id: 'communication',
@@ -324,7 +324,7 @@ export const menuConfig: MenuItem[] = [
     id: 'insights-divider',
     label: 'Insights & Reporting',
     type: 'divider',
-    dividerLabel: 'Insights & Reporting',
+    dividerLabel: 'Insights',
   },
   {
     id: 'insights-reporting',
@@ -352,7 +352,7 @@ export const menuConfig: MenuItem[] = [
     id: 'system-divider',
     label: 'System & Configuration',
     type: 'divider',
-    dividerLabel: 'System & Configuration',
+    dividerLabel: 'Systems',
   },
   {
     id: 'system-configuration',

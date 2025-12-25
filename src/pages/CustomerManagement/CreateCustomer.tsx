@@ -35,6 +35,7 @@ import type { DomesticStep5PreferencesHandle } from "../../components/customer-f
 import { DomesticStep5Preferences } from "../../components/customer-forms/DomesticStep5Preferences";
 import { DomesticStep6LinkedAccounts } from "../../components/customer-forms/DomesticStep6LinkedAccounts";
 import { CustomerBottleManagement } from "../../components/customer-forms/CustomerBottleManagement";
+import { CustomerOnboardingProgressBar } from "../../components/common/CustomerOnboardingProgressBar";
 import { useCreateCustomer } from "../../hooks/useCreateCustomer";
 import type { CustomerType } from "../../types/customer";
 
@@ -83,12 +84,34 @@ const businessSteps = [
 const CreateCustomerFormContent = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>("");
   const [customerProfileId, setCustomerProfileId] = useState<string | null>(
     () => {
       return localStorage.getItem("createCustomerProfileId") || null;
     }
   );
   const [isLoading, setIsLoading] = useState(false);
+
+  const getSuccessMessage = (step: number) => {
+    switch (step) {
+      case 0:
+        return "Basic profile information saved successfully!";
+      case 1:
+        return "Personal information saved successfully!";
+      case 2:
+        return "Building access information saved successfully!";
+      case 3:
+        return "Address information saved successfully!";
+      case 4:
+        return "Preferences saved successfully!";
+      case 5:
+        return "Linked accounts saved successfully!";
+      case 6:
+        return "Bottle management information saved successfully!";
+      default:
+        return "Information saved successfully!";
+    }
+  };
   const {
     state,
     setCurrentStep,
@@ -210,6 +233,7 @@ const CreateCustomerFormContent = () => {
         }
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(0));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(1);
         return;
@@ -257,6 +281,7 @@ const CreateCustomerFormContent = () => {
         });
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(1));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(2);
         return;
@@ -300,6 +325,7 @@ const CreateCustomerFormContent = () => {
         });
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(2));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(3);
         return;
@@ -321,6 +347,7 @@ const CreateCustomerFormContent = () => {
         // Addresses are handled via the component's internal API calls
         // Just move forward to the next step
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(3));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(4);
         return;
@@ -362,6 +389,7 @@ const CreateCustomerFormContent = () => {
         });
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(4));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(5);
         return;
@@ -380,6 +408,7 @@ const CreateCustomerFormContent = () => {
         // Linked accounts are handled via the component's internal API calls
         // Just move forward to the next step
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(5));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(6);
         return;
@@ -512,47 +541,20 @@ const CreateCustomerFormContent = () => {
           width: 280,
           bgcolor: colors.background.card,
           p: 3,
-          pr: 0,
+          pr: 2,
           borderRight: `1px solid ${colors.border.primary}`,
           overflowY: "auto",
         }}
       >
+        {/* API-based Progress Bar */}
+        <CustomerOnboardingProgressBar 
+          customerId={customerProfileId} 
+          currentStep={state.currentStep}
+          totalSteps={steps.length}
+        />
+
         <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              mb: 2,
-              p: 2,
-              mr:2,
-              bgcolor: colors.background.secondary,
-              borderRadius: 1,
-              border: `1px solid ${colors.border.primary}`,
-            }}
-          >
-            <Typography
-              variant="caption"
-              sx={{ color: colors.text.secondary, fontWeight: 600 }}
-            >
-              Progress: Step {state.currentStep + 1} of {steps.length}
-            </Typography>
-            <Box
-              sx={{
-                mt: 1,
-                height: 4,
-                bgcolor: colors.border.primary,
-                borderRadius: 2,
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  height: "100%",
-                  bgcolor: colors.primary[600],
-                  width: `${((state.currentStep + 1) / steps.length) * 100}%`,
-                  transition: "width 0.3s ease",
-                }}
-              />
-            </Box>
-          </Box>
+          
           {state.currentStep === 0 && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
               <Button
@@ -652,7 +654,7 @@ const CreateCustomerFormContent = () => {
             )}
             {success && (
               <Alert severity="success" sx={{ mb: 2 }}>
-                Information saved successfully!
+                {successMessage}
               </Alert>
             )}
             {renderStepContent(state.currentStep)}

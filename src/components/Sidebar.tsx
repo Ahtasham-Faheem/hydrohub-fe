@@ -21,7 +21,7 @@ import {
 } from "../utils/menuConfig";
 import type { MenuItem } from "../utils/menuConfig";
 import { useTheme } from "../contexts/ThemeContext";
-import { FaCircle } from "react-icons/fa";
+import { HiChevronDoubleLeft, HiChevronDoubleRight } from "react-icons/hi";
 
 interface SidebarProps {
   onSelect: (section: string) => void;
@@ -159,14 +159,15 @@ export const Sidebar = ({
 
     const Icon = item.icon;
     const hasChildItems = hasChildren(item);
-    const paddingLeft = level === 0 ? 2 : level === 1 ? 6 : 8;
+    const paddingLeft = level === 0 ? 2 : level === 1 ? 5 : 8;
     const showIcon = Icon && (level === 0 || level === 1);
 
     return (
       <div key={item.id}>
         <Tooltip
-          title={effectiveCollapsed && level === 0 ? item.label : ""}
+          title={item.label}
           placement="right"
+          arrow
         >
           <ListItemButton
             selected={activeSection === item.id}
@@ -267,69 +268,79 @@ export const Sidebar = ({
           },
         }}
       >
-        <Box sx={{ backgroundColor: colors.background.primary }}>
-          {/* Logo */}
+        <Box sx={{ backgroundColor: colors.background.primary, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+          {/* Logo - Sticky Header */}
           <Box
             sx={{
               display: "flex",
-              justifyContent: effectiveCollapsed ? "center" : "center",
-              alignItems: "center",
-              my: 2,
-              mx: effectiveCollapsed ? 0 : 2,
+              justifyContent: effectiveCollapsed ? "center" : "start",
+              alignItems: "flex-start",
+              py: 1,
+              px: effectiveCollapsed ? 0 : 2,
               backgroundColor: colors.background.primary,
-              position: "relative",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              borderBottom: `1px solid ${colors.border.primary}`,
             }}
           >
             <Link
               to="/dashboard"
-              className="hover:underline cursor-pointer flex justify-center"
+              className="hover:underline cursor-pointer flex justify-baseline"
               style={{ color: colors.primary[600] }}
             >
               <img
                 src={WaterLogo}
                 alt="HydroHub Logo"
                 className={`${
-                  effectiveCollapsed ? "w-[50px]" : "w-[180px]"
+                  effectiveCollapsed ? "w-[50px]" : "w-[150px]"
                 } h-auto transition-all duration-300`}
               />
             </Link>
 
-            {/* Collapse/Expand Button - positioned in top right when expanded */}
-            {!effectiveCollapsed && (
+            {/* Collapse/Expand Button - Show when expanded OR when hovering over collapsed sidebar */}
+            {(!collapsed || shouldExpand) && (
               <IconButton
                 onClick={handleToggleCollapse}
                 sx={{
-                  color: "white",
-                  borderRadius: 10,
-                  backgroundColor: "white",
-                  border: `4px solid ${colors.primary[500]}`,
-                  padding: "2px !important",
-                  minWidth: "20px",
-                  minHeight: "20px",
+                  color: colors.primary[500],
+                  borderRadius: "50%",
+                  backgroundColor: colors.background.secondary,
+                  // border: `2px solid ${colors.primary[500]}`,
+                  padding: "4px !important",
+                  minWidth: "28px",
+                  minHeight: "28px",
                   position: "absolute",
-                  top: 0,
-                  right: -10,
-                  boxShadow: colors.shadow.sm,
+                  top: 20,
+                  right: shouldExpand ? 16 : 16,
+                  boxShadow: colors.shadow.md,
                   "&:hover": {
-                    color: colors.primary[500],
-                    backgroundColor: colors.background.tertiary,
-                    boxShadow: colors.shadow.md,
+                    backgroundColor: colors.primary[50],
+                    boxShadow: colors.shadow.lg,
                   },
+                  transition: "all 0.3s ease",
                 }}
-                title="Collapse sidebar"
+                title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
-                <FaCircle fontSize="10px" color={colors.primary[500]} />
+                {collapsed ? (
+                  <HiChevronDoubleRight size={16} color={colors.primary[500]} />
+                ) : (
+                  <HiChevronDoubleLeft size={16} color={colors.primary[500]} />
+                )}
               </IconButton>
             )}
           </Box>
 
-          <List
-            component="nav"
-            disablePadding
-            sx={{ backgroundColor: colors.background.primary, paddingRight: 2 }}
-          >
-            {menuConfig.map((item) => renderMenuItem(item))}
-          </List>
+          {/* Scrollable Menu List */}
+          <Box className='noScrollbar' sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            <List
+              component="nav"
+              disablePadding
+              sx={{ backgroundColor: colors.background.primary, paddingRight: 2, paddingTop: 1 }}
+            >
+              {menuConfig.map((item) => renderMenuItem(item))}
+            </List>
+          </Box>
         </Box>
       </Drawer>
     </div>

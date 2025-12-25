@@ -45,9 +45,20 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Only redirect if NOT on login page - let login page handle the error
+      // Only redirect if NOT on auth pages - let these pages handle the error
       const currentPath = window.location.hash;
-      if (!currentPath.includes('/login')) {
+      const isAuthPage = currentPath.includes('/login') || 
+                        currentPath.includes('/reset-password') || 
+                        currentPath.includes('/qr-login') ||
+                        currentPath.includes('/login-access');
+      
+      // Also check if this is an auth-related API call that should not trigger redirect
+      const isAuthApiCall = error.config?.url?.includes('/auth/') || 
+                           error.config?.url?.includes('send-login-code') ||
+                           error.config?.url?.includes('verify-login-code') ||
+                           error.config?.url?.includes('reset-password');
+      
+      if (!isAuthPage && !isAuthApiCall) {
         // Clear auth data and redirect to login
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
@@ -602,6 +613,11 @@ export const staffService = {
     const response = await api.delete(`/staff/${staffId}`);
     return response.data;
   },
+
+  getOnboardingProgress: async (staffId: string): Promise<any> => {
+    const response = await api.get(`/staff/${staffId}/onboarding-progress`);
+    return response.data;
+  },
 };
 
 export const customerService = {
@@ -703,7 +719,18 @@ export const customerService = {
   },
 
   deleteCustomer: async (customerId: string): Promise<any> => {
-    const response = await api.delete(`/customers/${customerId}`);
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    const response = await api.delete(`/customers/${customerId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
+  getOnboardingProgress: async (customerId: string): Promise<any> => {
+    const response = await api.get(`/customers/${customerId}/onboarding-progress`);
     return response.data;
   },
 };

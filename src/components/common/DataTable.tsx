@@ -16,6 +16,7 @@ import {
   Skeleton,
   Typography,
   TableSortLabel,
+  Checkbox,
 } from "@mui/material";
 import { Visibility, Edit, Delete, FolderOpen } from "@mui/icons-material";
 import { IoMdClose } from "react-icons/io";
@@ -31,6 +32,23 @@ const useFormContextSafe = () => {
     return null;
   }
 };
+
+// Helper component for displaying info items in the modal
+const InfoItem = ({ label, value, colors, fullWidth = false }: { label: string; value: any; colors: any; fullWidth?: boolean }) => (
+  <Box sx={{ gridColumn: fullWidth ? "span 2" : "auto" }}>
+    <Typography sx={{ fontSize: 11, color: colors.text.tertiary, mb: 0.5, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+      {label}
+    </Typography>
+    <Typography sx={{ 
+      fontSize: 14, 
+      color: value ? colors.text.primary : colors.text.tertiary, 
+      fontWeight: 500,
+      wordBreak: "break-word",
+    }}>
+      {value || "Not provided"}
+    </Typography>
+  </Box>
+);
 
 export interface Column {
   key: string;
@@ -56,6 +74,9 @@ interface DataTableProps {
   totalPages: number;
   keyField?: string;
   showActions?: boolean;
+  showCheckbox?: boolean;
+  selectedItems?: string[];
+  onSelectionChange?: (selectedIds: string[]) => void;
   onView?: (item: any) => void;
   onEdit?: (item: any) => void;
   onDelete?: (item: any) => void;
@@ -73,6 +94,9 @@ export const DataTable = ({
   totalPages,
   keyField = "id",
   showActions = true,
+  showCheckbox = false,
+  selectedItems = [],
+  onSelectionChange,
   onView,
   onEdit,
   onDelete,
@@ -147,6 +171,33 @@ export const DataTable = ({
     setSelectedItem(null);
   };
 
+  // Checkbox selection handlers
+  const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked) {
+      const allIds = data.map((item) => getNestedValue(item, keyField));
+      onSelectionChange?.(allIds);
+    } else {
+      onSelectionChange?.([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string) => {
+    const currentIndex = selectedItems.indexOf(itemId);
+    const newSelected = [...selectedItems];
+
+    if (currentIndex === -1) {
+      newSelected.push(itemId);
+    } else {
+      newSelected.splice(currentIndex, 1);
+    }
+
+    onSelectionChange?.(newSelected);
+  };
+
+  const isSelected = (itemId: string) => selectedItems.indexOf(itemId) !== -1;
+  const isAllSelected = data.length > 0 && selectedItems.length === data.length;
+  const isIndeterminate = selectedItems.length > 0 && selectedItems.length < data.length;
+
   return (
     <Card
       sx={{
@@ -214,6 +265,24 @@ export const DataTable = ({
           <Table sx={{ minWidth: 800 }}>
             <TableHead>
               <TableRow sx={{ bgcolor: colors.background.secondary }}>
+                {showCheckbox && (
+                  <TableCell padding="checkbox" sx={{ width: 50 }}>
+                    <Checkbox
+                      indeterminate={isIndeterminate}
+                      checked={isAllSelected}
+                      onChange={handleSelectAll}
+                      sx={{
+                        color: colors.text.secondary,
+                        '&.Mui-checked': {
+                          color: colors.primary[600],
+                        },
+                        '&.MuiCheckbox-indeterminate': {
+                          color: colors.primary[600],
+                        },
+                      }}
+                    />
+                  </TableCell>
+                )}
                 {displayColumns.map((column) => (
                   <TableCell key={column.key} sx={{ color: colors.text.primary, fontWeight: 600 }}>
                     {column.sortable !== false && onSort ? (
@@ -245,19 +314,44 @@ export const DataTable = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {data.map((item: any) => (
+              {data.map((item: any) => {
+                const itemId = getNestedValue(item, keyField);
+                const isItemSelected = isSelected(itemId);
+                
+                return (
                 <TableRow 
-                  key={getNestedValue(item, keyField)} 
+                  key={itemId} 
                   hover
+                  selected={isItemSelected}
                   sx={{
                     '&:hover': {
                       backgroundColor: colors.background.secondary,
-                    }
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: `${colors.primary[600]}10`,
+                      '&:hover': {
+                        backgroundColor: `${colors.primary[600]}20`,
+                      },
+                    },
                   }}
                 >
+                  {showCheckbox && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={isItemSelected}
+                        onChange={() => handleSelectItem(itemId)}
+                        sx={{
+                          color: colors.text.secondary,
+                          '&.Mui-checked': {
+                            color: colors.primary[600],
+                          },
+                        }}
+                      />
+                    </TableCell>
+                  )}
                   {displayColumns.map((column) => (
                     <TableCell
-                      key={`${getNestedValue(item, keyField)}-${column.key}`}
+                      key={`${itemId}-${column.key}`}
                       sx={{ color: colors.text.primary }}
                     >
                       {renderCellValue(item, column)}
@@ -313,7 +407,8 @@ export const DataTable = ({
                     </TableCell>
                   )}
                 </TableRow>
-              ))}
+              );
+              })}
             </TableBody>
           </Table>
 
@@ -359,173 +454,271 @@ export const DataTable = ({
       <Dialog
         open={openModal}
         onClose={handleCloseModal}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
         PaperProps={{
           sx: {
-            borderRadius: "12px",
-            boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
-            backgroundColor: "#ffffff",
+            borderRadius: "16px",
+            boxShadow: colors.shadow.xl,
+            backgroundColor: colors.background.card,
+            maxHeight: "90vh",
           },
         }}
       >
         <DialogTitle
           sx={{
             fontWeight: 700,
-            fontSize: 22,
-            color: "#1f2937",
+            fontSize: 20,
+            color: colors.text.primary,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-            borderBottom: "1px solid #e2e8f0",
+            backgroundColor: colors.background.secondary,
+            borderBottom: `1px solid ${colors.border.primary}`,
             p: 3,
           }}
         >
-          <Box>Details</Box>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+            {selectedItem?.profilePictureAsset?.fileUrl ? (
+              <img
+                src={selectedItem.profilePictureAsset.fileUrl}
+                alt="Profile"
+                style={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: `2px solid ${colors.primary[500]}`,
+                }}
+              />
+            ) : (
+              <Box
+                sx={{
+                  width: 50,
+                  height: 50,
+                  borderRadius: "50%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  bgcolor: colors.primary[600],
+                  color: colors.text.inverse,
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                }}
+              >
+                {(selectedItem?.firstName?.[0] || "U") + (selectedItem?.lastName?.[0] || "")}
+              </Box>
+            )}
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: 18, color: colors.text.primary }}>
+                {selectedItem?.title} {selectedItem?.firstName} {selectedItem?.lastName}
+              </Typography>
+              <Typography sx={{ fontSize: 13, color: colors.text.secondary }}>
+                {selectedItem?.customerId} • {selectedItem?.customerType}
+              </Typography>
+            </Box>
+          </Box>
           <IconButton
             onClick={handleCloseModal}
             sx={{
-              color: "#64748b",
+              color: colors.text.secondary,
               "&:hover": { 
-                bgcolor: "rgba(100, 116, 139, 0.1)",
-                color: "#334155",
+                bgcolor: colors.background.tertiary,
+                color: colors.text.primary,
               },
-              transition: "all 0.2s ease",
             }}
             size="small"
           >
             <IoMdClose size={24} />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 0 }}>
+        <DialogContent sx={{ p: 0, overflow: "auto" }}>
           {selectedItem && (
             <Box sx={{ display: "flex", flexDirection: "column" }}>
-              {/* Display all fields from the item */}
-              {Object.entries(selectedItem).map(
-                ([key, value]: [string, any], index: number) => {
-                  // Skip nested objects and null values
-                  if (
-                    value === null ||
-                    typeof value === "object" ||
-                    key === "id" ||
-                    key === "userId" ||
-                    key === "vendorId" ||
-                    key === "staffProfileId" ||
-                    key === "customerProfileId" ||
-                    key === "profilePictureAssetId" ||
-                    key === "updatedAt"
-                  ) {
-                    return null;
-                  }
-
-                  // Format the key to readable format
-                  const displayKey = key
-                    .replace(/([A-Z])/g, " $1")
-                    .replace(/^./, (str) => str.toUpperCase())
-                    .trim();
-
-                  // Format the value
-                  let displayValue = value;
-                  if (displayValue instanceof Date) {
-                    displayValue = new Date(displayValue).toLocaleDateString(
-                      "en-US",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      }
-                    );
-                  } else if (typeof displayValue === "string") {
-                    displayValue =
-                      displayValue.charAt(0).toUpperCase() +
-                      displayValue.slice(1);
-                  }
-
-                  return (
+              {/* Status & Progress Section */}
+              <Box sx={{ 
+                p: 3, 
+                backgroundColor: colors.background.primary,
+                borderBottom: `1px solid ${colors.border.primary}`,
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 2,
+              }}>
+                <Box sx={{ display: "flex", gap: 3, alignItems: "center" }}>
+                  <Box>
+                    <Typography sx={{ fontSize: 12, color: colors.text.tertiary, mb: 0.5 }}>Status</Typography>
                     <Box
-                      key={key}
                       sx={{
-                        display: "grid",
-                        gridTemplateColumns: "200px 1fr",
-                        gap: 3,
-                        alignItems: "start",
-                        p: 3,
-                        borderBottom: index % 2 === 0 ? "1px solid #f1f5f9" : "none",
-                        backgroundColor: index % 2 === 0 ? "#f8fafc" : "#ffffff",
-                        transition: "background-color 0.2s ease",
-                        "&:hover": {
-                          backgroundColor: index % 2 === 0 ? "#f1f5f9" : "#f8fafc",
-                        },
+                        display: "inline-block",
+                        px: 2,
+                        py: 0.5,
+                        borderRadius: 2,
+                        bgcolor: selectedItem?.status === "active" ? `${colors.status.success}20` : `${colors.status.error}20`,
+                        color: selectedItem?.status === "active" ? colors.status.success : colors.status.error,
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        textTransform: "capitalize",
                       }}
                     >
-                      <Box
-                        sx={{
-                          fontWeight: 600,
-                          color: "#475569",
-                          fontSize: 13,
-                          textTransform: "capitalize",
-                          letterSpacing: "0.5px",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 3,
-                            height: 3,
-                            borderRadius: "50%",
-                            backgroundColor: "#3b82f6",
-                          }}
-                        />
-                        {displayKey}
-                      </Box>
-                      <Box
-                        sx={{
-                          color: "#1f2937",
-                          fontSize: 14,
-                          fontWeight: 500,
-                          wordBreak: "break-word",
-                          backgroundColor: "rgba(59, 130, 246, 0.05)",
-                          padding: "8px 12px",
-                          borderRadius: "6px",
-                          border: "1px solid rgba(59, 130, 246, 0.1)",
-                        }}
-                      >
-                        {displayValue || "-"}
-                      </Box>
+                      {selectedItem?.status || "N/A"}
                     </Box>
-                  );
-                }
+                  </Box>
+                  <Box>
+                    <Typography sx={{ fontSize: 12, color: colors.text.tertiary, mb: 0.5 }}>Onboarding Progress</Typography>
+                    <Typography sx={{ fontSize: 16, fontWeight: 700, color: colors.primary[600] }}>
+                      {selectedItem?.onboardingProgress?.["progress percentage"] || 0}%
+                    </Typography>
+                  </Box>
+                </Box>
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <Box sx={{ textAlign: "center" }}>
+                    <Typography sx={{ fontSize: 12, color: colors.text.tertiary }}>Created</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: colors.text.primary }}>
+                      {selectedItem?.createdAt ? new Date(selectedItem.createdAt).toLocaleDateString() : "N/A"}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {/* Basic Information Section */}
+              <Box sx={{ p: 3, borderBottom: `1px solid ${colors.border.primary}` }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.text.primary, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                  <Box sx={{ width: 4, height: 16, bgcolor: colors.primary[600], borderRadius: 1 }} />
+                  Basic Information
+                </Typography>
+                <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+                  <InfoItem label="Email" value={selectedItem?.email} colors={colors} />
+                  <InfoItem label="Phone" value={selectedItem?.phone} colors={colors} />
+                  <InfoItem label="Username" value={selectedItem?.username} colors={colors} />
+                </Box>
+              </Box>
+
+              {/* Personal Information Section */}
+              {selectedItem?.personalInfo && (
+                <Box sx={{ p: 3, borderBottom: `1px solid ${colors.border.primary}` }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.text.primary, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 4, height: 16, bgcolor: colors.status.info, borderRadius: 1 }} />
+                    Personal Information
+                  </Typography>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+                    <InfoItem label="Father's Name" value={selectedItem.personalInfo.fathersName} colors={colors} />
+                    <InfoItem label="Mother's Name" value={selectedItem.personalInfo.mothersName} colors={colors} />
+                    <InfoItem label="Date of Birth" value={selectedItem.personalInfo.dateOfBirth ? new Date(selectedItem.personalInfo.dateOfBirth).toLocaleDateString() : null} colors={colors} />
+                    <InfoItem label="Gender" value={selectedItem.personalInfo.gender} colors={colors} />
+                    <InfoItem label="Marital Status" value={selectedItem.personalInfo.maritalStatus} colors={colors} />
+                    <InfoItem label="Nationality" value={selectedItem.personalInfo.nationality} colors={colors} />
+                    <InfoItem label="National ID (CNIC)" value={selectedItem.personalInfo.nationalId} colors={colors} />
+                    <InfoItem label="Alternate Contact" value={selectedItem.personalInfo.alternateContactNumber} colors={colors} />
+                    <InfoItem label="Secondary Email" value={selectedItem.personalInfo.secondaryEmailAddress} colors={colors} />
+                  </Box>
+                </Box>
+              )}
+
+              {/* Address Information Section */}
+              {selectedItem?.personalInfo && (
+                <Box sx={{ p: 3, borderBottom: `1px solid ${colors.border.primary}` }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.text.primary, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 4, height: 16, bgcolor: colors.status.warning, borderRadius: 1 }} />
+                    Address Information
+                  </Typography>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 3 }}>
+                    <InfoItem label="Present Address" value={selectedItem.personalInfo.presentAddress} colors={colors} fullWidth />
+                    <InfoItem label="Permanent Address" value={selectedItem.personalInfo.permanentAddress} colors={colors} fullWidth />
+                  </Box>
+                </Box>
+              )}
+
+              {/* Emergency Contact Section */}
+              {selectedItem?.personalInfo && (
+                <Box sx={{ p: 3, borderBottom: `1px solid ${colors.border.primary}` }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.text.primary, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 4, height: 16, bgcolor: colors.status.error, borderRadius: 1 }} />
+                    Emergency Contact
+                  </Typography>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 3 }}>
+                    <InfoItem label="Contact Name" value={selectedItem.personalInfo.emergencyContactName} colors={colors} />
+                    <InfoItem label="Relation" value={selectedItem.personalInfo.emergencyContactRelation} colors={colors} />
+                    <InfoItem label="Contact Number" value={selectedItem.personalInfo.emergencyContactNumber} colors={colors} />
+                    <InfoItem label="Alternate Emergency Contact" value={selectedItem.personalInfo.alternateEmergencyContact} colors={colors} />
+                  </Box>
+                </Box>
+              )}
+
+              {/* Onboarding Progress Section */}
+              {selectedItem?.onboardingProgress && (
+                <Box sx={{ p: 3 }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: colors.text.primary, mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
+                    <Box sx={{ width: 4, height: 16, bgcolor: colors.status.success, borderRadius: 1 }} />
+                    Onboarding Steps
+                  </Typography>
+                  <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+                    {Object.entries(selectedItem.onboardingProgress).map(([key, value]) => {
+                      if (key === "progress percentage") return null;
+                      return (
+                        <Box
+                          key={key}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                            p: 1.5,
+                            borderRadius: 2,
+                            backgroundColor: value ? `${colors.status.success}10` : colors.background.secondary,
+                            border: `1px solid ${value ? colors.status.success : colors.border.primary}`,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              borderRadius: "50%",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              bgcolor: value ? colors.status.success : colors.text.tertiary,
+                              color: colors.text.inverse,
+                              fontSize: 12,
+                            }}
+                          >
+                            {value ? "✓" : "○"}
+                          </Box>
+                          <Typography sx={{ fontSize: 13, color: colors.text.primary, fontWeight: 500 }}>
+                            {key}
+                          </Typography>
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                </Box>
               )}
             </Box>
           )}
         </DialogContent>
         <DialogActions
           sx={{
-            p: 3,
-            background: "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)",
-            borderTop: "1px solid #e2e8f0",
+            p: 2,
+            backgroundColor: colors.background.secondary,
+            borderTop: `1px solid ${colors.border.primary}`,
             gap: 1,
           }}
         >
           <Button
             onClick={handleCloseModal}
             sx={{
-              color: "#64748b",
+              color: colors.text.secondary,
               textTransform: "none",
               fontSize: 14,
               fontWeight: 600,
-              padding: "8px 20px",
-              borderRadius: "6px",
-              border: "1px solid #cbd5e1",
-              backgroundColor: "#ffffff",
+              padding: "8px 24px",
+              borderRadius: "8px",
+              border: `1px solid ${colors.border.primary}`,
+              backgroundColor: colors.background.card,
               "&:hover": {
-                backgroundColor: "#f1f5f9",
-                borderColor: "#94a3b8",
+                backgroundColor: colors.background.tertiary,
+                borderColor: colors.text.secondary,
               },
-              transition: "all 0.2s ease",
             }}
           >
             Close

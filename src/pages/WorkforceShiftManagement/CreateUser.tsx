@@ -35,6 +35,7 @@ import { EmploymentDetails } from "../../components/forms/EmploymentDetails";
 import { DocumentsUpload } from "../../components/forms/DocumentsUpload";
 import { SalaryBenefits } from "../../components/forms/SalaryBenefits";
 import { IdentificationVerification } from "../../components/forms/IdentificationVerification";
+import { OnboardingProgressBar } from "../../components/common/OnboardingProgressBar";
 
 // Custom Step Icon Component
 const CustomStepIcon = ({ active, colors }: { active: boolean; colors: any }) => (
@@ -91,7 +92,27 @@ const CreateUserForm = () => {
   } = useFormContext();
   const navigate = useNavigate();
 
+  const getSuccessMessage = (step: number) => {
+    switch (step) {
+      case 0:
+        return "Personal information saved successfully!";
+      case 1:
+        return "Additional personal information saved successfully!";
+      case 2:
+        return "Employment details saved successfully!";
+      case 3:
+        return "Salary & benefits information saved successfully!";
+      case 4:
+        return "Identification & verification saved successfully!";
+      case 5:
+        return "Documents uploaded successfully!";
+      default:
+        return "Information saved successfully!";
+    }
+  };
+
   const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>("");
 
   const handleNext = async () => {
     setError(null);
@@ -154,6 +175,7 @@ const CreateUserForm = () => {
         }
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(0));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(1);
       }
@@ -194,6 +216,7 @@ const CreateUserForm = () => {
         );
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(1));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(2);
       }
@@ -226,6 +249,7 @@ const CreateUserForm = () => {
         );
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(2));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(3);
       }
@@ -259,6 +283,7 @@ const CreateUserForm = () => {
         );
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(3));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(4);
       }
@@ -293,6 +318,7 @@ const CreateUserForm = () => {
         );
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(4));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(5);
       }
@@ -318,6 +344,7 @@ const CreateUserForm = () => {
         );
 
         setSuccess(true);
+        setSuccessMessage(getSuccessMessage(6));
         setTimeout(() => setSuccess(false), 2000);
         setCurrentStep(7);
       }
@@ -367,7 +394,7 @@ const CreateUserForm = () => {
   return (
     <Box sx={{ 
       display: "flex", 
-      minHeight: "calc(100vh - 100px)",
+      minHeight: "73vh",
       backgroundColor: colors.background.primary 
     }}>
       {/* Sidebar */}
@@ -380,9 +407,13 @@ const CreateUserForm = () => {
           borderRight: `1px solid ${colors.border.primary}`,
         }}
       >
-        {/* <Typography variant="h6" sx={{ mb: 3, color: colors.text.primary }}>
-          User Creation Form
-        </Typography> */}
+        {/* Progress Bar */}
+        <OnboardingProgressBar 
+          staffId={formData.staffProfileId || null} 
+          currentStep={currentStep}
+          totalSteps={steps.length}
+        />
+        
         <Stepper
           activeStep={currentStep}
           orientation="vertical"
@@ -443,27 +474,27 @@ const CreateUserForm = () => {
           backgroundColor: colors.background.card,
           color: colors.text.primary 
         }}>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 1 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               {steps[currentStep].icon}
-              <Typography variant="h6" sx={{ my: 1 }}>
+              <Typography variant="h6">
                 {steps[currentStep].label}
               </Typography>
             </Box>
           </Box>
 
           <Box
-            sx={{ height: "71vh", pr: 1, pt: 1, overflowY: "scroll" }}
+            sx={{ height: "auto", pr: 1, pt: 1, overflowY: "scroll" }}
             className="noScrollbar"
           >
             {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert severity="error" sx={{ mb: 3 }}>
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ mb: 2 }}>
-                User created successfully!
+              <Alert severity="success" sx={{ mb: 3 }}>
+                {successMessage}
               </Alert>
             )}
             {renderStepContent(currentStep)}

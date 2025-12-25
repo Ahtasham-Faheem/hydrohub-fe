@@ -60,3 +60,6 @@ body {
 .noScrollbar::-webkit-scrollbar {
   display: none !important;
 }
+.phoneInput .css-qve9l1-MuiInputBase-input-MuiOutlinedInput-input {
+  color: var(--text-primary);
+}

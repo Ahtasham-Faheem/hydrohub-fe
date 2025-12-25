@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Button,
   Card,
@@ -26,7 +26,12 @@ import { useTheme } from "../../contexts/ThemeContext";
 
 export const Login = () => {
   const { colors } = useTheme();
-  const [loginMode, setLoginMode] = useState<"email" | "phone">("email");
+  const [searchParams] = useSearchParams();
+  const [loginMode, setLoginMode] = useState<"email" | "phone">(() => {
+    // Check URL parameter for initial login mode
+    const mode = searchParams.get("mode");
+    return mode === "phone" ? "phone" : "email";
+  });
   const [useCodeLogin, setUseCodeLogin] = useState(false);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -42,6 +47,7 @@ export const Login = () => {
   const [toastMessage, setToastMessage] = useState("");
   const [toastSeverity, setToastSeverity] = useState<"success" | "error">("error");
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
+  const [countdown, setCountdown] = useState(0);
   const { login, isAuthenticated, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -50,6 +56,15 @@ export const Login = () => {
       navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
+
+  // Countdown timer for resend code
+  useEffect(() => {
+    let timer: number;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   const validate = (): boolean => {
     // In demo mode, skip validation
@@ -73,9 +88,14 @@ export const Login = () => {
       if (!phone) {
         errorMessage = "Please enter your phone number";
         valid = false;
-      } else if (!/^\d{7,15}$/.test(phone)) {
-        errorMessage = "Please enter a valid phone number";
-        valid = false;
+      } else {
+        // Extract phone number without +92 prefix for validation
+        const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
+        // Valid Pakistani phone: 3XXXXXXXXX (10 digits) or 03XXXXXXXXX (11 digits)
+        if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits)) {
+          errorMessage = "Please enter a valid phone number";
+          valid = false;
+        }
       }
     }
 
@@ -108,7 +128,10 @@ export const Login = () => {
       if (loginMode === "email" && !email) setFieldErrors(prev => ({ ...prev, email: true }));
       if (loginMode === "email" && !/\S+@\S+\.\S+/.test(email)) setFieldErrors(prev => ({ ...prev, email: true }));
       if (loginMode === "phone" && !phone) setFieldErrors(prev => ({ ...prev, phone: true }));
-      if (loginMode === "phone" && !/^\d{7,15}$/.test(phone)) setFieldErrors(prev => ({ ...prev, phone: true }));
+      if (loginMode === "phone") {
+        const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
+        if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits)) setFieldErrors(prev => ({ ...prev, phone: true }));
+      }
       if (useCodeLogin && !otp) setFieldErrors(prev => ({ ...prev, otp: true }));
       if (useCodeLogin && !/^\d{6}$/.test(otp)) setFieldErrors(prev => ({ ...prev, otp: true }));
       if (!useCodeLogin && !password) setFieldErrors(prev => ({ ...prev, password: true }));
@@ -126,6 +149,7 @@ export const Login = () => {
     setIsLoading(true);
     setErrors({ email: "", password: "", phone: "" });
     setCodeError(null);
+    setFieldErrors({}); // Clear field errors
 
     try {
       if (useCodeLogin) {
@@ -165,6 +189,17 @@ export const Login = () => {
         error.response?.data?.message ||
         "Login failed. Please check your credentials.";
       
+      // Set field errors for failed login
+      if (errorMessage.toLowerCase().includes('user not found') || 
+          errorMessage.toLowerCase().includes('invalid credentials') ||
+          errorMessage.toLowerCase().includes('incorrect password')) {
+        if (loginMode === "email") {
+          setFieldErrors({ email: true, password: true });
+        } else {
+          setFieldErrors({ phone: true, password: true });
+        }
+      }
+      
       setToastMessage(errorMessage);
       setToastSeverity("error");
       setToastOpen(true);
@@ -174,19 +209,40 @@ export const Login = () => {
   };
 
   const handleSendCode = async () => {
-    // Validate email or phone
-    if (loginMode === "email" && !email) {
-      setToastMessage("Please enter your email address");
-      setToastSeverity("error");
-      setToastOpen(true);
-      return;
-    }
-    
-    if (loginMode === "phone" && !phone) {
-      setToastMessage("Please enter your phone number");
-      setToastSeverity("error");
-      setToastOpen(true);
-      return;
+    // Validate email or phone first
+    if (loginMode === "email") {
+      if (!email || !email.trim()) {
+        setToastMessage("Please enter your email address");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ email: true });
+        return;
+      }
+      if (!/\S+@\S+\.\S+/.test(email)) {
+        setToastMessage("Please enter a valid email address");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ email: true });
+        return;
+      }
+    } else {
+      if (!phone || !phone.trim()) {
+        setToastMessage("Please enter your phone number");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ phone: true });
+        return;
+      }
+      // Extract phone number without +92 prefix for validation
+      const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
+      // Valid Pakistani phone: 3XXXXXXXXX (10 digits) or 03XXXXXXXXX (11 digits)
+      if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits)) {
+        setToastMessage("Please enter a valid phone number");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ phone: true });
+        return;
+      }
     }
 
     setCodeLoading(true);
@@ -204,6 +260,7 @@ export const Login = () => {
       setToastSeverity("success");
       setToastOpen(true);
       setOtp("");
+      setCountdown(60); // Start 1-minute countdown
     } catch (error: any) {
       const errorMessage = 
         error.response?.data?.message || 
@@ -213,6 +270,21 @@ export const Login = () => {
       setToastOpen(true);
     } finally {
       setCodeLoading(false);
+    }
+  };
+
+  // Check if send code button should be disabled
+  const isSendCodeDisabled = () => {
+    if (codeLoading || countdown > 0) return true;
+    
+    if (loginMode === "email") {
+      return !email || !email.trim() || !/\S+@\S+\.\S+/.test(email);
+    } else {
+      if (!phone || !phone.trim()) return true;
+      // Extract phone number without +92 prefix for validation
+      const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
+      // Valid Pakistani phone: 3XXXXXXXXX (10 digits) or 03XXXXXXXXX (11 digits)
+      return !/^(3\d{9}|03\d{9})$/.test(phoneDigits);
     }
   };
 
@@ -411,20 +483,19 @@ export const Login = () => {
                     endAdornment={
                       <Button
                         variant="outlined"
-                        disabled={codeLoading}
+                        disabled={isSendCodeDisabled()}
                         sx={{
                           textTransform: "none",
-                          border: "none",
                           height: "38px",
                           fontSize: 13,
-                          color: codeLoading ? colors.text.tertiary : colors.text.secondary,
+                          color: isSendCodeDisabled() ? colors.text.tertiary : colors.text.secondary,
                           borderLeft: `1px solid ${colors.border.primary}`,
                           borderRadius: 0,
                           paddingRight: 0,
                           display: "flex",
                           alignItems: "center",
                           gap: 1,
-                          ":hover": { textDecoration: codeLoading ? "none" : "underline" },
+                          ":hover": { textDecoration: isSendCodeDisabled() ? "none" : "underline" },
                         }}
                         onClick={handleSendCode}
                       >
@@ -433,6 +504,8 @@ export const Login = () => {
                             <CircularProgress size={14} />
                             Sending...
                           </>
+                        ) : countdown > 0 ? (
+                          `Resend (${countdown}s)`
                         ) : (
                           "Send code"
                         )}

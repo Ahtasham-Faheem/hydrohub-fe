@@ -68,7 +68,7 @@ export const nameValidation = yup
   .required('This field is required')
   .min(2, 'Must be at least 2 characters')
   .max(50, 'Must be less than 50 characters')
-  .matches(/^[a-zA-Z\s]+$/, 'Only letters and spaces are allowed');
+  .matches(/^[a-zA-Z\s]+$/, 'Only alphabets and spaces are allowed');
 
 // Username validation
 export const usernameValidation = yup
@@ -93,7 +93,7 @@ export const salaryValidation = yup
 // Bank account validation
 export const bankAccountValidation = yup
   .string()
-  .matches(/^[0-9]{10,16}$/, 'Bank account must be 10-16 digits only');
+  .matches(/^[a-zA-Z0-9]{10,24}$/, 'Bank account must be 10-24 alphanumeric characters only');
 
 // Provident fund validation (percentage)
 export const providentFundValidation = yup
@@ -141,7 +141,7 @@ export const userStep2Schema = yup.object({
 
 export const userStep3Schema = yup.object({
   // Essential employment fields
-  employmentStatus: yup.string().required('Employment Status is required').oneOf(['Active', 'Inactive', 'Probation', '']),
+  employmentStatus: yup.string().required('Employment Status is required').oneOf(['Active', 'Inactive', 'Terminated', '']),
   supervisorId: yup.string().required('Please select Supervisor'),
   shiftType: yup.string().required('Shift type is required').oneOf(['Morning', 'Evening', 'Night', 'Rotating', '']),
   employmentType: yup.string().required('Employment type is required').oneOf(['Full-Time', 'Part-Time', 'Contract', 'Temporary']),
@@ -172,7 +172,7 @@ export const userStep4Schema = yup.object({
     then: () => bankAccountValidation.required('Bank account number is required for bank transfer'),
     otherwise: () => yup.string().nullable(),
   }),
-  taxStatus: yup.string().required('Tax Status is required').oneOf(['Taxable', 'Non-taxable', '']),
+  taxStatus: yup.string().required('Tax Status is required').oneOf(['Taxable', 'Non-Taxable', '']),
   
   // Optional fields
   basicSalary: salaryValidation.nullable(),

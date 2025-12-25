@@ -8,9 +8,11 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
+  Tooltip,
 } from "@mui/material";
 import { MdArrowBack, MdPhoneAndroid, MdInfo } from "react-icons/md";
 import WaterLogo from "../../assets/WATER-INN-logo.svg";
+import QRImage from "../../assets/qr.png";
 import { Footer } from "../../components/auth/Footer";
 import { useTheme } from "../../contexts/ThemeContext";
 
@@ -99,6 +101,7 @@ export const QRCodeLogin = () => {
                     fontWeight: 600,
                     mb: 1,
                     color: colors.text.primary,
+                    textAlign: 'center'
                   }}
                 >
                   Download the HYDROHUB app for your Mobile Device
@@ -117,16 +120,16 @@ export const QRCodeLogin = () => {
                 </Typography>
                 
                 {/* Store Badges */}
-                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
+                <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap",justifyContent: "center", mr: 5 }}>
                   <img
                     src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg"
                     alt="Download on App Store"
-                    style={{ height: 50, cursor: "pointer" }}
+                    style={{ height: 60, cursor: "pointer" }}
                   />
                   <img
                     src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
                     alt="Get it on Google Play"
-                    style={{ height: 50, cursor: "pointer" }}
+                    style={{ height: 60, cursor: "pointer" }}
                   />
                 </Box>
               </Box>
@@ -249,29 +252,43 @@ export const QRCodeLogin = () => {
                       sx={{ color: colors.text.primary, fontWeight: 500, fontSize: 14 }}
                     >
                       On Android tap Menu{" "}
-                      <Box
-                        component="span"
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          verticalAlign: "middle",
-                          mx: 0.5,
-                        }}
+                      <Tooltip 
+                        title="Look for the three horizontal lines (hamburger menu) usually located in the top-left corner of the app"
+                        arrow
+                        placement="top"
                       >
-                        <MdInfo size={16} style={{ color: colors.text.secondary }} />
-                      </Box>{" "}
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            verticalAlign: "middle",
+                            mx: 0.5,
+                            cursor: "help",
+                          }}
+                        >
+                          <MdInfo size={16} style={{ color: colors.text.secondary }} />
+                        </Box>
+                      </Tooltip>{" "}
                       • On iPhone tap Settings{" "}
-                      <Box
-                        component="span"
-                        sx={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          verticalAlign: "middle",
-                          ml: 0.5,
-                        }}
+                      <Tooltip 
+                        title="Look for the gear icon (⚙️) usually found in the bottom navigation or top-right corner of the app"
+                        arrow
+                        placement="top"
                       >
-                        <MdInfo size={16} style={{ color: colors.text.secondary }} />
-                      </Box>
+                        <Box
+                          component="span"
+                          sx={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            verticalAlign: "middle",
+                            ml: 0.5,
+                            cursor: "help",
+                          }}
+                        >
+                          <MdInfo size={16} style={{ color: colors.text.secondary }} />
+                        </Box>
+                      </Tooltip>
                     </Typography>
                   </Box>
                 </Box>
@@ -355,7 +372,15 @@ export const QRCodeLogin = () => {
                         >
                           Stay logged in on this browser
                         </Typography>
-                        <MdInfo size={16} style={{ color: colors.text.secondary }} />
+                        <Tooltip 
+                          title="When enabled, you won't need to scan the QR code again on this browser. Your session will remain active until you manually log out."
+                          arrow
+                          placement="top"
+                        >
+                          <Box sx={{ cursor: "help", display: "flex", alignItems: "center" }}>
+                            <MdInfo size={16} style={{ color: colors.text.secondary }} />
+                          </Box>
+                        </Tooltip>
                       </Box>
                     }
                   />
@@ -363,7 +388,7 @@ export const QRCodeLogin = () => {
               </Box>
 
               {/* Right Side - QR Code */}
-              <Box sx={{ flexShrink: 0, display: "flex", justifyContent: "center", width: { xs: "100%", md: "auto" } }}>
+              <Box sx={{ flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", width: { xs: "100%", md: "auto" } }}>
                 <Box
                   sx={{
                     width: 220,
@@ -376,131 +401,37 @@ export const QRCodeLogin = () => {
                     justifyContent: "center",
                     position: "relative",
                     boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    mb: 3,
                   }}
                 >
-                  {/* QR Code Pattern */}
-                  <svg width="190" height="190" viewBox="0 0 190 190" fill="none">
-                    {/* Corner squares */}
-                    <rect x="5" y="5" width="60" height="60" fill="black"/>
-                    <rect x="15" y="15" width="40" height="40" fill="white"/>
-                    <rect x="25" y="25" width="20" height="20" fill="black"/>
-                    
-                    <rect x="125" y="5" width="60" height="60" fill="black"/>
-                    <rect x="135" y="15" width="40" height="40" fill="white"/>
-                    <rect x="145" y="25" width="20" height="20" fill="black"/>
-                    
-                    <rect x="5" y="125" width="60" height="60" fill="black"/>
-                    <rect x="15" y="135" width="40" height="40" fill="white"/>
-                    <rect x="25" y="145" width="20" height="20" fill="black"/>
-                    
-                    {/* Timing patterns */}
-                    {Array.from({length: 9}, (_, i) => (
-                      <rect key={`h-${i}`} x={75 + i * 10} y="35" width="10" height="10" fill={i % 2 === 0 ? "black" : "white"}/>
-                    ))}
-                    {Array.from({length: 9}, (_, i) => (
-                      <rect key={`v-${i}`} x="35" y={75 + i * 10} width="10" height="10" fill={i % 2 === 0 ? "black" : "white"}/>
-                    ))}
-                    
-                    {/* Data modules */}
-                    <rect x="75" y="75" width="10" height="10" fill="black"/>
-                    <rect x="85" y="75" width="10" height="10" fill="white"/>
-                    <rect x="95" y="75" width="10" height="10" fill="black"/>
-                    <rect x="105" y="75" width="10" height="10" fill="black"/>
-                    <rect x="115" y="75" width="10" height="10" fill="white"/>
-                    
-                    <rect x="75" y="85" width="10" height="10" fill="white"/>
-                    <rect x="85" y="85" width="10" height="10" fill="black"/>
-                    <rect x="95" y="85" width="10" height="10" fill="white"/>
-                    <rect x="105" y="85" width="10" height="10" fill="black"/>
-                    <rect x="115" y="85" width="10" height="10" fill="black"/>
-                    
-                    <rect x="75" y="95" width="10" height="10" fill="black"/>
-                    <rect x="85" y="95" width="10" height="10" fill="black"/>
-                    <rect x="95" y="95" width="10" height="10" fill="black"/>
-                    <rect x="105" y="95" width="10" height="10" fill="white"/>
-                    <rect x="115" y="95" width="10" height="10" fill="black"/>
-                    
-                    <rect x="75" y="105" width="10" height="10" fill="white"/>
-                    <rect x="85" y="105" width="10" height="10" fill="black"/>
-                    <rect x="95" y="105" width="10" height="10" fill="black"/>
-                    <rect x="105" y="105" width="10" height="10" fill="black"/>
-                    <rect x="115" y="105" width="10" height="10" fill="white"/>
-                    
-                    <rect x="75" y="115" width="10" height="10" fill="black"/>
-                    <rect x="85" y="115" width="10" height="10" fill="white"/>
-                    <rect x="95" y="115" width="10" height="10" fill="white"/>
-                    <rect x="105" y="115" width="10" height="10" fill="black"/>
-                    <rect x="115" y="115" width="10" height="10" fill="black"/>
-                    
-                    {/* More data modules */}
-                    <rect x="125" y="75" width="10" height="10" fill="black"/>
-                    <rect x="135" y="75" width="10" height="10" fill="white"/>
-                    <rect x="145" y="75" width="10" height="10" fill="black"/>
-                    <rect x="155" y="75" width="10" height="10" fill="white"/>
-                    <rect x="165" y="75" width="10" height="10" fill="black"/>
-                    <rect x="175" y="75" width="10" height="10" fill="white"/>
-                    
-                    <rect x="125" y="85" width="10" height="10" fill="white"/>
-                    <rect x="135" y="85" width="10" height="10" fill="black"/>
-                    <rect x="145" y="85" width="10" height="10" fill="white"/>
-                    <rect x="155" y="85" width="10" height="10" fill="black"/>
-                    <rect x="165" y="85" width="10" height="10" fill="white"/>
-                    <rect x="175" y="85" width="10" height="10" fill="black"/>
-                    
-                    {/* Bottom section */}
-                    <rect x="75" y="125" width="10" height="10" fill="black"/>
-                    <rect x="85" y="125" width="10" height="10" fill="white"/>
-                    <rect x="95" y="125" width="10" height="10" fill="black"/>
-                    <rect x="105" y="125" width="10" height="10" fill="black"/>
-                    <rect x="115" y="125" width="10" height="10" fill="white"/>
-                    <rect x="125" y="125" width="10" height="10" fill="black"/>
-                    <rect x="135" y="125" width="10" height="10" fill="white"/>
-                    <rect x="145" y="125" width="10" height="10" fill="black"/>
-                    <rect x="155" y="125" width="10" height="10" fill="white"/>
-                    <rect x="165" y="125" width="10" height="10" fill="black"/>
-                    <rect x="175" y="125" width="10" height="10" fill="white"/>
-                    
-                    <rect x="75" y="135" width="10" height="10" fill="white"/>
-                    <rect x="85" y="135" width="10" height="10" fill="black"/>
-                    <rect x="95" y="135" width="10" height="10" fill="white"/>
-                    <rect x="105" y="135" width="10" height="10" fill="black"/>
-                    <rect x="115" y="135" width="10" height="10" fill="black"/>
-                    <rect x="125" y="135" width="10" height="10" fill="white"/>
-                    <rect x="135" y="135" width="10" height="10" fill="black"/>
-                    <rect x="145" y="135" width="10" height="10" fill="white"/>
-                    <rect x="155" y="135" width="10" height="10" fill="black"/>
-                    <rect x="165" y="135" width="10" height="10" fill="white"/>
-                    <rect x="175" y="135" width="10" height="10" fill="black"/>
-                  </svg>
-                  
-                  {/* Center Logo */}
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: 45,
-                      height: 45,
-                      backgroundColor: colors.primary[600],
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "3px solid white",
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 22,
-                        height: 22,
-                        backgroundColor: "white",
-                        borderRadius: "50%",
-                      }}
-                    />
-                  </Box>
+                  {/* QR Code Image */}
+                  <img 
+                    src={QRImage} 
+                    alt="QR Code for Login" 
+                    style={{ 
+                      width: '190px', 
+                      height: '190px',
+                      objectFit: 'contain'
+                    }} 
+                  />
                 </Box>
+
+                {/* Phone Login Button */}
+                <Typography
+                  onClick={() => navigate("/login?mode=phone")}
+                  sx={{
+                    color: "white",
+                    textTransform: "none",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    cursor: 'pointer',
+                   "&:hover": {
+                    textDecoration: 'underline'
+                  },
+                  }}
+                >
+                  Log in with phone number
+                </Typography>
               </Box>
             </Box>
 
@@ -508,13 +439,11 @@ export const QRCodeLogin = () => {
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent: "center",
                 alignItems: "center",
                 mt: 4,
                 pt: 3,
                 borderTop: `1px solid ${colors.border.primary}`,
-                flexDirection: { xs: "column", sm: "row" },
-                gap: { xs: 2, sm: 0 }
               }}
             >
               <Button
@@ -524,6 +453,7 @@ export const QRCodeLogin = () => {
                   color: colors.text.secondary,
                   textTransform: "none",
                   fontSize: 14,
+                  textAlign: 'center',
                   fontWeight: 500,
                   "&:hover": {
                     color: colors.primary[500],
@@ -533,22 +463,6 @@ export const QRCodeLogin = () => {
                 startIcon={<MdArrowBack />}
               >
                 Go back
-              </Button>
-
-              <Button
-                variant="text"
-                onClick={() => navigate("/login-access")}
-                sx={{
-                  color: colors.primary[500],
-                  textTransform: "none",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  "&:hover": {
-                    backgroundColor: colors.primary[50],
-                  },
-                }}
-              >
-                Log in with phone number →
               </Button>
             </Box>
           </CardContent>

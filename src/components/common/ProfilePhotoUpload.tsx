@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
 import { Box, Typography, Button } from "@mui/material";
-import { PrimaryButton } from "./PrimaryButton";
 import { useUploadFile } from "../../hooks/useAssets";
 import { assetsService } from "../../services/api";
 import { handleImageUpload as processImage } from "../../utils/imageCompression";
@@ -203,108 +202,120 @@ export const ProfilePhotoUpload = ({
       />
 
       {displayImage ? (
-        // Image Preview Layout - Square preview with details on the right
+        // Image Preview Layout - Image on left, drag and drop area on right
         <Box
           sx={{
             display: "flex",
             flexDirection: { xs: "column", sm: "row" },
             gap: 3,
-            p: 3,
-            borderRadius: 2,
-            border: `1px solid ${colors.border.primary}`,
-            backgroundColor: colors.background.card,
-            alignItems: { xs: "center", sm: "center" },
+            alignItems: { xs: "center", sm: "flex-start" },
           }}
         >
-          {/* Square Image Preview */}
+          {/* Left Side - Uploaded Image Preview */}
           <Box
             sx={{
-              width: { xs: 100, sm: 160 },
-              height: { xs: 100, sm: 160 },
-              borderRadius: 2,
-              overflow: "hidden",
-              border: `2px solid ${colors.border.primary}`,
-              flexShrink: 0,
-              position: "relative",
-              cursor: disabled ? "not-allowed" : "pointer",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 2,
             }}
-            onClick={() => !disabled && document.getElementById("profile-photo-upload")?.click()}
           >
-            <img
-              src={displayImage}
-              alt="Profile"
-              style={{ 
-                width: "100%", 
-                height: "100%", 
-                objectFit: "cover"
-              }}
-            />
+            {/* Square Image Preview */}
             <Box
               sx={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: "rgba(0,0,0,0.6)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: 0,
-                transition: "opacity 0.3s ease",
-                "&:hover": {
-                  opacity: 1,
-                },
+                width: { xs: 120, sm: 215 },
+                height: { xs: 120, sm: 215 },
+                borderRadius: 2,
+                overflow: "hidden",
+                border: `2px solid ${colors.border.primary}`,
+                flexShrink: 0,
+                position: "relative",
               }}
             >
-              <Typography sx={{ color: "white", fontWeight: 600, fontSize: "0.75rem", textAlign: "center" }}>
-                Click to change
-              </Typography>
+              <img
+                src={displayImage}
+                alt="Profile"
+                style={{ 
+                  width: "100%", 
+                  height: "100%", 
+                  objectFit: "cover"
+                }}
+              />
             </Box>
           </Box>
 
-          {/* Image Details */}
-          <Box sx={{ flex: 1, textAlign: { xs: "center", sm: "left" } }}>
-            <Typography 
-              variant="h6" 
-              sx={{ 
-                fontWeight: 600, 
-                mb: 1, 
-                color: colors.text.primary 
-              }}
-            >
-              Profile Photo Uploaded
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: colors.text.secondary,
-                mb: 2,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: { xs: "center", sm: "flex-start" },
-                gap: 1
-              }}
-            >
-              <MdImage size={16} />
-              Image successfully uploaded and ready to use
-            </Typography>
-            
-            {/* Action Buttons */}
-            <Box sx={{ display: "flex", gap: 2, justifyContent: { xs: "center", sm: "flex-start" } }}>
-              <PrimaryButton
-                size="small"
-                onClick={() => {
-                  document.getElementById("profile-photo-upload")?.click();
+          {/* Right Side - Drag and Drop Area (same as original upload area) */}
+          <Box
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => !disabled && document.getElementById("profile-photo-upload")?.click()}
+            sx={{
+              flex: 1,
+              minHeight: 200,
+              borderRadius: 2,
+              border: `2px dashed ${isDragOver ? colors.primary[500] : colors.border.primary}`,
+              backgroundColor: isDragOver ? colors.primary[50] : colors.background.secondary,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: disabled ? "not-allowed" : "pointer",
+              transition: "all 0.3s ease",
+              position: "relative",
+              "&:hover": !disabled ? {
+                borderColor: colors.primary[500],
+                backgroundColor: colors.primary[50],
+              } : {},
+            }}
+          >
+            <Box sx={{ textAlign: "center", p: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <MdCloudUpload 
+                size={40} 
+                style={{ 
+                  color: isDragOver ? colors.primary[500] : colors.text.secondary,
+                }} 
+              />
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 0.5, 
+                  color: isDragOver ? colors.primary[500] : colors.text.primary 
                 }}
-                disabled={uploadMutation?.isPending || disabled}
               >
-                {uploadMutation?.isPending ? "Uploading..." : "Change Photo"}
-              </PrimaryButton>
+                {uploadMutation?.isPending ? "Uploading..." : "Replace Profile Photo"}
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  color: colors.text.secondary,
+                  mb: 1
+                }}
+              >
+                Drag and drop your new image here, or click to browse
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: colors.text.tertiary,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 0.5,
+                  mb: 1
+                }}
+              >
+                <MdImage size={16} />
+                Allowed JPG, GIF or PNG. Max size {maxSize}
+              </Typography>
+              
+              {/* Remove Button */}
               <Button
                 size="small"
                 variant="outlined"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   handleImageReset();
                 }}
                 disabled={isDeleting || disabled}
@@ -317,7 +328,7 @@ export const ProfilePhotoUpload = ({
                   },
                 }}
               >
-                {isDeleting ? "Deleting..." : "Remove"}
+                {isDeleting ? "Deleting..." : "Remove Photo"}
               </Button>
             </Box>
           </Box>

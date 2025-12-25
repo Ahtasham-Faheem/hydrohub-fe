@@ -49,12 +49,21 @@ export const AdditionalPersonalInfo = () => {
 
       {/* Nationality + National ID + Gender */}
       <Stack direction="row" spacing={2}>
-        <CustomInput
+         <CustomSelect
           label="Nationality"
-          placeholder="e.g., Pakistani"
           value={formData.nationality || "Pakistani"}
-          onChange={(e) => updateFormData("nationality", e.target.value)}
+          onChange={(e) => {
+            updateFormData("nationality", e.target.value);
+            // Clear error when user selects
+            if (fieldErrors['nationality']) {
+              setFieldErrors({ ...fieldErrors, nationality: "" });
+            }
+          }}
           error={fieldErrors['nationality']}
+          options={[
+            { value: "Pakistani", label: "Pakistan" },
+            { value: "Other", label: "Other" },
+          ]}
         />
         <CNICInput
           label="National ID"
@@ -167,7 +176,6 @@ export const AdditionalPersonalInfo = () => {
           onChange={(value) => handlePhoneChange("emergencyContactNumber", value)}
           onClearError={() => setFieldErrors({ ...fieldErrors, emergencyContactNumber: "" })}
           error={fieldErrors['emergencyContactNumber']}
-          required
         />
       </Stack>
     </Stack>

@@ -7,6 +7,7 @@ interface DateCalendarGridProps {
   startDate?: Dayjs | null;
   endDate?: Dayjs | null;
   onDateClick: (date: Dayjs) => void;
+  minDate?: Dayjs | null;
 }
 
 export const DateCalendarGrid = ({
@@ -14,6 +15,7 @@ export const DateCalendarGrid = ({
   startDate,
   endDate,
   onDateClick,
+  minDate,
 }: DateCalendarGridProps) => {
   const { colors } = useTheme();
   const daysInMonth = month.daysInMonth();
@@ -32,18 +34,26 @@ export const DateCalendarGrid = ({
 
   const isDateInRange = (date: Dayjs) => {
     if (!startDate || !endDate) return false;
-    return (
-      (date.isAfter(startDate) || date.isSame(startDate, "day")) &&
-      (date.isBefore(endDate) || date.isSame(endDate, "day"))
-    );
+    // Compare using date string format to avoid timezone issues
+    const dateStr = date.format("YYYY-MM-DD");
+    const startStr = startDate.format("YYYY-MM-DD");
+    const endStr = endDate.format("YYYY-MM-DD");
+    return dateStr >= startStr && dateStr <= endStr;
   };
 
   const isStartDate = (date: Dayjs) => {
-    return startDate && date.isSame(startDate, "day");
+    if (!startDate) return false;
+    return date.format("YYYY-MM-DD") === startDate.format("YYYY-MM-DD");
   };
 
   const isEndDate = (date: Dayjs) => {
-    return endDate && date.isSame(endDate, "day");
+    if (!endDate) return false;
+    return date.format("YYYY-MM-DD") === endDate.format("YYYY-MM-DD");
+  };
+
+  const isDisabled = (date: Dayjs) => {
+    if (!minDate) return false;
+    return date.format("YYYY-MM-DD") < minDate.format("YYYY-MM-DD");
   };
 
   return (
@@ -96,12 +106,14 @@ export const DateCalendarGrid = ({
           const inRange = isDateInRange(date);
           const isStart = isStartDate(date);
           const isEnd = isEndDate(date);
+          const disabled = isDisabled(date);
 
           return (
             <Button
               key={date.format("YYYY-MM-DD")}
               size="small"
-              onClick={() => onDateClick(date)}
+              onClick={() => !disabled && onDateClick(date)}
+              disabled={disabled}
               sx={{
                 width: "100%",
                 aspectRatio: "1",
@@ -116,19 +128,28 @@ export const DateCalendarGrid = ({
                     ? colors.primary[100]
                     : "transparent",
                 color:
-                  isStart || isEnd
+                  disabled
+                    ? colors.text.tertiary
+                    : isStart || isEnd
                     ? colors.text.inverse
                     : inRange
                     ? colors.primary[700]
                     : colors.text.primary,
                 borderRadius: 1,
+                cursor: disabled ? "not-allowed" : "pointer",
+                opacity: disabled ? 0.5 : 1,
                 "&:hover": {
-                  bgcolor:
-                    isStart || isEnd 
-                      ? colors.primary[700] 
-                      : inRange 
-                      ? colors.primary[200] 
-                      : colors.background.secondary,
+                  bgcolor: disabled
+                    ? "transparent"
+                    : isStart || isEnd
+                    ? colors.primary[700]
+                    : inRange
+                    ? colors.primary[200]
+                    : colors.background.secondary,
+                },
+                "&.Mui-disabled": {
+                  color: colors.text.tertiary,
+                  opacity: 0.5,
                 },
               }}
             >

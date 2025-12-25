@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Card,
@@ -9,7 +9,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { Visibility, VisibilityOff, Phone, Email } from "@mui/icons-material";
+import { Visibility, VisibilityOff, Email } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import { CustomInput } from "../../components/common/CustomInput";
 import { PrimaryButton } from "../../components/common/PrimaryButton";
@@ -17,11 +17,11 @@ import WaterLogo from "../../assets/WATER-INN-logo.svg";
 import { Footer } from "../../components/auth/Footer";
 import { authService } from "../../services/api";
 import { useTheme } from "../../contexts/ThemeContext";
+import { PhoneInput } from "../../components/common/PhoneInput";
 
 export const ResetPassword = () => {
   const { colors } = useTheme();
   const [resetMode, setResetMode] = useState<"email" | "phone">("email");
-  const [countryCode, setCountryCode] = useState("+92");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -30,40 +30,78 @@ export const ResetPassword = () => {
   const [errors, setErrors] = useState({ email: "", phone: "", otp: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastSeverity, setToastSeverity] = useState<"success" | "error">("error");
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
   const navigate = useNavigate();
 
+  // Countdown timer for resend code
+  useEffect(() => {
+    let timer: number;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   const handleSendCode = async () => {
     setErrors({ email: "", phone: "", otp: "", password: "" });
+    setFieldErrors({});
     setIsLoading(true);
     
-    if (resetMode === "email" && !email) {
-      setToastMessage("Please enter your email address");
-      setToastSeverity("error");
-      setToastOpen(true);
-      setIsLoading(false);
-      return;
-    }
-    if (resetMode === "phone" && !phone) {
-      setToastMessage("Please enter your phone number");
-      setToastSeverity("error");
-      setToastOpen(true);
-      setIsLoading(false);
-      return;
+    // Validate input first
+    if (resetMode === "email") {
+      if (!email || !email.trim()) {
+        setToastMessage("Please enter your email address");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ email: true });
+        setIsLoading(false);
+        return;
+      }
+      // More robust email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setToastMessage("Please enter a valid email address");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ email: true });
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      if (!phone || !phone.trim()) {
+        setToastMessage("Please enter your phone number");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ phone: true });
+        setIsLoading(false);
+        return;
+      }
+      // Extract phone number without country code for validation
+      const phoneNumber = phone.startsWith('+92') ? phone.substring(3) : phone;
+      if (!/^(3\d{9}|03\d{8})$/.test(phoneNumber)) {
+        setToastMessage("Please enter a valid Pakistani phone number");
+        setToastSeverity("error");
+        setToastOpen(true);
+        setFieldErrors({ phone: true });
+        setIsLoading(false);
+        return;
+      }
     }
     
     try {
       const requestData = resetMode === "email" 
-        ? { email } 
-        : { phone: countryCode + phone };
+        ? { email: email.trim() } 
+        : { phone: phone.startsWith('+92') ? phone : `+92${phone}` };
       
-      await authService.requestResetPassword(requestData);
+      await authService.sendLoginCode(requestData);
       setCodeSent(true);
+      setCountdown(60); // Start 1-minute countdown
       setToastMessage(`Verification code sent to ${
-        resetMode === "email" ? email : countryCode + phone
+        resetMode === "email" ? email : phone
       }`);
       setToastSeverity("success");
       setToastOpen(true);
@@ -72,69 +110,143 @@ export const ResetPassword = () => {
       setToastMessage(errorMessage);
       setToastSeverity("error");
       setToastOpen(true);
+      
+      // Set field errors based on error type and also for API failures
+      if (errorMessage.toLowerCase().includes('email') || resetMode === "email") {
+        setFieldErrors({ email: true });
+      } else if (errorMessage.toLowerCase().includes('phone') || resetMode === "phone") {
+        setFieldErrors({ phone: true });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Check if send code button should be disabled
+  const isSendCodeDisabled = () => {
+    if (isLoading || countdown > 0) return true;
+    
+    if (resetMode === "email") {
+      return !email || !email.trim() || !/\S+@\S+\.\S+/.test(email);
+    } else {
+      if (!phone || !phone.trim()) return true;
+      const phoneNumber = phone.startsWith('+92') ? phone.substring(3) : phone;
+      return !/^(3\d{9}|03\d{8})$/.test(phoneNumber);
+    }
+  };
+
+  // Validate password strength
+  const validatePassword = (pwd: string): string | null => {
+    if (!pwd) return "Password is required";
+    if (pwd.length < 8) return "Password must be at least 8 characters";
+    if (!/(?=.*[a-z])/.test(pwd)) return "Password must contain at least one lowercase letter";
+    if (!/(?=.*[A-Z])/.test(pwd)) return "Password must contain at least one uppercase letter";
+    if (!/(?=.*\d)/.test(pwd)) return "Password must contain at least one number";
+    if (!/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(pwd)) return "Password must contain at least one special character";
+    return null;
+  };
+
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({ email: "", phone: "", otp: "", password: "" });
+    setFieldErrors({});
     setIsLoading(true);
     
     let hasErrors = false;
     let errorMessage = "";
+    const newFieldErrors: { [key: string]: boolean } = {};
     
-    if (resetMode === "email" && !email) {
+    // Validate all fields
+    if (resetMode === "email" && (!email || !email.trim())) {
       errorMessage = "Please enter your email address";
+      newFieldErrors.email = true;
+      hasErrors = true;
+    } else if (resetMode === "email" && !/\S+@\S+\.\S+/.test(email)) {
+      errorMessage = "Please enter a valid email address";
+      newFieldErrors.email = true;
       hasErrors = true;
     }
-    if (!hasErrors && resetMode === "phone" && !phone) {
+    
+    if (!hasErrors && resetMode === "phone" && (!phone || !phone.trim())) {
       errorMessage = "Please enter your phone number";
+      newFieldErrors.phone = true;
       hasErrors = true;
+    } else if (!hasErrors && resetMode === "phone") {
+      const phoneNumber = phone.startsWith('+92') ? phone.substring(3) : phone;
+      if (!/^(3\d{9}|03\d{8})$/.test(phoneNumber)) {
+        errorMessage = "Please enter a valid Pakistani phone number";
+        newFieldErrors.phone = true;
+        hasErrors = true;
+      }
     }
-    if (!hasErrors && !otp) {
+    
+    if (!hasErrors && (!otp || !otp.trim())) {
       errorMessage = "Please enter the verification code";
+      newFieldErrors.otp = true;
+      hasErrors = true;
+    } else if (!hasErrors && !/^\d{6}$/.test(otp)) {
+      errorMessage = "Verification code must be exactly 6 digits";
+      newFieldErrors.otp = true;
       hasErrors = true;
     }
-    if (!hasErrors && !password) {
-      errorMessage = "Please enter your new password";
-      hasErrors = true;
-    } else if (!hasErrors && password.length < 6) {
-      errorMessage = "Password must be at least 6 characters";
-      hasErrors = true;
+    
+    if (!hasErrors) {
+      const passwordError = validatePassword(password);
+      if (passwordError) {
+        errorMessage = passwordError;
+        newFieldErrors.password = true;
+        hasErrors = true;
+      }
     }
     
     if (hasErrors) {
       setToastMessage(errorMessage);
       setToastSeverity("error");
       setToastOpen(true);
-      // Mark fields in error
-      if (resetMode === "email" && !email) setFieldErrors(prev => ({ ...prev, email: true }));
-      if (resetMode === "phone" && !phone) setFieldErrors(prev => ({ ...prev, phone: true }));
-      if (!otp) setFieldErrors(prev => ({ ...prev, otp: true }));
-      if (!password || password.length < 6) setFieldErrors(prev => ({ ...prev, password: true }));
+      setFieldErrors(newFieldErrors);
       setIsLoading(false);
       return;
     }
     
     try {
+      // Use verifyLoginCode to verify the code, then call resetPassword
+      const verifyData = {
+        ...(resetMode === "email" ? { email } : { phone: phone.startsWith('+92') ? phone : `+92${phone}` }),
+        code: otp,
+      };
+      
+      // First verify the code
+      await authService.verifyLoginCode(verifyData);
+      
+      // If verification successful, proceed with password reset
       const resetData = {
-        ...(resetMode === "email" ? { email } : { phone: countryCode + phone }),
+        ...(resetMode === "email" ? { email } : { phone: phone.startsWith('+92') ? phone : `+92${phone}` }),
         code: otp,
         newPassword: password,
       };
       
       await authService.resetPassword(resetData);
-      setToastMessage("Password reset successfully!");
+      
+      setToastMessage("Password reset successfully! Redirecting to login...");
       setToastSeverity("success");
       setToastOpen(true);
-      setTimeout(() => navigate("/login"), 2000);
+      
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        navigate("/login");
+      }, 2000);
     } catch (error: any) {
       const errorMsg = error.response?.data?.message || "Failed to reset password";
       setToastMessage(errorMsg);
       setToastSeverity("error");
       setToastOpen(true);
+      
+      // Set appropriate field errors based on error message
+      if (errorMsg.toLowerCase().includes('code') || errorMsg.toLowerCase().includes('invalid')) {
+        setFieldErrors({ otp: true });
+      } else if (errorMsg.toLowerCase().includes('password')) {
+        setFieldErrors({ password: true });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -267,15 +379,15 @@ export const ResetPassword = () => {
                   }
                 }}
                 error={errors.email}
-                sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
+                sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error }, color: colors.text.primary } } : {}}
                 endAdornment={<Email sx={{ color: colors.text.secondary, fontSize: 22 }} />}
               />
             ) : (
-              <CustomInput
+              <PhoneInput
                 label="Phone Number"
                 value={phone}
-                onChange={(e) => {
-                  setPhone(e.target.value);
+                onChange={(value: string) => {
+                  setPhone(value);
                   // Clear error styling when user types
                   if (fieldErrors.phone) {
                     setFieldErrors(prev => ({ ...prev, phone: false }));
@@ -283,36 +395,6 @@ export const ResetPassword = () => {
                 }}
                 error={errors.phone}
                 sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
-                startAdornment={
-                  <Box sx={{ display: "flex", alignItems: "center", mr: 1 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      style={{
-                        border: 'none',
-                        backgroundColor: 'transparent',
-                        fontSize: '14px',
-                        color: colors.text.secondary,
-                        cursor: 'pointer',
-                        paddingRight: '8px',
-                        outline: 'none'
-                      }}
-                    >
-                      <option value="+92" style={{ backgroundColor: colors.background.card, color: colors.text.primary }}>
-                        PK +92
-                      </option>
-                    </select>
-                    <span 
-                      style={{ 
-                        marginLeft: '8px', 
-                        color: colors.border.primary, 
-                        borderRight: `1px solid ${colors.border.primary}`, 
-                        height: '24px' 
-                      }}
-                    ></span>
-                  </Box>
-                }
-                endAdornment={<Phone sx={{ color: colors.text.secondary, fontSize: 22 }} />}
               />
             )}
 
@@ -322,14 +404,35 @@ export const ResetPassword = () => {
                 label="Enter 6-digit code"
                 value={otp}
                 onChange={(e) => {
-                  setOtp(e.target.value);
+                  // Only allow numeric input and limit to 6 digits
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setOtp(value);
                   // Clear error styling when user types
                   if (fieldErrors.otp) {
                     setFieldErrors(prev => ({ ...prev, otp: false }));
                   }
                 }}
                 error={errors.otp}
-                sx={fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
+                disabled={!codeSent}
+                placeholder="Enter 6-digit code"
+                sx={{
+                  ...(fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error, borderWidth: "2px" } } } : {}),
+                  // Improve disabled text visibility
+                  "& .MuiOutlinedInput-root.Mui-disabled": {
+                    cursor: "not-allowed",
+                    "& input": {
+                      color: colors.text.secondary,
+                      WebkitTextFillColor: colors.text.secondary,
+                      cursor: "not-allowed",
+                    },
+                    "& fieldset": {
+                      borderColor: colors.border.secondary,
+                    }
+                  },
+                  "& .MuiInputLabel-root.Mui-disabled": {
+                    color: colors.text.secondary,
+                  }
+                }}
                 endAdornment={
                   <Button
                     variant="outlined"
@@ -338,16 +441,21 @@ export const ResetPassword = () => {
                       height: "38px",
                       border: "none",
                       fontSize: 15,
-                      color: colors.text.secondary,
+                      color: isSendCodeDisabled() ? colors.text.secondary : colors.text.secondary,
                       borderLeft: `1px solid ${colors.border.primary}`,
                       borderRadius: 0,
                       paddingRight: 0,
-                      ":hover": { textDecoration: "underline" },
+                      cursor: isSendCodeDisabled() ? "not-allowed" : "pointer",
+                      ":hover": { textDecoration: isSendCodeDisabled() ? "none" : "underline" },
+                      "&.Mui-disabled": {
+                        color: colors.text.secondary,
+                        cursor: "not-allowed",
+                      }
                     }}
                     onClick={handleSendCode}
-                    disabled={isLoading}
+                    disabled={isSendCodeDisabled()}
                   >
-                    Send code
+                    {isLoading ? "Sending..." : countdown > 0 ? `Resend (${countdown}s)` : "Send code"}
                   </Button>
                 }
               />
@@ -366,24 +474,106 @@ export const ResetPassword = () => {
                 }
               }}
               error={errors.password}
-              disabled={!codeSent}
-              sx={fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
+              disabled={!codeSent || otp.length !== 6}
+              placeholder="Enter new password"
+              sx={{
+                ...(fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error, borderWidth: "2px" } } } : {}),
+                // Improve disabled text visibility
+                "& .MuiOutlinedInput-root.Mui-disabled": {
+                  cursor: "not-allowed",
+                  "& input": {
+                    color: colors.text.secondary,
+                    WebkitTextFillColor: colors.text.secondary,
+                    cursor: "not-allowed",
+                  },
+                  "& fieldset": {
+                    borderColor: colors.border.secondary,
+                  }
+                },
+                "& .MuiInputLabel-root.Mui-disabled": {
+                  color: colors.text.secondary,
+                }
+              }}
               endAdornment={
                 <IconButton
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
-                  disabled={!codeSent}
+                  disabled={!codeSent || otp.length !== 6}
+                  sx={{
+                    cursor: (!codeSent || otp.length !== 6) ? "not-allowed" : "pointer",
+                    "&.Mui-disabled": {
+                      cursor: "not-allowed",
+                    }
+                  }}
                 >
                   {showPassword ? (
-                    <VisibilityOff sx={{ color: codeSent ? colors.text.secondary : colors.text.tertiary, fontSize: 22 }} />
+                    <VisibilityOff sx={{ 
+                      color: (!codeSent || otp.length !== 6) ? colors.text.tertiary : colors.text.secondary, 
+                      fontSize: 22,
+                      cursor: (!codeSent || otp.length !== 6) ? "not-allowed" : "pointer"
+                    }} />
                   ) : (
-                    <Visibility sx={{ color: codeSent ? colors.text.secondary : colors.text.tertiary, fontSize: 22 }} />
+                    <Visibility sx={{ 
+                      color: (!codeSent || otp.length !== 6) ? colors.text.tertiary : colors.text.secondary, 
+                      fontSize: 22,
+                      cursor: (!codeSent || otp.length !== 6) ? "not-allowed" : "pointer"
+                    }} />
                   )}
                 </IconButton>
               }
             />
 
-            <PrimaryButton type="submit" fullWidth disabled={isLoading}>
+            {/* Password requirements */}
+            {password && (
+              <Box sx={{ mt: 1, mb: 2 }}>
+                <Typography variant="caption" sx={{ color: colors.text.secondary, fontSize: 12 }}>
+                  Password must contain:
+                </Typography>
+                <Box sx={{ ml: 1 }}>
+                  <Typography variant="caption" sx={{ 
+                    color: password.length >= 8 ? colors.status.success : colors.status.error, 
+                    fontSize: 11,
+                    display: 'block'
+                  }}>
+                    • At least 8 characters
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: /(?=.*[a-z])/.test(password) ? colors.status.success : colors.status.error, 
+                    fontSize: 11,
+                    display: 'block'
+                  }}>
+                    • One lowercase letter
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: /(?=.*[A-Z])/.test(password) ? colors.status.success : colors.status.error, 
+                    fontSize: 11,
+                    display: 'block'
+                  }}>
+                    • One uppercase letter
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: /(?=.*\d)/.test(password) ? colors.status.success : colors.status.error, 
+                    fontSize: 11,
+                    display: 'block'
+                  }}>
+                    • One number
+                  </Typography>
+                  <Typography variant="caption" sx={{ 
+                    color: /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(password) ? colors.status.success : colors.status.error, 
+                    fontSize: 11,
+                    display: 'block'
+                  }}>
+                    • One special character
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+
+            <PrimaryButton 
+              type="submit" 
+              fullWidth 
+              disabled={isLoading || !codeSent || otp.length !== 6 || !password}
+            >
               {isLoading ? "Processing..." : "Reset Password"}
             </PrimaryButton>
 

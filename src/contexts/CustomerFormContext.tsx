@@ -58,6 +58,7 @@ const defaultDomesticCustomer: DomesticCustomer = {
   alternateContactNumber: '',
   creationDate: new Date().toISOString(),
   preferredContactMethod: 'whatsapp',
+  profilePictureFileUrl: '',
   buildingAccessInfo: {
     ownershipStatus: '',
     deliveryAccessLevel: '',
@@ -318,6 +319,7 @@ export const CustomerFormProvider: React.FC<{ children: ReactNode }> = ({ childr
             firstName: data.firstName,
             lastName: data.lastName,
             profilePictureAssetId: data.profilePictureAssetId,
+            profilePictureFileUrl: data.profilePictureFileUrl,
           };
         case 1:
           return {
