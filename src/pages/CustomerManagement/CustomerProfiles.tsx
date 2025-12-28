@@ -62,7 +62,7 @@ export const CustomerProfiles = () => {
     try {
       await customerService.deleteCustomer(item.id);
       // Refetch customers list after deletion
-      // refetch();
+      refetch();
     } catch (err: any) {
       console.error(err.response?.data?.message || "Failed to delete customer");
     }

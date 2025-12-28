@@ -592,6 +592,17 @@ export const staffService = {
     return response.data;
   },
 
+  deleteStaff: async (staffProfileId: string): Promise<any> => {
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    const vendorId = userData?.vendorId || userData?.id || '';
+    const response = await api.delete(`/staff/${staffProfileId}`, {
+      headers: {
+        'x-vendorId': vendorId,
+      },
+    });
+    return response.data;
+  },
+
   getStaffById: async (staffId: string): Promise<any> => {
     const response = await api.get(`/staff/${staffId}`);
     return response.data;
@@ -609,10 +620,10 @@ export const staffService = {
     return response.data;
   },
 
-  deleteStaff: async (staffId: string): Promise<any> => {
-    const response = await api.delete(`/staff/${staffId}`);
-    return response.data;
-  },
+  // deleteStaff: async (staffId: string): Promise<any> => {
+  //   const response = await api.delete(`/staff/${staffId}`);
+  //   return response.data;
+  // },
 
   getOnboardingProgress: async (staffId: string): Promise<any> => {
     const response = await api.get(`/staff/${staffId}/onboarding-progress`);

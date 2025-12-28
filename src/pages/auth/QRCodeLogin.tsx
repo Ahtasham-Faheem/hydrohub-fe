@@ -420,7 +420,7 @@ export const QRCodeLogin = () => {
                 <Typography
                   onClick={() => navigate("/login?mode=phone")}
                   sx={{
-                    color: "white",
+                    color: colors.text.primary,
                     textTransform: "none",
                     fontSize: 14,
                     fontWeight: 500,

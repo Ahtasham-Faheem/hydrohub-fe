@@ -12,6 +12,7 @@ import { DataTable } from "../../components/common/DataTable";
 import { CustomSelect } from "../../components/common/CustomSelect";
 import type { Column, SortConfig } from "../../components/common/DataTable";
 import { useTheme } from "../../contexts/ThemeContext";
+import { staffService } from "../../services/api";
 
 export const UsersPage = () => {
   const navigate = useNavigate();
@@ -153,6 +154,16 @@ export const UsersPage = () => {
     [newCols[index], newCols[swap]] = [newCols[swap], newCols[index]];
     setColumns(newCols);
   };
+  const handleDeleteUser = async (item: any) => {
+      console.log(item)
+      try {
+        await staffService.deleteStaff(item.id);
+        // Refetch customers list after deletion
+        refetch();
+      } catch (err: any) {
+        console.error(err.response?.data?.message || "Failed to delete customer");
+      }
+    };
 
   // Handle export functionality
   const handleExport = (format: string) => {
@@ -481,7 +492,7 @@ export const UsersPage = () => {
         onSelectionChange={setSelectedUsers}
         onView={(item) => console.log("View", item)}
         onEdit={(item) => navigate(`/dashboard/users/edit/${item.id}`)}
-        onDelete={(item) => console.log("Delete", item)}
+        onDelete={(item) => handleDeleteUser(item)}
         sortConfig={sortConfig}
         onSort={handleSort}
         visibleColumns={visibleColumns}

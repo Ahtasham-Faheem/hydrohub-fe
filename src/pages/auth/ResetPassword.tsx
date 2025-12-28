@@ -97,7 +97,7 @@ export const ResetPassword = () => {
         ? { email: email.trim() } 
         : { phone: phone.startsWith('+92') ? phone : `+92${phone}` };
       
-      await authService.sendLoginCode(requestData);
+      await authService.requestResetPassword(requestData);
       setCodeSent(true);
       setCountdown(60); // Start 1-minute countdown
       setToastMessage(`Verification code sent to ${
@@ -210,13 +210,13 @@ export const ResetPassword = () => {
     
     try {
       // Use verifyLoginCode to verify the code, then call resetPassword
-      const verifyData = {
-        ...(resetMode === "email" ? { email } : { phone: phone.startsWith('+92') ? phone : `+92${phone}` }),
-        code: otp,
-      };
+      // const verifyData = {
+      //   ...(resetMode === "email" ? { email } : { phone: phone.startsWith('+92') ? phone : `+92${phone}` }),
+      //   code: otp,
+      // };
       
       // First verify the code
-      await authService.verifyLoginCode(verifyData);
+      // await authService.verifyLoginCode(verifyData);
       
       // If verification successful, proceed with password reset
       const resetData = {
