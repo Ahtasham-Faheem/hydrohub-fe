@@ -16,6 +16,10 @@ import { EditCustomer } from "./CustomerManagement/EditCustomer";
 import { CustomerFormProvider } from "../contexts/CustomerFormContext";
 import { CatalogueManagement } from "./CatalogeManagement/CatalogueManagement";
 import { OrderFlow } from "./Orders/OrderFlow";
+import { WalkInSales } from "./Orders/WalkInSales";
+import { DeliveryOrderStep1 } from "./Orders/DeliveryOrderStep1";
+import { DeliveryOrderStep2 } from "./Orders/DeliveryOrderStep2";
+import { ParkingOrders } from "./Orders/ParkingOrders";
 import { useTheme } from "../contexts/ThemeContext";
 
 export const Dashboard = () => {
@@ -119,6 +123,11 @@ export const Dashboard = () => {
               />
               <Route path="catalogue" element={<CatalogueManagement />} />
               <Route path="orders" element={<OrderFlow />} />
+              <Route path="orders/walk-in-sales" element={<WalkInSales />} />
+              <Route path="orders/delivery-step-1" element={<DeliveryOrderStep1 />} />
+              <Route path="orders/delivery-step-2" element={<DeliveryOrderStep2 />} />
+              <Route path="orders/parking-orders" element={<ParkingOrders />} />
+              <Route path="orders/parking-orders" element={<ParkingOrders />} />
               <Route
                 path="*"
                 element={

@@ -63,3 +63,8 @@ body {
 .phoneInput .css-qve9l1-MuiInputBase-input-MuiOutlinedInput-input {
   color: var(--text-primary);
 }
+
+.send-code-btn:hover:not(:disabled) {
+  font-weight: 600;
+  text-decoration: underline;
+}

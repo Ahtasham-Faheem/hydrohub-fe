@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -28,7 +28,12 @@ export const QRCodeLogin = () => {
     >
       {/* Header */}
       <div className="flex justify-between items-center w-full px-12 pt-8 mb-8">
-        <img src={WaterLogo} alt="HydroHub Logo" className="w-[190px]" />
+        <Link
+          to="/login-access"
+          className="text-primary-600 hover:underline cursor-pointer"
+        >
+          <img src={WaterLogo} alt="HydroHub Logo" className="w-[190px]" />
+        </Link>
         <div 
           className="text-center font-extrabold flex items-center cursor-pointer"
           style={{ color: colors.primary[500] }}

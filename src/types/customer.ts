@@ -196,6 +196,71 @@ export interface CustomerFormState {
   errors: Record<string, string>;
 }
 
+export interface PersonalInfo {
+  id: string;
+  staffProfileId: string | null;
+  customerProfileId: string;
+  fathersName: string;
+  mothersName: string;
+  dateOfBirth: string;
+  nationality: string;
+  nationalId: string;
+  gender: string;
+  maritalStatus: string;
+  alternateContactNumber: string;
+  secondaryEmailAddress: string;
+  presentAddress: string;
+  permanentAddress: string;
+  emergencyContactName: string;
+  emergencyContactRelation: string;
+  emergencyContactNumber: string;
+  alternateEmergencyContact: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProfilePictureAsset {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  storageKey: string;
+  fileType: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OnboardingProgress {
+  'Basic Profile': boolean;
+  'Additional Information': boolean;
+  'Addresses Added': boolean;
+  'Building Information': boolean;
+  'Preferences Set': boolean;
+  'Security & Empties': boolean;
+  'progress percentage': number;
+}
+
+export interface ActualCustomerProfile {
+  id: string;
+  customerId: string;
+  userId: string;
+  vendorId: string;
+  customerType: string;
+  status: string;
+  title: string;
+  firstName: string;
+  lastName: string;
+  profilePictureAssetId: string;
+  additionalRequests: string | null;
+  createdAt: string;
+  updatedAt: string;
+  email: string;
+  phone: string;
+  username: string;
+  personalInfo: PersonalInfo;
+  profilePictureAsset: ProfilePictureAsset;
+  onboardingProgress: OnboardingProgress;
+}
+
 export interface CustomerUser {
   id: string;
   email: string;
@@ -238,6 +303,6 @@ export interface Pagination {
 }
 
 export interface CustomersResponse {
-  data: CustomerProfile[];
+  data: ActualCustomerProfile[];
   pagination: Pagination;
 }

@@ -8,8 +8,8 @@ interface OnboardingProgressBarProps {
   currentStep: number;
   totalSteps: number;
   onboardingProgress?: {
-    [key: string]: boolean | number;
-    'progress percentage'?: number | any;
+    [key: string]: boolean | number | string;
+    'progress percentage'?: number;
   };
 }
 

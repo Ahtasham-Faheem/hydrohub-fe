@@ -123,11 +123,6 @@ export const menuConfig: MenuItem[] = [
     icon: RateReviewOutlined,
     children: [
       {
-        id: 'orders-management',
-        label: 'Orders Management',
-        icon: Assignment,
-      },
-      {
         id: 'payments-receipts',
         label: 'Payments & Receipts',
         icon: Receipt,
@@ -154,8 +149,30 @@ export const menuConfig: MenuItem[] = [
       },
       {
         id: 'orders',
-        label: 'Create Order',
-        icon: ShoppingCart,
+        label: 'Orders Management',
+        icon: Assignment,
+        children: [
+          {
+            id: 'orders',
+            label: 'All Orders',
+            icon: Assignment,
+          },
+          {
+            id: 'orders/walk-in-sales',
+            label: 'Walk-In Sales',
+            icon: PointOfSale,
+          },
+          {
+            id: 'orders/delivery-step-1',
+            label: 'New Delivery Order',
+            icon: LocalShipping,
+          },
+          {
+            id: 'orders/parking-orders',
+            label: 'Parking Orders',
+            icon: PauseCircle,
+          },
+        ],
       },
     ],
   },

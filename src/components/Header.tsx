@@ -315,7 +315,7 @@ export const Header = ({
           slotProps={{
             paper: {
               sx: {
-                mt: 1.2,
+                mt: 1.2,  
                 minWidth: 180,
                 borderRadius: 2,
                 backgroundColor: colors.background.card,

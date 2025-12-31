@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Box, Card, Divider, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { LuUserRoundCheck, LuUserRoundX } from "react-icons/lu";
@@ -31,6 +31,14 @@ export const CustomerProfiles = () => {
   );
   const [exportFormat, setExportFormat] = useState("");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
+  
+  // Customer statistics state
+  const [customerStats, setCustomerStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    verified: 0,
+  });
 
   // Get vendorId from localStorage
   const vendorData = localStorage.getItem("userData");
@@ -57,12 +65,66 @@ export const CustomerProfiles = () => {
   const customers = customerData?.data || [];
   const totalPages = customerData?.pagination?.totalPages || 1;
 
+  // Fetch customer statistics
+  const fetchCustomerStats = async () => {
+    if (!vendorId) return;
+    
+    try {
+      // Make parallel API calls for better performance
+      const [totalResponse, activeResponse, inactiveResponse] = await Promise.all([
+        customerService.getCustomers(vendorId, 1, 1), // Get total count
+        customerService.getCustomers(vendorId, 1, 1, { status: 'active' }), // Get active count
+        customerService.getCustomers(vendorId, 1, 1, { status: 'inactive' }), // Get inactive count
+      ]);
+      
+      const total = totalResponse.pagination?.total || 0;
+      const active = activeResponse.pagination?.total || 0;
+      const inactive = inactiveResponse.pagination?.total || 0;
+      
+      // For verified customers, we'll estimate based on current page data
+      // since we don't have a specific API filter for this
+      let verified = 0;
+      if (customers.length > 0) {
+        const verifiedCount = customers.filter((c: any) => c.personalInfo !== null).length;
+        const verificationRate = verifiedCount / customers.length;
+        verified = Math.round(verificationRate * total);
+      }
+      
+      setCustomerStats({
+        total,
+        active,
+        inactive,
+        verified,
+      });
+    } catch (error) {
+      console.error('Error fetching customer statistics:', error);
+      // Fallback to current page data if API calls fail
+      setCustomerStats({
+        total: customerData?.pagination?.total || customers.length,
+        active: customers.filter((c: any) => c.status === 'active').length,
+        inactive: customers.filter((c: any) => c.status === 'inactive').length,
+        verified: customers.filter((c: any) => c.personalInfo !== null).length,
+      });
+    }
+  };
+
+  // Fetch stats when component mounts or vendorId changes
+  useEffect(() => {
+    if (vendorId && customers.length > 0) {
+      fetchCustomerStats();
+    }
+  }, [vendorId, customers.length]);
+
   const handleDeleteCustomer = async (item: any) => {
     console.log(item)
     try {
       await customerService.deleteCustomer(item.id);
       // Refetch customers list after deletion
       refetch();
+      // Refresh statistics
+      if (vendorId) {
+        fetchCustomerStats();
+      }
     } catch (err: any) {
       console.error(err.response?.data?.message || "Failed to delete customer");
     }
@@ -96,6 +158,9 @@ export const CustomerProfiles = () => {
   // Handle refresh functionality
   const handleRefresh = () => {
     refetch();
+    if (vendorId) {
+      fetchCustomerStats();
+    }
   };
 
   const [columns, setColumns] = useState([
@@ -198,7 +263,7 @@ export const CustomerProfiles = () => {
   const cards = [
     {
       title: "Total Customers",
-      value: sortedAndFilteredCustomers.length.toString(),
+      value: customerStats.total.toString(),
       change: "0%",
       desc: "Total customers in the system",
       color: colors.status.success,
@@ -207,9 +272,7 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Active Customers",
-      value: sortedAndFilteredCustomers
-        .filter((c: any) => c.status === "active")
-        .length.toString(),
+      value: customerStats.active.toString(),
       change: "+0%",
       desc: "All customers currently active in the system",
       color: colors.primary[600],
@@ -218,9 +281,7 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Verified Customers",
-      value: sortedAndFilteredCustomers
-        .filter((c: any) => c.personalInfo !== null)
-        .length.toString(),
+      value: customerStats.verified.toString(),
       change: "+0%",
       desc: "Customers with complete profile information",
       color: colors.status.warning,
@@ -229,9 +290,7 @@ export const CustomerProfiles = () => {
     },
     {
       title: "Inactive Customers",
-      value: sortedAndFilteredCustomers
-        .filter((c: any) => c.status === "inactive")
-        .length.toString(),
+      value: customerStats.inactive.toString(),
       change: "0%",
       desc: "Customers no longer active",
       color: colors.status.error,

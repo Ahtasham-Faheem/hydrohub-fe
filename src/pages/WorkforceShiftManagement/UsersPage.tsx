@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Box, Card, Divider, IconButton } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useGetStaff } from "../../hooks/useStaff";
@@ -27,6 +27,14 @@ export const UsersPage = () => {
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [exportFormat, setExportFormat] = useState("");
+  
+  // Staff statistics state
+  const [staffStats, setStaffStats] = useState({
+    total: 0,
+    active: 0,
+    inactive: 0,
+    supervisors: 0,
+  });
 
   // Get vendorId from localStorage
   const vendorData = localStorage.getItem("userData");
@@ -53,6 +61,50 @@ export const UsersPage = () => {
 
   const staff = staffData?.data || [];
   const totalPages = staffData?.pagination?.totalPages || 1;
+
+  // Fetch staff statistics
+  const fetchStaffStats = async () => {
+    if (!vendorId) return;
+    
+    try {
+      // Make parallel API calls for better performance
+      const [totalResponse, activeResponse, inactiveResponse, supervisorResponse] = await Promise.all([
+        staffService.getStaff(vendorId, 1, 1), // Get total count
+        staffService.getStaff(vendorId, 1, 1, { status: 'active' }), // Get active count
+        staffService.getStaff(vendorId, 1, 1, { status: 'inactive' }), // Get inactive count
+        staffService.getStaff(vendorId, 1, 1, { role: 'supervisor' }), // Get supervisor count
+      ]);
+      
+      const total = totalResponse.pagination?.total || 0;
+      const active = activeResponse.pagination?.total || 0;
+      const inactive = inactiveResponse.pagination?.total || 0;
+      const supervisors = supervisorResponse.pagination?.total || 0;
+      
+      setStaffStats({
+        total,
+        active,
+        inactive,
+        supervisors,
+      });
+    } catch (error) {
+      console.error('Error fetching staff statistics:', error);
+      // Fallback to current page data if API calls fail
+      setStaffStats({
+        total: staffData?.pagination?.total || staff.length,
+        active: staff.filter((s: any) => s.status === 'active').length,
+        inactive: staff.filter((s: any) => s.status === 'inactive').length,
+        supervisors: staff.filter((s: any) => s.role === 'supervisor').length,
+      });
+    }
+  };
+
+  // Fetch stats when component mounts or vendorId changes
+  useEffect(() => {
+    if (vendorId && staff.length > 0) {
+      fetchStaffStats();
+    }
+  }, [vendorId, staff.length]);
+
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [manageAnchorEl, setManageAnchorEl] = useState<HTMLElement | null>(
     null
@@ -158,10 +210,14 @@ export const UsersPage = () => {
       console.log(item)
       try {
         await staffService.deleteStaff(item.id);
-        // Refetch customers list after deletion
+        // Refetch staff list after deletion
         refetch();
+        // Refresh statistics
+        if (vendorId) {
+          fetchStaffStats();
+        }
       } catch (err: any) {
-        console.error(err.response?.data?.message || "Failed to delete customer");
+        console.error(err.response?.data?.message || "Failed to delete staff");
       }
     };
 
@@ -194,14 +250,15 @@ export const UsersPage = () => {
   // Handle refresh functionality
   const handleRefresh = () => {
     refetch();
+    if (vendorId) {
+      fetchStaffStats();
+    }
   };
 
   const cards = [
     {
       title: "Active Users",
-      value: sortedAndFilteredStaff
-        .filter((u: any) => u?.status === "active")
-        .length.toString(),
+      value: staffStats.active.toString(),
       change: "+0%",
       desc: "All staff currently authorized in the system",
       color: colors.status.success,
@@ -210,7 +267,7 @@ export const UsersPage = () => {
     },
     {
       title: "Total Staff",
-      value: sortedAndFilteredStaff.length.toString(),
+      value: staffStats.total.toString(),
       change: "+0%",
       desc: "Total staff members in the system",
       color: colors.primary[600],
@@ -219,9 +276,7 @@ export const UsersPage = () => {
     },
     {
       title: "Supervisors",
-      value: sortedAndFilteredStaff
-        .filter((u: any) => u?.role === "supervisor")
-        .length.toString(),
+      value: staffStats.supervisors.toString(),
       change: "0%",
       desc: "Supervisory staff members",
       color: colors.status.warning,
@@ -230,9 +285,7 @@ export const UsersPage = () => {
     },
     {
       title: "Inactive Users",
-      value: sortedAndFilteredStaff
-        .filter((u: any) => u?.status === "inactive")
-        .length.toString(),
+      value: staffStats.inactive.toString(),
       change: "0%",
       desc: "Users no longer active in operations",
       color: colors.status.error,

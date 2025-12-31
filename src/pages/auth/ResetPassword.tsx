@@ -8,6 +8,7 @@ import {
   Button,
   Snackbar,
   Alert,
+  CircularProgress,
 } from "@mui/material";
 import { Visibility, VisibilityOff, Email } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
@@ -27,14 +28,23 @@ export const ResetPassword = () => {
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState({ email: "", phone: "", otp: "", password: "" });
+  const [errors, setErrors] = useState({
+    email: "",
+    phone: "",
+    otp: "",
+    password: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastSeverity, setToastSeverity] = useState<"success" | "error">("error");
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
+  const [toastSeverity, setToastSeverity] = useState<"success" | "error">(
+    "error"
+  );
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   const navigate = useNavigate();
 
   // Countdown timer for resend code
@@ -50,7 +60,7 @@ export const ResetPassword = () => {
     setErrors({ email: "", phone: "", otp: "", password: "" });
     setFieldErrors({});
     setIsLoading(true);
-    
+
     // Validate input first
     if (resetMode === "email") {
       if (!email || !email.trim()) {
@@ -81,7 +91,7 @@ export const ResetPassword = () => {
         return;
       }
       // Extract phone number without country code for validation
-      const phoneNumber = phone.startsWith('+92') ? phone.substring(3) : phone;
+      const phoneNumber = phone.startsWith("+92") ? phone.substring(3) : phone;
       if (!/^(3\d{9}|03\d{8})$/.test(phoneNumber)) {
         setToastMessage("Please enter a valid Pakistani phone number");
         setToastSeverity("error");
@@ -91,30 +101,38 @@ export const ResetPassword = () => {
         return;
       }
     }
-    
+
     try {
-      const requestData = resetMode === "email" 
-        ? { email: email.trim() } 
-        : { phone: phone.startsWith('+92') ? phone : `+92${phone}` };
-      
+      const requestData =
+        resetMode === "email"
+          ? { email: email.trim() }
+          : { phone: phone.startsWith("+92") ? phone : `+92${phone}` };
+
       await authService.requestResetPassword(requestData);
       setCodeSent(true);
       setCountdown(60); // Start 1-minute countdown
-      setToastMessage(`Verification code sent to ${
-        resetMode === "email" ? email : phone
-      }`);
+      setToastMessage(
+        `Verification code sent to ${resetMode === "email" ? email : phone}`
+      );
       setToastSeverity("success");
       setToastOpen(true);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Failed to send code";
+      const errorMessage =
+        error.response?.data?.message || "Failed to send code";
       setToastMessage(errorMessage);
       setToastSeverity("error");
       setToastOpen(true);
-      
+
       // Set field errors based on error type and also for API failures
-      if (errorMessage.toLowerCase().includes('email') || resetMode === "email") {
+      if (
+        errorMessage.toLowerCase().includes("email") ||
+        resetMode === "email"
+      ) {
         setFieldErrors({ email: true });
-      } else if (errorMessage.toLowerCase().includes('phone') || resetMode === "phone") {
+      } else if (
+        errorMessage.toLowerCase().includes("phone") ||
+        resetMode === "phone"
+      ) {
         setFieldErrors({ phone: true });
       }
     } finally {
@@ -125,12 +143,12 @@ export const ResetPassword = () => {
   // Check if send code button should be disabled
   const isSendCodeDisabled = () => {
     if (isLoading || countdown > 0) return true;
-    
+
     if (resetMode === "email") {
       return !email || !email.trim() || !/\S+@\S+\.\S+/.test(email);
     } else {
       if (!phone || !phone.trim()) return true;
-      const phoneNumber = phone.startsWith('+92') ? phone.substring(3) : phone;
+      const phoneNumber = phone.startsWith("+92") ? phone.substring(3) : phone;
       return !/^(3\d{9}|03\d{8})$/.test(phoneNumber);
     }
   };
@@ -139,10 +157,14 @@ export const ResetPassword = () => {
   const validatePassword = (pwd: string): string | null => {
     if (!pwd) return "Password is required";
     if (pwd.length < 8) return "Password must be at least 8 characters";
-    if (!/(?=.*[a-z])/.test(pwd)) return "Password must contain at least one lowercase letter";
-    if (!/(?=.*[A-Z])/.test(pwd)) return "Password must contain at least one uppercase letter";
-    if (!/(?=.*\d)/.test(pwd)) return "Password must contain at least one number";
-    if (!/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(pwd)) return "Password must contain at least one special character";
+    if (!/(?=.*[a-z])/.test(pwd))
+      return "Password must contain at least one lowercase letter";
+    if (!/(?=.*[A-Z])/.test(pwd))
+      return "Password must contain at least one uppercase letter";
+    if (!/(?=.*\d)/.test(pwd))
+      return "Password must contain at least one number";
+    if (!/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(pwd))
+      return "Password must contain at least one special character";
     return null;
   };
 
@@ -151,11 +173,11 @@ export const ResetPassword = () => {
     setErrors({ email: "", phone: "", otp: "", password: "" });
     setFieldErrors({});
     setIsLoading(true);
-    
+
     let hasErrors = false;
     let errorMessage = "";
     const newFieldErrors: { [key: string]: boolean } = {};
-    
+
     // Validate all fields
     if (resetMode === "email" && (!email || !email.trim())) {
       errorMessage = "Please enter your email address";
@@ -166,20 +188,20 @@ export const ResetPassword = () => {
       newFieldErrors.email = true;
       hasErrors = true;
     }
-    
+
     if (!hasErrors && resetMode === "phone" && (!phone || !phone.trim())) {
       errorMessage = "Please enter your phone number";
       newFieldErrors.phone = true;
       hasErrors = true;
     } else if (!hasErrors && resetMode === "phone") {
-      const phoneNumber = phone.startsWith('+92') ? phone.substring(3) : phone;
+      const phoneNumber = phone.startsWith("+92") ? phone.substring(3) : phone;
       if (!/^(3\d{9}|03\d{8})$/.test(phoneNumber)) {
         errorMessage = "Please enter a valid Pakistani phone number";
         newFieldErrors.phone = true;
         hasErrors = true;
       }
     }
-    
+
     if (!hasErrors && (!otp || !otp.trim())) {
       errorMessage = "Please enter the verification code";
       newFieldErrors.otp = true;
@@ -189,7 +211,7 @@ export const ResetPassword = () => {
       newFieldErrors.otp = true;
       hasErrors = true;
     }
-    
+
     if (!hasErrors) {
       const passwordError = validatePassword(password);
       if (passwordError) {
@@ -198,7 +220,7 @@ export const ResetPassword = () => {
         hasErrors = true;
       }
     }
-    
+
     if (hasErrors) {
       setToastMessage(errorMessage);
       setToastSeverity("error");
@@ -207,44 +229,50 @@ export const ResetPassword = () => {
       setIsLoading(false);
       return;
     }
-    
+
     try {
       // Use verifyLoginCode to verify the code, then call resetPassword
       // const verifyData = {
       //   ...(resetMode === "email" ? { email } : { phone: phone.startsWith('+92') ? phone : `+92${phone}` }),
       //   code: otp,
       // };
-      
+
       // First verify the code
       // await authService.verifyLoginCode(verifyData);
-      
+
       // If verification successful, proceed with password reset
       const resetData = {
-        ...(resetMode === "email" ? { email } : { phone: phone.startsWith('+92') ? phone : `+92${phone}` }),
+        ...(resetMode === "email"
+          ? { email }
+          : { phone: phone.startsWith("+92") ? phone : `+92${phone}` }),
         code: otp,
         newPassword: password,
       };
-      
+
       await authService.resetPassword(resetData);
-      
+
       setToastMessage("Password reset successfully! Redirecting to login...");
       setToastSeverity("success");
       setToastOpen(true);
-      
+
       // Redirect to login after 2 seconds
       setTimeout(() => {
         navigate("/login");
       }, 2000);
     } catch (error: any) {
-      const errorMsg = error.response?.data?.message || "Failed to reset password";
+      const errorMsg =
+        error.response?.data?.message || "Failed to reset password";
       setToastMessage(errorMsg);
       setToastSeverity("error");
       setToastOpen(true);
-      
+
       // Set appropriate field errors based on error message
-      if (errorMsg.toLowerCase().includes('code') || errorMsg.toLowerCase().includes('invalid')) {
+      if (
+        errorMsg.toLowerCase().includes("code") ||
+        errorMsg.toLowerCase().includes("invalid")
+      ) {
         setFieldErrors({ otp: true });
-      } else if (errorMsg.toLowerCase().includes('password')) {
+      } else if (errorMsg.toLowerCase().includes("password")) {
         setFieldErrors({ password: true });
       }
     } finally {
@@ -253,7 +281,7 @@ export const ResetPassword = () => {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col items-center justify-between"
       style={{ backgroundColor: colors.background.primary }}
     >
@@ -270,7 +298,7 @@ export const ResetPassword = () => {
             className="w-[190px]" // Reduced size
           />
         </Link>
-        <div 
+        <div
           className="text-center font-extrabold flex items-center cursor-pointer"
           style={{ color: colors.primary[500] }}
         >
@@ -295,7 +323,9 @@ export const ResetPassword = () => {
               0-2.21-1.79-4-4-4z"
             />
           </svg>
-          <span className="font-medium text-sm underline ml-1"> {/* Reduced text size */}
+          <span className="font-medium text-sm underline ml-1">
+            {" "}
+            {/* Reduced text size */}
             Feedback and help
           </span>
         </div>
@@ -308,12 +338,14 @@ export const ResetPassword = () => {
           width: "90%",
           boxShadow: colors.shadow.lg,
           borderRadius: 2,
-          margin: 'auto 0', // Centers vertically
+          margin: "auto 0", // Centers vertically
           backgroundColor: colors.background.card,
           border: `1px solid ${colors.border.primary}`,
         }}
       >
-        <CardContent sx={{ px: 4, py: 5 }}> {/* Reduced padding */}
+        <CardContent sx={{ px: 4, py: 5 }}>
+          {" "}
+          {/* Reduced padding */}
           <Typography
             variant="h4"
             align="center"
@@ -336,7 +368,6 @@ export const ResetPassword = () => {
           >
             Empower your team, enhance performance and grow smarter everyday
           </Typography>
-
           <Box
             component="form"
             onSubmit={handleReset}
@@ -375,12 +406,23 @@ export const ResetPassword = () => {
                   setEmail(e.target.value);
                   // Clear error styling when user types
                   if (fieldErrors.email) {
-                    setFieldErrors(prev => ({ ...prev, email: false }));
+                    setFieldErrors((prev) => ({ ...prev, email: false }));
                   }
                 }}
                 error={errors.email}
-                sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error }, color: colors.text.primary } } : {}}
-                endAdornment={<Email sx={{ color: colors.text.secondary, fontSize: 22 }} />}
+                sx={
+                  fieldErrors.email
+                    ? {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: colors.status.error },
+                          color: colors.text.primary,
+                        },
+                      }
+                    : {}
+                }
+                endAdornment={
+                  <Email sx={{ color: colors.text.secondary, fontSize: 22 }} />
+                }
               />
             ) : (
               <PhoneInput
@@ -390,11 +432,19 @@ export const ResetPassword = () => {
                   setPhone(value);
                   // Clear error styling when user types
                   if (fieldErrors.phone) {
-                    setFieldErrors(prev => ({ ...prev, phone: false }));
+                    setFieldErrors((prev) => ({ ...prev, phone: false }));
                   }
                 }}
                 error={errors.phone}
-                sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error } } } : {}}
+                sx={
+                  fieldErrors.phone
+                    ? {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": { borderColor: colors.status.error },
+                        },
+                      }
+                    : {}
+                }
               />
             )}
 
@@ -405,18 +455,27 @@ export const ResetPassword = () => {
                 value={otp}
                 onChange={(e) => {
                   // Only allow numeric input and limit to 6 digits
-                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
                   setOtp(value);
                   // Clear error styling when user types
                   if (fieldErrors.otp) {
-                    setFieldErrors(prev => ({ ...prev, otp: false }));
+                    setFieldErrors((prev) => ({ ...prev, otp: false }));
                   }
                 }}
                 error={errors.otp}
                 disabled={!codeSent}
                 placeholder="Enter 6-digit code"
                 sx={{
-                  ...(fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error, borderWidth: "2px" } } } : {}),
+                  ...(fieldErrors.otp
+                    ? {
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: colors.status.error,
+                            borderWidth: "2px",
+                          },
+                        },
+                      }
+                    : {}),
                   // Improve disabled text visibility
                   "& .MuiOutlinedInput-root.Mui-disabled": {
                     cursor: "not-allowed",
@@ -427,36 +486,36 @@ export const ResetPassword = () => {
                     },
                     "& fieldset": {
                       borderColor: colors.border.secondary,
-                    }
+                    },
                   },
                   "& .MuiInputLabel-root.Mui-disabled": {
                     color: colors.text.secondary,
-                  }
+                  },
                 }}
                 endAdornment={
-                  <Button
-                    variant="outlined"
-                    sx={{
+                  <button
+                    className="send-code-btn"
+                    disabled={isSendCodeDisabled()}
+                    style={{
                       textTransform: "none",
-                      height: "38px",
-                      border: "none",
+                      height: "54px",
                       fontSize: 15,
-                      color: isSendCodeDisabled() ? colors.text.secondary : colors.text.secondary,
+                      color: isSendCodeDisabled()
+                        ? colors.text.tertiary
+                        : colors.text.secondary,
+                      borderLeftWidth: 1,
+                      paddingLeft: 15,
                       borderLeft: `1px solid ${colors.border.primary}`,
                       borderRadius: 0,
-                      paddingRight: 0,
-                      cursor: isSendCodeDisabled() ? "not-allowed" : "pointer",
-                      ":hover": { textDecoration: isSendCodeDisabled() ? "none" : "underline" },
-                      "&.Mui-disabled": {
-                        color: colors.text.secondary,
-                        cursor: "not-allowed",
-                      }
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 1,
                     }}
                     onClick={handleSendCode}
-                    disabled={isSendCodeDisabled()}
                   >
                     {isLoading ? "Sending..." : countdown > 0 ? `Resend (${countdown}s)` : "Send code"}
-                  </Button>
+                  </button>
                 }
               />
             </Box>
@@ -470,14 +529,23 @@ export const ResetPassword = () => {
                 setPassword(e.target.value);
                 // Clear error styling when user types
                 if (fieldErrors.password) {
-                  setFieldErrors(prev => ({ ...prev, password: false }));
+                  setFieldErrors((prev) => ({ ...prev, password: false }));
                 }
               }}
               error={errors.password}
               disabled={!codeSent || otp.length !== 6}
               placeholder="Enter new password"
               sx={{
-                ...(fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: colors.status.error, borderWidth: "2px" } } } : {}),
+                ...(fieldErrors.password
+                  ? {
+                      "& .MuiOutlinedInput-root": {
+                        "& fieldset": {
+                          borderColor: colors.status.error,
+                          borderWidth: "2px",
+                        },
+                      },
+                    }
+                  : {}),
                 // Improve disabled text visibility
                 "& .MuiOutlinedInput-root.Mui-disabled": {
                   cursor: "not-allowed",
@@ -488,11 +556,11 @@ export const ResetPassword = () => {
                   },
                   "& fieldset": {
                     borderColor: colors.border.secondary,
-                  }
+                  },
                 },
                 "& .MuiInputLabel-root.Mui-disabled": {
                   color: colors.text.secondary,
-                }
+                },
               }}
               endAdornment={
                 <IconButton
@@ -500,24 +568,41 @@ export const ResetPassword = () => {
                   edge="end"
                   disabled={!codeSent || otp.length !== 6}
                   sx={{
-                    cursor: (!codeSent || otp.length !== 6) ? "not-allowed" : "pointer",
+                    cursor:
+                      !codeSent || otp.length !== 6 ? "not-allowed" : "pointer",
                     "&.Mui-disabled": {
                       cursor: "not-allowed",
-                    }
+                    },
                   }}
                 >
                   {showPassword ? (
-                    <VisibilityOff sx={{ 
-                      color: (!codeSent || otp.length !== 6) ? colors.text.tertiary : colors.text.secondary, 
-                      fontSize: 22,
-                      cursor: (!codeSent || otp.length !== 6) ? "not-allowed" : "pointer"
-                    }} />
+                    <VisibilityOff
+                      sx={{
+                        color:
+                          !codeSent || otp.length !== 6
+                            ? colors.text.tertiary
+                            : colors.text.secondary,
+                        fontSize: 22,
+                        cursor:
+                          !codeSent || otp.length !== 6
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    />
                   ) : (
-                    <Visibility sx={{ 
-                      color: (!codeSent || otp.length !== 6) ? colors.text.tertiary : colors.text.secondary, 
-                      fontSize: 22,
-                      cursor: (!codeSent || otp.length !== 6) ? "not-allowed" : "pointer"
-                    }} />
+                    <Visibility
+                      sx={{
+                        color:
+                          !codeSent || otp.length !== 6
+                            ? colors.text.tertiary
+                            : colors.text.secondary,
+                        fontSize: 22,
+                        cursor:
+                          !codeSent || otp.length !== 6
+                            ? "not-allowed"
+                            : "pointer",
+                      }}
+                    />
                   )}
                 </IconButton>
               }
@@ -526,52 +611,81 @@ export const ResetPassword = () => {
             {/* Password requirements */}
             {password && (
               <Box sx={{ mt: 1, mb: 2 }}>
-                <Typography variant="caption" sx={{ color: colors.text.secondary, fontSize: 12 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ color: colors.text.secondary, fontSize: 12 }}
+                >
                   Password must contain:
                 </Typography>
                 <Box sx={{ ml: 1 }}>
-                  <Typography variant="caption" sx={{ 
-                    color: password.length >= 8 ? colors.status.success : colors.status.error, 
-                    fontSize: 11,
-                    display: 'block'
-                  }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        password.length >= 8
+                          ? colors.status.success
+                          : colors.status.error,
+                      fontSize: 11,
+                      display: "block",
+                    }}
+                  >
                     • At least 8 characters
                   </Typography>
-                  <Typography variant="caption" sx={{ 
-                    color: /(?=.*[a-z])/.test(password) ? colors.status.success : colors.status.error, 
-                    fontSize: 11,
-                    display: 'block'
-                  }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: /(?=.*[a-z])/.test(password)
+                        ? colors.status.success
+                        : colors.status.error,
+                      fontSize: 11,
+                      display: "block",
+                    }}
+                  >
                     • One lowercase letter
                   </Typography>
-                  <Typography variant="caption" sx={{ 
-                    color: /(?=.*[A-Z])/.test(password) ? colors.status.success : colors.status.error, 
-                    fontSize: 11,
-                    display: 'block'
-                  }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: /(?=.*[A-Z])/.test(password)
+                        ? colors.status.success
+                        : colors.status.error,
+                      fontSize: 11,
+                      display: "block",
+                    }}
+                  >
                     • One uppercase letter
                   </Typography>
-                  <Typography variant="caption" sx={{ 
-                    color: /(?=.*\d)/.test(password) ? colors.status.success : colors.status.error, 
-                    fontSize: 11,
-                    display: 'block'
-                  }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: /(?=.*\d)/.test(password)
+                        ? colors.status.success
+                        : colors.status.error,
+                      fontSize: 11,
+                      display: "block",
+                    }}
+                  >
                     • One number
                   </Typography>
-                  <Typography variant="caption" sx={{ 
-                    color: /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(password) ? colors.status.success : colors.status.error, 
-                    fontSize: 11,
-                    display: 'block'
-                  }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: /(?=.*[!@#$%^&*(),.?":{}|<>])/.test(password)
+                        ? colors.status.success
+                        : colors.status.error,
+                      fontSize: 11,
+                      display: "block",
+                    }}
+                  >
                     • One special character
                   </Typography>
                 </Box>
               </Box>
             )}
 
-            <PrimaryButton 
-              type="submit" 
-              fullWidth 
+            <PrimaryButton
+              type="submit"
+              fullWidth
               disabled={isLoading || !codeSent || otp.length !== 6 || !password}
             >
               {isLoading ? "Processing..." : "Reset Password"}
@@ -606,7 +720,14 @@ export const ResetPassword = () => {
       {/* Terms - Reduced margins */}
       <Typography
         align="center"
-        sx={{ mt: 3, mb: 2, maxWidth: 500, px: 4, fontSize: 14, color: colors.text.secondary }}
+        sx={{
+          mt: 3,
+          mb: 2,
+          maxWidth: 500,
+          px: 4,
+          fontSize: 14,
+          color: colors.text.secondary,
+        }}
       >
         By continuing, you agree to our{" "}
         <Link

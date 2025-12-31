@@ -30,7 +30,7 @@ export const LoginAccess = () => {
       {/* Header */}
       <div className="flex justify-between items-center w-full px-12 pt-8">
         <Link
-          to="/login"
+          to="/login-access"
           className="hover:underline cursor-pointer"
           style={{ color: colors.primary[500] }}
         >

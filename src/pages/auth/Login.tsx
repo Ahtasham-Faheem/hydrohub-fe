@@ -45,8 +45,12 @@ export const Login = () => {
   const [codeSuccess, setCodeSuccess] = useState<string | null>(null);
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
-  const [toastSeverity, setToastSeverity] = useState<"success" | "error">("error");
-  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>({});
+  const [toastSeverity, setToastSeverity] = useState<"success" | "error">(
+    "error"
+  );
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: boolean }>(
+    {}
+  );
   const [countdown, setCountdown] = useState(0);
   const { login, isAuthenticated, setIsAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -89,9 +93,9 @@ export const Login = () => {
         errorMessage = "Please enter your phone number";
         valid = false;
       } else {
-        // Extract phone number without +92 prefix for validation
-        const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
-        // Valid Pakistani phone: 3XXXXXXXXX (10 digits) or 03XXXXXXXXX (11 digits)
+        const phoneDigits = phone.startsWith("+92")
+          ? phone.substring(3)
+          : phone;
         if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits)) {
           errorMessage = "Please enter a valid phone number";
           valid = false;
@@ -113,8 +117,8 @@ export const Login = () => {
         if (!password) {
           errorMessage = "Please enter your password";
           valid = false;
-        } else if (password.length < 6) {
-          errorMessage = "Password must be at least 6 characters";
+        } else if (password.length < 8) {
+          errorMessage = "Password must be at least 8 characters";
           valid = false;
         }
       }
@@ -125,17 +129,27 @@ export const Login = () => {
       setToastSeverity("error");
       setToastOpen(true);
       // Mark fields in error
-      if (loginMode === "email" && !email) setFieldErrors(prev => ({ ...prev, email: true }));
-      if (loginMode === "email" && !/\S+@\S+\.\S+/.test(email)) setFieldErrors(prev => ({ ...prev, email: true }));
-      if (loginMode === "phone" && !phone) setFieldErrors(prev => ({ ...prev, phone: true }));
+      if (loginMode === "email" && !email)
+        setFieldErrors((prev) => ({ ...prev, email: true }));
+      if (loginMode === "email" && !/\S+@\S+\.\S+/.test(email))
+        setFieldErrors((prev) => ({ ...prev, email: true }));
+      if (loginMode === "phone" && !phone)
+        setFieldErrors((prev) => ({ ...prev, phone: true }));
       if (loginMode === "phone") {
-        const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
-        if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits)) setFieldErrors(prev => ({ ...prev, phone: true }));
+        const phoneDigits = phone.startsWith("+92")
+          ? phone.substring(3)
+          : phone;
+        if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits))
+          setFieldErrors((prev) => ({ ...prev, phone: true }));
       }
-      if (useCodeLogin && !otp) setFieldErrors(prev => ({ ...prev, otp: true }));
-      if (useCodeLogin && !/^\d{6}$/.test(otp)) setFieldErrors(prev => ({ ...prev, otp: true }));
-      if (!useCodeLogin && !password) setFieldErrors(prev => ({ ...prev, password: true }));
-      if (!useCodeLogin && password.length < 6) setFieldErrors(prev => ({ ...prev, password: true }));
+      if (useCodeLogin && !otp)
+        setFieldErrors((prev) => ({ ...prev, otp: true }));
+      if (useCodeLogin && !/^\d{6}$/.test(otp))
+        setFieldErrors((prev) => ({ ...prev, otp: true }));
+      if (!useCodeLogin && !password)
+        setFieldErrors((prev) => ({ ...prev, password: true }));
+      if (!useCodeLogin && password.length < 8)
+        setFieldErrors((prev) => ({ ...prev, password: true }));
     }
 
     return valid;
@@ -143,31 +157,34 @@ export const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validate()) return;
 
     setIsLoading(true);
     setErrors({ email: "", password: "", phone: "" });
     setCodeError(null);
-    setFieldErrors({}); // Clear field errors
+    setFieldErrors({});
 
     try {
       if (useCodeLogin) {
-        // Verify login code
-        const verifyPayload = loginMode === "email" 
-          ? { email, code: otp }
-          : { phone: phone.startsWith('+92') ? phone : `+92${phone}`, code: otp };
-        
+        const verifyPayload =
+          loginMode === "email"
+            ? { email, code: otp }
+            : {
+                phone: phone.startsWith("+92") ? phone : `+92${phone}`,
+                code: otp,
+              };
+
         const response = await authService.verifyLoginCode(verifyPayload);
-        
+
         // Store auth token and user data
-        localStorage.setItem('authToken', response.access_token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
+        localStorage.setItem("authToken", response.access_token);
+        localStorage.setItem("userData", JSON.stringify(response.user));
 
         setIsAuthenticated(true);
-      
+
         try {
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         } catch (e) {
           // Ignore any errors from this approach
         }
@@ -177,7 +194,7 @@ export const Login = () => {
           loginMode === "email"
             ? { email, password }
             : {
-                phone: phone.startsWith('+92') ? phone : `+92${phone}`,
+                phone: phone.startsWith("+92") ? phone : `+92${phone}`,
                 password,
               };
 
@@ -188,18 +205,44 @@ export const Login = () => {
       const errorMessage =
         error.response?.data?.message ||
         "Login failed. Please check your credentials.";
-      
-      // Set field errors for failed login
-      if (errorMessage.toLowerCase().includes('user not found') || 
-          errorMessage.toLowerCase().includes('invalid credentials') ||
-          errorMessage.toLowerCase().includes('incorrect password')) {
+
+      // Set field errors based on specific error messages
+      const lowerErrorMessage = errorMessage.toLowerCase();
+
+      if (
+        lowerErrorMessage.includes("password") &&
+        (lowerErrorMessage.includes("invalid") ||
+          lowerErrorMessage.includes("incorrect") ||
+          lowerErrorMessage.includes("wrong"))
+      ) {
+        // Password-specific error - only highlight password field
+        setFieldErrors({ password: true });
+      } else if (
+        lowerErrorMessage.includes("user not found") ||
+        lowerErrorMessage.includes("email not found") ||
+        lowerErrorMessage.includes("phone not found")
+      ) {
+        // User/email/phone not found - highlight the identifier field
+        if (loginMode === "email") {
+          setFieldErrors({ email: true });
+        } else {
+          setFieldErrors({ phone: true });
+        }
+      } else if (
+        lowerErrorMessage.includes("invalid credentials") ||
+        lowerErrorMessage.includes("authentication failed")
+      ) {
+        // Generic authentication failure - highlight both fields
         if (loginMode === "email") {
           setFieldErrors({ email: true, password: true });
         } else {
           setFieldErrors({ phone: true, password: true });
         }
+      } else {
+        // For any other error, don't highlight specific fields
+        setFieldErrors({});
       }
-      
+
       setToastMessage(errorMessage);
       setToastSeverity("error");
       setToastOpen(true);
@@ -234,7 +277,7 @@ export const Login = () => {
         return;
       }
       // Extract phone number without +92 prefix for validation
-      const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
+      const phoneDigits = phone.startsWith("+92") ? phone.substring(3) : phone;
       // Valid Pakistani phone: 3XXXXXXXXX (10 digits) or 03XXXXXXXXX (11 digits)
       if (!/^(3\d{9}|03\d{9})$/.test(phoneDigits)) {
         setToastMessage("Please enter a valid phone number");
@@ -250,20 +293,21 @@ export const Login = () => {
     setCodeSuccess(null);
 
     try {
-      const sendPayload = loginMode === "email"
-        ? { email }
-        : { phone: phone.startsWith('+92') ? phone : `+92${phone}` };
-      
+      const sendPayload =
+        loginMode === "email"
+          ? { email }
+          : { phone: phone.startsWith("+92") ? phone : `+92${phone}` };
+
       const response = await authService.sendLoginCode(sendPayload);
-      
+
       setToastMessage(response.message || "Code sent successfully!");
       setToastSeverity("success");
       setToastOpen(true);
       setOtp("");
       setCountdown(60); // Start 1-minute countdown
     } catch (error: any) {
-      const errorMessage = 
-        error.response?.data?.message || 
+      const errorMessage =
+        error.response?.data?.message ||
         "Failed to send code. Please try again.";
       setToastMessage(errorMessage);
       setToastSeverity("error");
@@ -276,32 +320,32 @@ export const Login = () => {
   // Check if send code button should be disabled
   const isSendCodeDisabled = () => {
     if (codeLoading || countdown > 0) return true;
-    
+
     if (loginMode === "email") {
       return !email || !email.trim() || !/\S+@\S+\.\S+/.test(email);
     } else {
       if (!phone || !phone.trim()) return true;
       // Extract phone number without +92 prefix for validation
-      const phoneDigits = phone.startsWith('+92') ? phone.substring(3) : phone;
+      const phoneDigits = phone.startsWith("+92") ? phone.substring(3) : phone;
       // Valid Pakistani phone: 3XXXXXXXXX (10 digits) or 03XXXXXXXXX (11 digits)
       return !/^(3\d{9}|03\d{9})$/.test(phoneDigits);
     }
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col items-center justify-between"
       style={{ backgroundColor: colors.background.primary }}
     >
       {/* Header */}
       <div className="flex justify-between items-center w-full px-12 pt-8">
         <Link
-          to="/login"
+          to="/login-access"
           className="text-primary-600 hover:underline cursor-pointer"
         >
           <img src={WaterLogo} alt="HydroHub Logo" className="w-[190px]" />
         </Link>
-        <div 
+        <div
           className="text-center font-extrabold flex items-center cursor-pointer"
           style={{ color: colors.primary[500] }}
         >
@@ -397,19 +441,32 @@ export const Login = () => {
             {loginMode === "email" ? (
               <div className="mb-4">
                 <CustomInput
-                  label="Email or Username"
+                  label="Email"
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     // Clear error styling when user types
                     if (fieldErrors.email) {
-                      setFieldErrors(prev => ({ ...prev, email: false }));
+                      setFieldErrors((prev) => ({ ...prev, email: false }));
                     }
                   }}
                   error={errors.email}
-                  sx={fieldErrors.email ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
+                  sx={
+                    fieldErrors.email
+                      ? {
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": {
+                              borderColor: "#dc2626",
+                              borderWidth: "2px",
+                            },
+                          },
+                        }
+                      : {}
+                  }
                   endAdornment={
-                    <LuMail style={{ color: colors.text.secondary, fontSize: 22 }} />
+                    <LuMail
+                      style={{ color: colors.text.secondary, fontSize: 22 }}
+                    />
                   }
                 />
               </div>
@@ -422,11 +479,22 @@ export const Login = () => {
                     setPhone(value);
                     // Clear error styling when user types
                     if (fieldErrors.phone) {
-                      setFieldErrors(prev => ({ ...prev, phone: false }));
+                      setFieldErrors((prev) => ({ ...prev, phone: false }));
                     }
                   }}
                   error={errors.phone}
-                  sx={fieldErrors.phone ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
+                  sx={
+                    fieldErrors.phone
+                      ? {
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": {
+                              borderColor: "#dc2626",
+                              borderWidth: "2px",
+                            },
+                          },
+                        }
+                      : {}
+                  }
                 />
               </div>
             )}
@@ -467,7 +535,9 @@ export const Login = () => {
                     label="Enter verification code"
                     value={otp}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      const value = e.target.value
+                        .replace(/\D/g, "")
+                        .slice(0, 6);
                       setOtp(value);
                       // Clear error when user starts typing
                       if (codeError) {
@@ -475,41 +545,46 @@ export const Login = () => {
                       }
                       // Clear field error styling when user types
                       if (fieldErrors.otp) {
-                        setFieldErrors(prev => ({ ...prev, otp: false }));
+                        setFieldErrors((prev) => ({ ...prev, otp: false }));
                       }
                     }}
                     placeholder="Enter 6-digit code"
-                    sx={fieldErrors.otp ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
+                    sx={
+                      fieldErrors.otp
+                        ? {
+                            "& .MuiOutlinedInput-root": {
+                              "& fieldset": {
+                                borderColor: "#dc2626",
+                                borderWidth: "2px",
+                              },
+                            },
+                          }
+                        : {}
+                    }
                     endAdornment={
-                      <Button
-                        variant="outlined"
+                      <button
+                        className="send-code-btn"
                         disabled={isSendCodeDisabled()}
-                        sx={{
+                        style={{
                           textTransform: "none",
-                          height: "38px",
-                          fontSize: 13,
-                          color: isSendCodeDisabled() ? colors.text.tertiary : colors.text.secondary,
+                          height: "54px",
+                          fontSize: 15,
+                          color: isSendCodeDisabled()
+                            ? colors.text.tertiary
+                            : colors.text.secondary,
+                          borderLeftWidth: 1,
+                          paddingLeft: 15,
                           borderLeft: `1px solid ${colors.border.primary}`,
                           borderRadius: 0,
-                          paddingRight: 0,
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "center",
                           gap: 1,
-                          ":hover": { textDecoration: isSendCodeDisabled() ? "none" : "underline" },
                         }}
                         onClick={handleSendCode}
                       >
-                        {codeLoading ? (
-                          <>
-                            <CircularProgress size={14} />
-                            Sending...
-                          </>
-                        ) : countdown > 0 ? (
-                          `Resend (${countdown}s)`
-                        ) : (
-                          "Send code"
-                        )}
-                      </Button>
+                        {isLoading ? "Sending..." : countdown > 0 ? `Resend (${countdown}s)` : "Send code"}
+                      </button>
                     }
                   />
                 </Box>
@@ -522,11 +597,22 @@ export const Login = () => {
                     setPassword(e.target.value);
                     // Clear error styling when user types
                     if (fieldErrors.password) {
-                      setFieldErrors(prev => ({ ...prev, password: false }));
+                      setFieldErrors((prev) => ({ ...prev, password: false }));
                     }
                   }}
                   error={errors.email || errors.password}
-                  sx={fieldErrors.password ? { "& .MuiOutlinedInput-root": { "& fieldset": { borderColor: "#dc2626", borderWidth: "2px" } } } : {}}
+                  sx={
+                    fieldErrors.password
+                      ? {
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": {
+                              borderColor: "#dc2626",
+                              borderWidth: "2px",
+                            },
+                          },
+                        }
+                      : {}
+                  }
                   endAdornment={
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
@@ -537,7 +623,9 @@ export const Login = () => {
                           sx={{ color: colors.text.secondary, fontSize: 22 }}
                         />
                       ) : (
-                        <Visibility sx={{ color: colors.text.secondary, fontSize: 22 }} />
+                        <Visibility
+                          sx={{ color: colors.text.secondary, fontSize: 22 }}
+                        />
                       )}
                     </IconButton>
                   }
@@ -671,7 +759,14 @@ export const Login = () => {
       {/* Terms */}
       <Typography
         align="center"
-        sx={{ mt: 4, mb: 3, maxWidth: 500, px: 4, fontSize: 14, color: colors.text.secondary }}
+        sx={{
+          mt: 4,
+          mb: 3,
+          maxWidth: 500,
+          px: 4,
+          fontSize: 14,
+          color: colors.text.secondary,
+        }}
       >
         By continuing, you agree to our{" "}
         <Link
